@@ -1,0 +1,631 @@
+{% extends "wireguardapp/base.html" %}
+
+{% block title %}quack{% endblock %}
+
+{% block content %}
+  
+<div class="row m-1">
+  <div class="col-md-8">
+<!-- Část knih ///////////////////////////////////////////////////// -->
+<!-- \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\  Titulek -->
+    <div class="container-xl p-0 border">
+
+      <div class="container-fluid text-bg-primary border p-1">
+        <h3>Knihy</h3>
+      </div>  
+
+      <div class="container-fluid mt-1 p-2">
+
+        
+        <!-- \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\  vyhledávání -->
+        <div class="container-md mt-1 p-0 border">
+          <div class="bg-info p-1">
+            <h5>Vyhledat</h5>
+          </div>
+          <div class="input-group p-1">
+            <select class="form-select" style="flex: 0 0 30%" name="vyhledat" id="vyhledat">
+              <option value="name">Jméno</option>
+              <option value="author">Autor</option>
+              <option value="release">Vydání</option>
+              <option value="genre">Žánr</option>
+              <option value="rating">Hodnocení</option>
+            </select>
+            <input class="form-control" type="text">
+            <button type="button" class="btn btn-outline-primary">Vyhledat</button>
+          </div>
+        </div>
+    
+
+        <!-- \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\  Tabulka -->
+        <div class="table-responsive border mt-2 p-0" style="overflow-y: auto;max-height: 300px;" name="tableBooks">
+          <table class="table table-striped table-hover" >
+            <colgroup>
+              <col style="width: 5%;">
+              <col style="width: 15%;">
+              <col style="width: 15%;">
+              <col style="width: 5%;">
+              <col style="width: 10%;">
+              <col style="width: 5%;">
+              <col style="width: 15%; max-width: 150px;">
+              <col style="width: 10%;">
+            </colgroup>
+            <thead class="table-light">
+              <tr>
+                <th scope="col">Id</th>
+                <th scope="col">Jméno</th>
+                <th scope="col">Autor</th>
+                <th scope="col">Vydání</th>
+                <th scope="col">Žánr</th>
+                <th scope="col">Hodnocení</th>
+                <th scope="col">Popis</th>
+                <th scope="col">Editace</th>
+              </tr>
+            </thead>
+            <tbody class="table-group-divider">
+              <!-- //////////////////////////////////////////////////knihy data start/////////////////////////////////////////////-->
+              <tr>
+                <td>0</td>
+                <td>Charakteristika koček</td>
+                <td>Za tebou</td>
+                <td>2025</td>
+                <td>Poučná próza</td>
+                <td>***</td>
+                <td style="overflow: hidden;text-overflow:ellipsis;white-space:nowrap; max-width: 150px;"
+                >Jsou jenom dva typy koček: barevné a černé 
+                aaaaaaaaaaaaaaaaaaaaaaaa aaaaaaa aaaaaaaaaaaaaaaaaaa 
+                aaaaaaaaaaaaa aaaaaa aaaaa aaaaaaaaaa aaaaaaaaaa
+                </td>
+                <td style="vertical-align: middle;" ><button type="button" class="btn btn-outline-primary"
+                  data-bs-toggle="modal" data-bs-target="#ModalEditBook">Editovat</button></td>
+              </tr>
+              <tr>
+                <td>1</td>
+                <td>Charakteristika koček</td>
+                <td>Za tebou</td>
+                <td>2025</td>
+                <td>Poučná próza</td>
+                <td>***</td>
+                <td style="overflow: hidden;text-overflow:ellipsis;white-space:nowrap; max-width: 150px;"
+                >Jsou jenom dva typy koček: barevné a černé</td>
+                <td style="vertical-align: middle;" ><button type="button" class="btn btn-outline-primary">Editovat</button></td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td>Charakteristika koček</td>
+                <td>Za tebou</td>
+                <td>2025</td>
+                <td>Poučná próza</td>
+                <td>***</td>
+                <td style="overflow: hidden;text-overflow:ellipsis;white-space:nowrap; max-width: 150px;">Jsou jenom dva typy koček: barevné a černé</td>
+                <td style="vertical-align: middle;" ><button type="button" class="btn btn-outline-primary">Editovat</button></td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td>Charakteristika koček</td>
+                <td>Za tebou</td>
+                <td>2025</td>
+                <td>Poučná próza</td>
+                <td>***</td>
+                <td style="overflow: hidden;text-overflow:ellipsis;white-space:nowrap; max-width: 150px;">Jsou jenom dva typy koček: barevné a černé</td>
+                <td style="vertical-align: middle;" ><button type="button" class="btn btn-outline-primary">Editovat</button></td>
+              </tr>
+              <tr>
+                <td>4</td>
+                <td>Charakteristika koček</td>
+                <td>Za tebou</td>
+                <td>2025</td>
+                <td>Poučná próza</td>
+                <td>***</td>
+                <td style="overflow: hidden;text-overflow:ellipsis;white-space:nowrap; max-width: 150px;">Jsou jenom dva typy koček: barevné a černé</td>
+                <td style="vertical-align: middle;" ><button type="button" class="btn btn-outline-primary">Editovat</button></td>
+              </tr>
+              <tr>
+                <td>5</td>
+                <td>Charakteristika koček</td>
+                <td>Za tebou</td>
+                <td>2025</td>
+                <td>Poučná próza</td>
+                <td>***</td>
+                <td style="overflow: hidden;text-overflow:ellipsis;white-space:nowrap; max-width: 150px;">Jsou jenom dva typy koček: barevné a černé</td>
+                <td style="vertical-align: middle;" ><button type="button" class="btn btn-outline-primary">Editovat</button></td>
+              </tr>
+              <tr>
+                <td>6</td>
+                <td>Charakteristika koček</td>
+                <td>Za tebou</td>
+                <td>2025</td>
+                <td>Poučná próza</td>
+                <td>***</td>
+                <td style="overflow: hidden;text-overflow:ellipsis;white-space:nowrap; max-width: 150px;">Jsou jenom dva typy koček: barevné a černé</td>
+                <td style="vertical-align: middle;" ><button type="button" class="btn btn-outline-primary">Editovat</button></td>
+              </tr>
+              <tr>
+                <td>7</td>
+                <td>Charakteristika koček</td>
+                <td>Za tebou</td>
+                <td>2025</td>
+                <td>Poučná próza</td>
+                <td>***</td>
+                <td style="overflow: hidden;text-overflow:ellipsis;white-space:nowrap; max-width: 150px;">Jsou jenom dva typy koček: barevné a černé</td>
+                <td style="vertical-align: middle;" ><button type="button" class="btn btn-outline-primary">Editovat</button></td>
+              </tr>
+              <tr>
+                <td>8</td>
+                <td>Charakteristika koček</td>
+                <td>Za tebou</td>
+                <td>2025</td>
+                <td>Poučná próza</td>
+                <td>***</td>
+                <td style="overflow: hidden;text-overflow:ellipsis;white-space:nowrap; max-width: 150px;">Jsou jenom dva typy koček: barevné a černé</td>
+                <td style="vertical-align: middle;" ><button type="button" class="btn btn-outline-primary">Editovat</button></td>
+              </tr>
+              <tr>
+                <td>9</td>
+                <td>Charakteristika koček</td>
+                <td>Za tebou</td>
+                <td>2025</td>
+                <td>Poučná próza</td>
+                <td>***</td>
+                <td style="overflow: hidden;text-overflow:ellipsis;white-space:nowrap; max-width: 150px;">Jsou jenom dva typy koček: barevné a černé</td>
+                <td style="vertical-align: middle;" ><button type="button" class="btn btn-outline-primary">Editovat</button></td>
+              </tr>
+              <!-- //////////////////////////////////////////////////knihy data end//////////////////////////////////////////////////////////////////-->
+            </tbody>
+        
+          </table>
+        </div>
+
+        <!-- \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\  Nová kniha -->
+
+
+       
+
+
+        <div class="container-xl mt-1 p-0 border">
+          <div class="bg-info p-1">
+            <h5>Vytvořit novou knihu</h5>
+          </div>
+          <div class="container-md m-1 p-2">
+            
+            
+            <div class="row">
+
+              <div class="col-md-7">  
+                <div class="container-sm border p-2 mb-1">
+                  <div>
+                    <label for="bookname">Název knihy</label>
+                    <input type="text" id="bookname" class="form-control">
+                  </div>
+                  <div>
+                    <label for="bookauthor">Autor knihy</label>
+                    <input type="text" id="bookauthor" class="form-control">
+                  </div>
+                  <div>
+                    <label for="bookrelease">Vydání</label>
+                    <input type="text" id="bookrelease" class="form-control">
+                  </div>
+                  <div>
+                    <label for="bookgenre">Žánr</label>
+                    <input type="text" id="bookgenre" class="form-control">
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-5">
+                <div class="container-sm border p-2">
+                  
+                  <div class="m-1 d-flex flex-column justify-content-center">
+                    <label for="bookCover" >Obal knihy:</label>
+                    <img id="bookCover" class="rounded mx-auto d-block" width="150px" height="225px" src="cat2.jpg">
+                    <input type="button" class="btn btn-secondary mt-2 align-self-center" style="max-width: 150px;"  value="Přidat obrázek">
+                  </div>
+
+                </div>
+              </div>
+            </div>
+
+
+            <ul class="nav nav-tabs mt-1" id="tabNewBook" role="tablist">
+
+              <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="tabNewBookDetail" data-bs-toggle="tab" 
+                data-bs-target="#NewBookDetailPane" type="button" role="tab" aria-controls="tabNewBookDetail" 
+                aria-selected="true">Detail</button>
+              </li>
+    
+              <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tabNewBookDesc" data-bs-toggle="tab" 
+                data-bs-target="#NewBookDescPane" type="button" role="tab" aria-controls="tabNewBookDesc" 
+                aria-selected="false">Popis</button>
+              </li>
+    
+            </ul>
+
+
+            <div class="tab-content border p-2" id="tabNewBookContent" >
+
+              <div class="tab-pane fade show active " id="NewBookDetailPane" role="tabpanel" tabindex="0" aria-labelledby="tabNewBookDetail">
+                <div>
+                  <label for="bookgenre">Hodnocení</label>
+                  <select class="form-select" name="rating" id="rating" style="width: 100px;">
+                    <option value="1">*</option>
+                    <option value="2">**</option>
+                    <option value="3">***</option>
+                    <option value="4">****</option>
+                    <option value="5">*****</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="tab-pane fade" id="NewBookDescPane" role="tabpanel" tabindex="0" aria-labelledby="tabNewBookDesc">
+                <div>
+                  <label for="bookdesc">Popis</label>
+                  <textarea class="form-control" id="bookdesc"></textarea>
+                  
+                </div>
+              </div>
+
+            </div>
+
+
+            <div class="mt-1 d-flex flex-row-reverse">
+              <input type="button" class="btn btn-primary " value="Vytvořit novou knihu" data-bs-toggle="modal" data-bs-target="#ModalAddBook">
+            </div>
+          </div>
+        </div>
+
+
+        
+
+      </div>
+    </div>
+    <!-- konec Část knih ///////////////////////////////////////////////////////////////////////////////////////// -->
+  </div>
+  
+  
+   <!-- Část pujček ///////////////////////////////////////////////////////////////////////////////////////// -->
+  <div class="col-md-4">
+    <div class="container-xl p-0 border">
+      <!-- \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\  Titulek -->
+
+
+      <div class="container-fluid text-bg-primary border p-1">
+        <h3>Půjčky</h3>
+      </div> 
+
+      <div class="container-fluid mt-1 p-2">
+        
+
+        <!-- \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\  Tabulka -->
+        <div class="table-responsive border mt-1 p-0" style="overflow-y: auto;max-height: 300px;" name="tableBorrows">
+          <table class="table table-stripped table-hover">
+            <colgroup>
+              <col style="width: 20%;">
+              <col style="width: 20%;">
+              <col style="width: 60%;">
+            </colgroup>
+            <thead class="table-light">
+              <tr>
+                <th scope="col">Id čtenáře</th>
+                <th scope="col">Id knihy</th>
+                <th scope="col">Datum vrácení</th>
+              </tr>
+            </thead>
+            <tbody class="table-group-divider">
+              <tr>
+                <td>1</td>
+                <td>1</td>
+                <td>02.05.2025</td>
+              </tr>
+              <tr>
+                <td>1</td>
+                <td>2</td>
+                <td>12.05.2025</td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td>3</td>
+                <td>02.02.2000</td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td>4</td>
+                <td>30.12.2026</td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td>5</td>
+                <td>30.12.2026</td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td>6</td>
+                <td>30.12.2026</td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td>7</td>
+                <td>30.12.2026</td>
+              </tr>
+              <tr>
+                <td>4</td>
+                <td>8</td>
+                <td>30.12.2026</td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td>9</td>
+                <td>30.12.2026</td>
+              </tr>
+              <tr>
+                <td>67</td>
+                <td>10</td>
+                <td>30.12.2026</td>
+              </tr>
+              
+            </tbody>
+          </table>
+        </div>
+
+        <!-- \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\  tabs -->
+
+        
+          
+
+        
+
+
+        <ul class="nav nav-tabs mt-1" id="tabBorrowNav" role="tablist">
+
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="borrowTabNav" data-bs-toggle="tab" 
+            data-bs-target="#tabNewBorrowPane" type="button" role="tab" aria-controls="tabNewBorrow" 
+            aria-selected="true">Vytvořit půjčku</button>
+          </li>
+
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tabExtendBorrow" data-bs-toggle="tab" 
+            data-bs-target="#tabExtendBorrowPane" type="button" role="tab" aria-controls="tabExtendBorrow" 
+            aria-selected="false">Prodloužit půjčku</button>
+          </li>
+
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="TabReturnBorrow" data-bs-toggle="tab" 
+            data-bs-target="#tabReturnBorrowPane" type="button" role="tab" aria-controls="tabReturnBorrow" 
+            aria-selected="false">Vrátit půjčku</button>
+          </li>
+
+        </ul>
+
+
+        
+        <div class="tab-content" id="tabContentBorrow" >
+          <!-- \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\  vytvořit půjčku -->
+          <div class="tab-pane fade show active" id="tabNewBorrowPane" role="tabpanel" tabindex="0" aria-labelledby="TabNewBorrow">
+
+            
+            <div class="container-md border mt-1 p-0">
+
+              <div class="border bg-info p-1">
+                <h5>Nová půjčka</h5>
+              </div>
+
+              <div class="p-1 m-1">
+                <div>
+                  <label for="idreader" class="form-label">Id čtenáře</label>
+                  <input type="text" id="idreader" class="form-control">
+                </div>
+                <div>
+                  <label for="idbook" class="form-label">Id knihy</label>
+                  <input type="text" id="idbook" class="form-control">
+                </div>
+                <div>
+                  <label for="borrowdate" class="form-label">Datum Vrácení</label>
+                  <input type="date" id="idbook" class="form-control">
+                </div>
+                <div class="d-flex flex-row-reverse">
+                  <input type="button" class="btn btn-primary mt-1" value="Přidat půjčku">
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\  prodlouzit půjčku -->
+          <div class="tab-pane fade" id="tabExtendBorrowPane" role="tabpanel" tabindex="0" aria-labelledby="TabExtendBorrow">
+
+            <div class="container-md border mt-1 p-0">
+
+              <div class="border bg-info p-1">
+                <h5>Prodloužit půjčku</h5>
+              </div>
+
+              <div class="p-1 m-1">
+                <div>
+                  <label for="idbook" class="form-label">Id knihy</label>
+                  <input type="text" id="idbook" class="form-control">
+                </div>
+                <div>
+                  <label for="borrowdate" class="form-label">Datum změněného vrácení</label>
+                  <input type="date" id="idbook" class="form-control">
+                </div>
+                <div class="d-flex flex-row-reverse">
+                  <input type="button" class="btn btn-primary mt-1" value="Prodloužit půjčku knihy">
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\  vrátit půjčku -->
+          <div class="tab-pane fade" id="tabReturnBorrowPane" role="tabpanel" tabindex="0" aria-labelledby="TabReturnBorrow">
+            <div class="container-md border mt-1 p-0">
+
+              <div class="bg-info p-1">
+                <h5>Vrátit půjčku</h5>
+              </div>
+
+              <div class="p-1 m-1">
+                <div>
+                  <label for="idbookreturn" class="form-label">Id knihy</label>
+                  <input type="text" class="form-control">
+                </div>
+                <div class="d-flex flex-row-reverse">
+                  <input type="button" class="btn btn-primary mt-1" value="Vrátit knihu">
+                </div>
+              </div>
+            
+            </div>
+          </div>
+
+        </div>
+
+
+
+
+
+        
+        
+        
+
+
+
+      </div>
+
+
+    </div>  
+  </div>
+
+
+</div>
+
+
+<div class="modal fade" id="ModalAddBook" tabindex="-1" aria-labelledby="ModalAddBookLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="ModalAddBookLabel">Potrvzení</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        Opravdu chete přidat záznam do tabulky?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary">Uložit nový záznam</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="ModalEditBook" tabindex="-1" aria-labelledby="ModalEditBookLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="ModalAddBookLabel">Editace knihy</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        
+
+
+        
+        <div class="container-xl mt-1 p-0 border">
+          <div class="container-md m-1 p-2">
+            
+            
+            <div class="row">
+
+              <div class="col-md-7">  
+                <div class="container-sm border p-2 mb-1">
+                  <div>
+                    <label for="bookname">Název knihy</label>
+                    <input type="text" id="bookname" class="form-control">
+                  </div>
+                  <div>
+                    <label for="bookauthor">Autor knihy</label>
+                    <input type="text" id="bookauthor" class="form-control">
+                  </div>
+                  <div>
+                    <label for="bookrelease">Vydání</label>
+                    <input type="text" id="bookrelease" class="form-control">
+                  </div>
+                  <div>
+                    <label for="bookgenre">Žánr</label>
+                    <input type="text" id="bookgenre" class="form-control">
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-5">
+                <div class="container-sm border p-2">
+                  
+                  <div class="m-1 d-flex flex-column justify-content-center">
+                    <label for="bookCover" >Obal knihy:</label>
+                    <img id="bookCover" class="rounded mx-auto d-block" width="150px" height="225px" src="cat2.jpg">
+                    <input type="button" class="btn btn-secondary mt-2 align-self-center" style="max-width: 150px;"  value="Přidat obrázek">
+                  </div>
+
+                </div>
+              </div>
+            </div>
+
+
+            <ul class="nav nav-tabs mt-1" id="tabNewBook" role="tablist">
+
+              <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="tabNewBookDetail" data-bs-toggle="tab" 
+                data-bs-target="#NewBookDetailPane" type="button" role="tab" aria-controls="tabNewBookDetail" 
+                aria-selected="true">Detail</button>
+              </li>
+    
+              <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tabNewBookDesc" data-bs-toggle="tab" 
+                data-bs-target="#NewBookDescPane" type="button" role="tab" aria-controls="tabNewBookDesc" 
+                aria-selected="false">Popis</button>
+              </li>
+    
+            </ul>
+
+
+            <div class="tab-content border p-2" id="tabNewBookContent" >
+
+              <div class="tab-pane fade show active " id="NewBookDetailPane" role="tabpanel" tabindex="0" aria-labelledby="tabNewBookDetail">
+                <div>
+                  <label for="bookgenre">Hodnocení</label>
+                  <select class="form-select" name="rating" id="rating" style="width: 100px;">
+                    <option value="1">*</option>
+                    <option value="2">**</option>
+                    <option value="3">***</option>
+                    <option value="4">****</option>
+                    <option value="5">*****</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="tab-pane fade" id="NewBookDescPane" role="tabpanel" tabindex="0" aria-labelledby="tabNewBookDesc">
+                <div>
+                  <label for="bookdesc">Popis</label>
+                  <textarea class="form-control" id="bookdesc"></textarea>
+                  
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+
+
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary">Uložit editovaný záznam</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+ 
