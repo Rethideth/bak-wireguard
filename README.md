@@ -1,8 +1,8 @@
-# useful
+# Postup
 
 sudo tail -f /var/log/apache2/wg_web-error.log
 
-#create project
+## create project
 cd /var/www/
 sudo mkdir wg_web
 sudo chown $USER:$USER wg_web
@@ -14,7 +14,7 @@ django-admin startproject wg_web .
 python manage.py runserver
 python manage.py createsuperuser
 
-#create mariadb connection
+## create mariadb connection
 sudo apt-get install libmariadb-dev
 sudo apt-get install pkg-config python3-dev default-libmysqlclient-dev build-essential
 pip install mysqlclient
@@ -24,9 +24,7 @@ sudo mysql
 	CREATE USER ‘django’@’localhost’ IDENTIFIED BY ‘django'; 
 	GRANT ALL PRIVILEGES ON 'wg_web'.* TO ‘django’@’localhost';
 	FLUSH PRIVILEGES;
-
-wg_web/settings.py
-START write ->
+### ve wg_web/settings.py
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
@@ -39,7 +37,6 @@ DATABASES = {
     }
 }
 
-END write;
 python manage.py migrate
 
 wg_web/settings.py
@@ -50,7 +47,7 @@ python manage.py collectstatic
 
 python manage.py runserver
 
-# secure connection
+## secure connection
 
 apache conf
 
@@ -61,7 +58,8 @@ python manage.py collectstatic
 
 
 
-sudo apt install python3-pip
+## ve apache server config
+
 <VirtualHost *:443>
 	SSLEngine on
 	SSLCertificateFile /etc/apache2/ssl/apache.crt
