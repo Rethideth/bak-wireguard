@@ -5,20 +5,20 @@ sudo tail -f /var/log/apache2/wg_web-error.log
 ## create project
 cd /var/www/
 
-sudo mkdir wg_web 
-sudo chown $USER:$USER wg_web 
-cd wg_web 
-python3 -m venv venv 
-source venv/bin/activate 
-pip install django 
-django-admin startproject wg_web . 
-python manage.py runserver 
-python manage.py createsuperuser 
+sudo mkdir wg_web  
+sudo chown $USER:$USER wg_web  
+cd wg_web  
+python3 -m venv venv  
+source venv/bin/activate  
+pip install django  
+django-admin startproject wg_web .  
+python manage.py runserver  
+python manage.py createsuperuser  
 
 ## create mariadb connection
-sudo apt-get install libmariadb-dev 
-sudo apt-get install pkg-config python3-dev default-libmysqlclient-dev build-essential 
-pip install mysqlclient 
+sudo apt-get install libmariadb-dev  
+sudo apt-get install pkg-config python3-dev default-libmysqlclient-dev build-essential  
+pip install mysqlclient  
 
 sudo mysql
 	CREATE DATABASE wg_web;
