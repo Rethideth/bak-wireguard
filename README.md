@@ -59,7 +59,7 @@ python manage.py collectstatic
 
 
 ## ve apache server config
-
+```
 <VirtualHost *:443>
 	SSLEngine on
 	SSLCertificateFile /etc/apache2/ssl/apache.crt
@@ -120,7 +120,8 @@ python manage.py collectstatic
 	</Directory>
 
 </VirtualHost>
-
+```
+### apache temporary certification
 sudo a2enmod ssl
 sudo mkdir -p /etc/apache2/ssl
 sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048  -keyout /etc/apache2/ssl/apache.key  -out /etc/apache2/ssl/apache.crt
@@ -128,13 +129,10 @@ sudo a2ensite default-ssl
 sudo systemctl restart apache2
 
 
-;;;;;;;;;;;;;;;;;;;;;;
-
 python manage.py startapp wireguardapp
 
 
-;;;;;;;;;;;;;;;;;;;;;
-sources
+## sources
 
 
 https://studygyaan.com/django/how-to-setup-django-applications-with-apache-and-mod-wsgi-on-ubuntu
