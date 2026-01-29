@@ -35,15 +35,15 @@
       </div>
       <div class="modal-body" id="modalBody">
         <!-- AJAX content will appear here -->
+        <pre id="configText"></pre>
       </div>
       <div class="modal-footer">
+        <button type="button" class="btn btn-primary" id="copyButton">Kopírovat do schránky</button>
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zavřít</button>
       </div>
     </div>
   </div>
 </div>
-
-
 
 <script>
     // CSRF token
@@ -63,7 +63,7 @@
     }
     const csrftoken = getCookie('csrftoken');
 
-    // AJAX setup with CSRF
+    // AJAX helper
     function ajaxWithCSRF(url, data, successCallback) {
         fetch(url, {
             method: 'POST',
@@ -81,17 +81,16 @@
         });
     }
 
-    // Handle button clicks
+    // Handle configuration buttons
     document.querySelectorAll('.conf-button').forEach(button => {
         button.addEventListener('click', function() {
             const publicKey = this.dataset.key;
 
             ajaxWithCSRF("{% url 'confajax' %}", { 'public_key': publicKey }, function(response) {
-                // Fill modal with response content
-                document.getElementById('modalBody').innerHTML = `
-                    <p><strong>Konfigurace pro klíč:</strong> ${publicKey}</p>
-                    <pre>${response.config || 'Žádná konfigurace nebyla vrácena.'}</pre>
-                `;
+                // Fill modal with config
+                const configText = document.getElementById('configText');
+                configText.textContent = response.config || 'Žádná konfigurace nebyla vrácena.';
+
                 // Show modal
                 const modal = new bootstrap.Modal(document.getElementById('configModal'));
                 modal.show();
@@ -99,7 +98,13 @@
         });
     });
 
+    // Copy to clipboard button
+    document.getElementById('copyButton').addEventListener('click', function() {
+        const configText = document.getElementById('configText').textContent;
+        navigator.clipboard.writeText(configText)
+    });
 </script>
+
 
 
 
