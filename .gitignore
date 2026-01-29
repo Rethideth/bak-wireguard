@@ -1,0 +1,12 @@
+# Python caches
+__pycache__/
+*.pyc
+wireguardapp/__pycache__/
+
+# Django
+db.sqlite3
+/staticfiles/
+media/
+
+# Virtual environment
+venv/
