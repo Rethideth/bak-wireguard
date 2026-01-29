@@ -1,0 +1,106 @@
+{% extends "wireguardapp/base.html" %}
+
+{% block title %}WG{% endblock %}
+
+{% block content %}
+
+
+<div class="container mt-4">
+<h1 class="mb-4">Seznam Klíčů</h1>
+    {% for key in keys %}
+    <div class="card mb-3">
+        <div class="card-body">
+            <h5>{{key.name}}</h5>
+            <input id="public_key" type="text" value="{{ key.public_key }}" readonly>
+            <button 
+            class="btn btn-secondary conf-button" 
+            type="submit"
+            data-key="{{key.public_key}}">
+            Vytvořit konfiguraci</button>
+        </div>
+    </div>
+
+        {% empty %}
+        <p>Zatím nemáte žádne kliče</p>
+    {% endfor %}
+</div>
+
+<!-- Bootstrap Modal -->
+<div class="modal fade" id="configModal" tabindex="-1" aria-labelledby="configModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="configModalLabel">Konfigurace</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="modalBody">
+        <!-- AJAX content will appear here -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zavřít</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<script>
+    // CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                cookie = cookie.trim();
+                if (cookie.startsWith(name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    const csrftoken = getCookie('csrftoken');
+
+    // AJAX setup with CSRF
+    function ajaxWithCSRF(url, data, successCallback) {
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken,
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(successCallback)
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Došlo k chybě při získávání konfigurace!');
+        });
+    }
+
+    // Handle button clicks
+    document.querySelectorAll('.conf-button').forEach(button => {
+        button.addEventListener('click', function() {
+            const publicKey = this.dataset.key;
+
+            ajaxWithCSRF("{% url 'confajax' %}", { 'public_key': publicKey }, function(response) {
+                // Fill modal with response content
+                document.getElementById('modalBody').innerHTML = `
+                    <p><strong>Konfigurace pro klíč:</strong> ${publicKey}</p>
+                    <pre>${response.config || 'Žádná konfigurace nebyla vrácena.'}</pre>
+                `;
+                // Show modal
+                const modal = new bootstrap.Modal(document.getElementById('configModal'));
+                modal.show();
+            });
+        });
+    });
+
+</script>
+
+
+
+{% endblock %}
