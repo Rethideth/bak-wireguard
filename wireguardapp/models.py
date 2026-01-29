@@ -4,9 +4,19 @@ from django.contrib.auth.models import User
 
 
 class Key(models.Model):
+    TYPE_KEY = [('server', 'Server'), ('client', 'Client')]
+
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE
+    )
+    name = models.CharField(
+        max_length=255,
+        null=True
+    )
+    key_type = models.CharField(
+        max_length=64,
+        choices=TYPE_KEY,
     )
     public_key = models.CharField(
         max_length=44,
@@ -89,11 +99,6 @@ class PeerAllowedIP(models.Model):
         max_length=64
     )
 
-    class Meta:
-        unique_together = ("peer", "cidr")
-        indexes = [
-            models.Index(fields=["peer", "cidr"]),
-        ]
 
     def __str__(self):
         return f"{self.peer} → {self.cidr}"
@@ -121,10 +126,6 @@ class PeerSnapshot(models.Model):
         db_index=True
     )
 
-    class Meta:
-        indexes = [
-            models.Index(fields=["peer", "collected_at"]),
-        ]
 
     def __str__(self):
         return f"{self.peer} @ {self.collected_at}"
