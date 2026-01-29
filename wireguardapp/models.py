@@ -4,8 +4,6 @@ from django.contrib.auth.models import User
 
 
 class Key(models.Model):
-    TYPE_KEY = [('server', 'Server'), ('client', 'Client')]
-
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE
@@ -13,10 +11,6 @@ class Key(models.Model):
     name = models.CharField(
         max_length=255,
         null=True
-    )
-    key_type = models.CharField(
-        max_length=64,
-        choices=TYPE_KEY,
     )
     public_key = models.CharField(
         max_length=44,
@@ -52,6 +46,10 @@ class Interface(models.Model):
         null=True,
         blank=True
     )
+    ip_address = models.CharField(
+        max_length=32,
+        null=True
+    )
     created_at = models.DateTimeField(
         auto_now_add=True
     )
@@ -61,6 +59,8 @@ class Interface(models.Model):
 
 
 class Peer(models.Model):
+    TYPE_CONNECTION = [('server', 'Server'), ('client', 'Client')]
+
     interface = models.ForeignKey(
         Interface,
         on_delete=models.CASCADE,
@@ -69,7 +69,8 @@ class Peer(models.Model):
     public_key = models.ForeignKey(
         Key,
         on_delete=models.CASCADE,
-        related_name='peerkey'
+        related_name='peerkey',
+        verbose_name='interface connected to',
     )
     persistent_keepalive = models.PositiveIntegerField(
         null=True,
@@ -77,6 +78,10 @@ class Peer(models.Model):
     )
     created_at = models.DateTimeField(
         auto_now_add=True
+    )
+    peer_type = models.CharField(
+        max_length=32,
+        choices=TYPE_CONNECTION,
     )
 
     class Meta:
@@ -129,6 +134,8 @@ class PeerSnapshot(models.Model):
 
     def __str__(self):
         return f"{self.peer} @ {self.collected_at}"
+
+
 
 
 class PeerEvent(models.Model):

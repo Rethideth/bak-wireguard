@@ -8,7 +8,9 @@ urlpatterns = [
     path('logout/', auth_views.LogoutView.as_view(), name = 'logout'),
     path('register/', views.register, name='register'),
     path('mykeys/', views.mykeys, name = 'mykeys'),
-    path('confajax/', views.getconfajax, name = 'confajax')
+    path('confajax/', views.getconfajax, name = 'confajax'),
+    path('newkey/', views.newkey, name = 'newkey'),
+    path('logs/', views.viewlogs, name = 'logs'),
     
 ]
     

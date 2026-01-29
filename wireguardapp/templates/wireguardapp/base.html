@@ -32,6 +32,9 @@
                     <a class="nav-link" href="{% url 'register' %}">Registrovat se</a>
                 </li>
                 {% endif%}
+                {% if user.is_authenticated and user.is_superuser %}
+                    <a class="nav-link" href="{% url 'logs' %}">Log</a>
+                {% endif %}
                 </ul>
             </div>
     </div>

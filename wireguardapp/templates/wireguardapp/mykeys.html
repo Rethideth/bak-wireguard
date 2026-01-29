@@ -14,7 +14,7 @@
             <input id="public_key" type="text" value="{{ key.public_key }}" readonly>
             <button 
             class="btn btn-secondary conf-button" 
-            type="submit"
+            type="submit-conf"
             data-key="{{key.public_key}}">
             Vytvořit konfiguraci</button>
         </div>
@@ -23,7 +23,13 @@
         {% empty %}
         <p>Zatím nemáte žádne kliče</p>
     {% endfor %}
+    <form method="post" action="{% url 'newkey' %}">
+        {% csrf_token %}
+        <button class="btn btn-primary new-button" type="submit-new">Vytvořit nový klíč</button>
+    </form>
 </div>
+
+
 
 <!-- Bootstrap Modal -->
 <div class="modal fade" id="configModal" tabindex="-1" aria-labelledby="configModalLabel" aria-hidden="true">
@@ -77,7 +83,7 @@
         .then(successCallback)
         .catch(error => {
             console.error('Error:', error);
-            alert('Došlo k chybě při získávání konfigurace!');
+            alert('Došlo k chybě při zasílání informací na server');
         });
     }
 
@@ -104,8 +110,6 @@
         navigator.clipboard.writeText(configText)
     });
 </script>
-
-
 
 
 {% endblock %}

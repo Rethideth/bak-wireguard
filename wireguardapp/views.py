@@ -13,6 +13,7 @@ from .forms import CustomUserCreationForm
 # Create your views here.
 
 CLIENT_ADDRESS = "10.10.0.2/24"
+CZ_ADDRESS = ""
 ENDPOINT = "127.0.0.1:51820"
 ALLOWEDIPS = "10.10.0.1/32"
 
@@ -41,32 +42,42 @@ def mykeys(request):
 
     return render(request, 'wireguardapp/mykeys.html', {'keys':keys})
 
+@login_required
 def getconfajax(request):
     if request.method == 'POST':
         data = json.loads(request.body)
         keytext = data.get('public_key')
         key = Key.objects.get(public_key = keytext)
         title = f"{request.user.username}"
-        
 
-        conf = "[Interface]\n"
-        conf = conf + f"Address = {CLIENT_ADDRESS}\n"
-        conf = conf + f"PrivateKey = {key.private_key}\n\n"
+        clientAddress = f"10.10.0.{key.pk}/32"
+        serverPeer = Peer.objects.get(peer_type = 'server')
+        clientInterface = Interface.objects.get(public_key = key)
 
-        conf = conf + "[Peer]\n"
-        conf = conf + f"PublicKey = {Key.objects.get(key_type='server').public_key}\n"
-        conf = conf + f"EndPoint = {ENDPOINT}\n"
-        conf = conf + f"AllowedIPs = {ALLOWEDIPS}\n"
-        conf = conf + f"PersistentKeepalive = 5\n"
+        conf = f"""
+[Interface]
+PrivateKey = {clientInterface.public_key.private_key}
+Address = {clientInterface.ip_address}
+
+[Peer]
+PublicKey = {serverPeer.public_key.public_key}
+EndPoint = {ENDPOINT}
+AllowedIPs = 0.0.0.0/0
+PersistentKeepalive = {serverPeer.persistent_keepalive}
+""".strip()
 
         return JsonResponse({'title':title,'config': conf})
-    pass
 
 
+@login_required
+def newkey(request):
+    if request.method == 'POST':
+        pass
+
+@login_required
 def viewlogs(request):
-    if not request.user.is_authenticated:
-        return redirect("login")
-
     if not request.user.is_superuser:
         raise PermissionDenied
+    
+    
     return render(request, 'wireguardapp/logs.html')
