@@ -9,6 +9,7 @@
 <h1 class="mb-4">Seznam Klíčů</h1>
     {% for key in keys %}
     <div class="card mb-3">
+<<<<<<< HEAD
         <div class="card-header">
             <h5>{{key.name}}</h5>
         </div>
@@ -17,11 +18,19 @@
             <input id="public_key" class="form-control mb-2" type="text" value="{{ key.public_key }}" readonly>
             <button 
             class="btn btn-secondary conf-button " 
+=======
+        <div class="card-body">
+            <h5>{{key.name}}</h5>
+            <input id="public_key" type="text" value="{{ key.public_key }}" readonly>
+            <button 
+            class="btn btn-secondary conf-button" 
+>>>>>>> refs/remotes/origin/main
             type="submit"
             data-key="{{key.public_key}}">
             Vytvořit konfiguraci</button>
         </div>
     </div>
+<<<<<<< HEAD
         {% empty %}
         <p>Zatím nemáte žádne kliče</p>
     {% endfor %}
@@ -33,6 +42,14 @@
 
 
 
+=======
+
+        {% empty %}
+        <p>Zatím nemáte žádne kliče</p>
+    {% endfor %}
+</div>
+
+>>>>>>> refs/remotes/origin/main
 <!-- Bootstrap Modal -->
 <div class="modal fade" id="configModal" tabindex="-1" aria-labelledby="configModalLabel" aria-hidden="true">
   <div class="modal-dialog">
@@ -43,16 +60,26 @@
       </div>
       <div class="modal-body" id="modalBody">
         <!-- AJAX content will appear here -->
+<<<<<<< HEAD
         <pre id="configText"></pre>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-primary" id="copyButton">Kopírovat do schránky</button>
+=======
+      </div>
+      <div class="modal-footer">
+>>>>>>> refs/remotes/origin/main
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zavřít</button>
       </div>
     </div>
   </div>
 </div>
 
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> refs/remotes/origin/main
 <script>
     // CSRF token
     function getCookie(name) {
@@ -71,7 +98,11 @@
     }
     const csrftoken = getCookie('csrftoken');
 
+<<<<<<< HEAD
     // AJAX helper
+=======
+    // AJAX setup with CSRF
+>>>>>>> refs/remotes/origin/main
     function ajaxWithCSRF(url, data, successCallback) {
         fetch(url, {
             method: 'POST',
@@ -85,20 +116,36 @@
         .then(successCallback)
         .catch(error => {
             console.error('Error:', error);
+<<<<<<< HEAD
             alert('Došlo k chybě při zasílání informací na server');
         });
     }
 
     // Handle configuration buttons
+=======
+            alert('Došlo k chybě při získávání konfigurace!');
+        });
+    }
+
+    // Handle button clicks
+>>>>>>> refs/remotes/origin/main
     document.querySelectorAll('.conf-button').forEach(button => {
         button.addEventListener('click', function() {
             const publicKey = this.dataset.key;
 
             ajaxWithCSRF("{% url 'confajax' %}", { 'public_key': publicKey }, function(response) {
+<<<<<<< HEAD
                 // Fill modal with config
                 const configText = document.getElementById('configText');
                 configText.textContent = response.config || 'Žádná konfigurace nebyla vrácena.';
 
+=======
+                // Fill modal with response content
+                document.getElementById('modalBody').innerHTML = `
+                    <p><strong>Konfigurace pro klíč:</strong> ${publicKey}</p>
+                    <pre>${response.config || 'Žádná konfigurace nebyla vrácena.'}</pre>
+                `;
+>>>>>>> refs/remotes/origin/main
                 // Show modal
                 const modal = new bootstrap.Modal(document.getElementById('configModal'));
                 modal.show();
@@ -106,6 +153,7 @@
         });
     });
 
+<<<<<<< HEAD
     // Copy to clipboard button
     document.getElementById('copyButton').addEventListener('click', function() {
         const configText = document.getElementById('configText').textContent;
@@ -114,4 +162,10 @@
 </script>
 
 
+=======
+</script>
+
+
+
+>>>>>>> refs/remotes/origin/main
 {% endblock %}

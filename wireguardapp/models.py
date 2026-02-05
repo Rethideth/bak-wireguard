@@ -4,6 +4,8 @@ from django.contrib.auth.models import User
 
 
 class Key(models.Model):
+    TYPE_KEY = [('server', 'Server'), ('client', 'Client')]
+
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE
@@ -12,6 +14,13 @@ class Key(models.Model):
         max_length=255,
         null=True
     )
+<<<<<<< HEAD
+=======
+    key_type = models.CharField(
+        max_length=64,
+        choices=TYPE_KEY,
+    )
+>>>>>>> refs/remotes/origin/main
     public_key = models.CharField(
         max_length=44,
         null=False,

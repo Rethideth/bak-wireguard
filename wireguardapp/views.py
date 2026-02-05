@@ -6,9 +6,12 @@ from django.contrib.auth.forms import UserCreationForm
 from wireguardapp.models import Interface, Peer, PeerAllowedIP, PeerSnapshot, Key
 from django.http import JsonResponse
 import json
+<<<<<<< HEAD
 
 from .service.wireguard import generateClientConf
 from .service.dbcommands import createNewClient
+=======
+>>>>>>> refs/remotes/origin/main
 
 from django.core.exceptions import PermissionDenied
 
@@ -21,6 +24,12 @@ import os
 import getpass
 # Create your views here.
 
+<<<<<<< HEAD
+=======
+CLIENT_ADDRESS = "10.10.0.2/24"
+ENDPOINT = "127.0.0.1:51820"
+ALLOWEDIPS = "10.10.0.1/32"
+>>>>>>> refs/remotes/origin/main
 
 def home(request):
     return render(request, 'wireguardapp/main.html')
@@ -47,6 +56,7 @@ def mykeys(request):
 
     return render(request, 'wireguardapp/mykeys.html', {'keys':keys})
 
+<<<<<<< HEAD
 @login_required
 def getconfajax(request):
     if request.method == 'POST':
@@ -64,6 +74,28 @@ def getconfajax(request):
         conf = generateClientConf(key)
 
         return JsonResponse({'title':request.user.username,'config': conf})
+=======
+def getconfajax(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        keytext = data.get('public_key')
+        key = Key.objects.get(public_key = keytext)
+        title = f"{request.user.username}"
+        
+
+        conf = "[Interface]\n"
+        conf = conf + f"Address = {CLIENT_ADDRESS}\n"
+        conf = conf + f"PrivateKey = {key.private_key}\n\n"
+
+        conf = conf + "[Peer]\n"
+        conf = conf + f"PublicKey = {Key.objects.get(key_type='server').public_key}\n"
+        conf = conf + f"EndPoint = {ENDPOINT}\n"
+        conf = conf + f"AllowedIPs = {ALLOWEDIPS}\n"
+        conf = conf + f"PersistentKeepalive = 5\n"
+
+        return JsonResponse({'title':title,'config': conf})
+    pass
+>>>>>>> refs/remotes/origin/main
 
 
 @login_required

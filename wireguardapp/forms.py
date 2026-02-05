@@ -26,8 +26,13 @@ class CustomUserCreationForm(UserCreationForm):
         fields = ("username", "email", "password1", "password2")
 
 
+<<<<<<< HEAD
 class NewKeyForm(forms.ModelForm):
     name = forms.CharField(
         max_length=64,
     )
+=======
+class CustomKeyList(forms.ModelForm):
+    
+>>>>>>> refs/remotes/origin/main
     pass
