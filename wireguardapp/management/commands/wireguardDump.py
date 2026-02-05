@@ -2,6 +2,8 @@ from django.core.management.base import BaseCommand
 import subprocess
 from datetime import datetime
 from wireguardapp.models import Interface, Peer, PeerAllowedIP, PeerSnapshot, Key
+import logging
+
 
 class Command(BaseCommand):
     help = "Ingest WireGuard status into Django models"
@@ -32,7 +34,7 @@ class Command(BaseCommand):
             interface, _ = Interface.objects.get_or_create(
                 name=iface_name,
                 defaults={
-                    "public_key": key,
+                    "interface_key": key,
                     "listen_port": int(listen_port),
                     "fwmark": fwmark if fwmark != "off" else None,
                 },
@@ -65,7 +67,7 @@ class Command(BaseCommand):
 
                 peer, _ = Peer.objects.get_or_create(
                     interface=interface,
-                    public_key=key,
+                    peer_key=key,
                     defaults={
                         "persistent_keepalive": None if keepalive == "off" else int(keepalive),
                     },

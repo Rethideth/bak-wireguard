@@ -26,6 +26,8 @@ class CustomUserCreationForm(UserCreationForm):
         fields = ("username", "email", "password1", "password2")
 
 
-class CustomKeyList(forms.ModelForm):
-    
+class NewKeyForm(forms.ModelForm):
+    name = forms.CharField(
+        max_length=64,
+    )
     pass

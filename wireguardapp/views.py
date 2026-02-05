@@ -7,15 +7,20 @@ from wireguardapp.models import Interface, Peer, PeerAllowedIP, PeerSnapshot, Ke
 from django.http import JsonResponse
 import json
 
+from .service.wireguard import generateClientConf
+from .service.dbcommands import createNewClient
+
 from django.core.exceptions import PermissionDenied
 
 from .forms import CustomUserCreationForm
+
+
+from datetime import datetime
+from django.utils import timezone
+import os
+import getpass
 # Create your views here.
 
-CLIENT_ADDRESS = "10.10.0.2/24"
-CZ_ADDRESS = ""
-ENDPOINT = "127.0.0.1:51820"
-ALLOWEDIPS = "10.10.0.1/32"
 
 def home(request):
     return render(request, 'wireguardapp/main.html')
@@ -46,32 +51,35 @@ def mykeys(request):
 def getconfajax(request):
     if request.method == 'POST':
         data = json.loads(request.body)
-        keytext = data.get('public_key')
-        key = Key.objects.get(public_key = keytext)
-        title = f"{request.user.username}"
+        clientkeytext = data.get('public_key')
 
-        clientAddress = f"10.10.0.{key.pk}/32"
-        serverPeer = Peer.objects.get(peer_type = 'server')
-        clientInterface = Interface.objects.get(public_key = key)
+        if not clientkeytext:
+            return JsonResponse(
+            {"error": "public_key is required"},
+            status=400
+            )
 
-        conf = f"""
-[Interface]
-PrivateKey = {clientInterface.public_key.private_key}
-Address = {clientInterface.ip_address}
+        key = Key.objects.get(public_key = clientkeytext)
+        
+        conf = generateClientConf(key)
 
-[Peer]
-PublicKey = {serverPeer.public_key.public_key}
-EndPoint = {ENDPOINT}
-AllowedIPs = 0.0.0.0/0
-PersistentKeepalive = {serverPeer.persistent_keepalive}
-""".strip()
-
-        return JsonResponse({'title':title,'config': conf})
+        return JsonResponse({'title':request.user.username,'config': conf})
 
 
 @login_required
 def newkey(request):
     if request.method == 'POST':
+        user = request.user
+        name = str(timezone.now().time())
+        createNewClient(user,name)
+
+        
+    return redirect('mykeys')
+
+@login_required
+def deletekey(request):
+    if request.method == "POST":
+
         pass
 
 @login_required
@@ -79,5 +87,6 @@ def viewlogs(request):
     if not request.user.is_superuser:
         raise PermissionDenied
     
-    
-    return render(request, 'wireguardapp/logs.html')
+    path = os.getcwd()
+    userDjango = getpass.getuser()
+    return render(request, 'wireguardapp/logs.html', {'test1': path, "test2":userDjango} )

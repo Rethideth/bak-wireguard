@@ -27,15 +27,18 @@ class Key(models.Model):
 
 
 class Interface(models.Model):
+    SERVER = 'server'
+    CLIENT = 'client'
+    TYPE_CONNECTION = [(SERVER, 'Server'), (CLIENT, 'Client')]
+    
     name = models.CharField(
         max_length=32,
         unique=True,
         db_index=True
     )
-    public_key = models.ForeignKey(
+    interface_key = models.ForeignKey(
         Key,
         on_delete=models.CASCADE,
-        related_name='interfacekey'
     )
     listen_port = models.PositiveIntegerField(
         null=True,
@@ -53,24 +56,29 @@ class Interface(models.Model):
     created_at = models.DateTimeField(
         auto_now_add=True
     )
+    
+    interface_type = models.CharField(
+        max_length=32,
+        choices=TYPE_CONNECTION,
+        null=True
+    )
 
     def __str__(self):
         return self.name
 
 
 class Peer(models.Model):
-    TYPE_CONNECTION = [('server', 'Server'), ('client', 'Client')]
-
     interface = models.ForeignKey(
         Interface,
         on_delete=models.CASCADE,
-        related_name="peers"
+        related_name="peers",
+        verbose_name="Interface included with this peer"
     )
-    public_key = models.ForeignKey(
+    peer_key = models.ForeignKey(
         Key,
         on_delete=models.CASCADE,
         related_name='peerkey',
-        verbose_name='interface connected to',
+        verbose_name="Connected to"
     )
     persistent_keepalive = models.PositiveIntegerField(
         null=True,
@@ -79,19 +87,10 @@ class Peer(models.Model):
     created_at = models.DateTimeField(
         auto_now_add=True
     )
-    peer_type = models.CharField(
-        max_length=32,
-        choices=TYPE_CONNECTION,
-    )
 
-    class Meta:
-        unique_together = ("interface", "public_key")
-        indexes = [
-            models.Index(fields=["interface", "public_key"]),
-        ]
 
     def __str__(self):
-        return f"{self.interface.name} → {self.public_key}"
+        return f"{self.interface.name} → {self.peer_key}"
 
 
 class PeerAllowedIP(models.Model):

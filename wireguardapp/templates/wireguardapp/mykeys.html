@@ -9,17 +9,19 @@
 <h1 class="mb-4">Seznam Klíčů</h1>
     {% for key in keys %}
     <div class="card mb-3">
-        <div class="card-body">
+        <div class="card-header">
             <h5>{{key.name}}</h5>
-            <input id="public_key" type="text" value="{{ key.public_key }}" readonly>
+        </div>
+        <div class="card-body">
+            <p class="card-text mb-2">Veřejný klíč</p>
+            <input id="public_key" class="form-control mb-2" type="text" value="{{ key.public_key }}" readonly>
             <button 
-            class="btn btn-secondary conf-button" 
-            type="submit-conf"
+            class="btn btn-secondary conf-button " 
+            type="submit"
             data-key="{{key.public_key}}">
             Vytvořit konfiguraci</button>
         </div>
     </div>
-
         {% empty %}
         <p>Zatím nemáte žádne kliče</p>
     {% endfor %}
