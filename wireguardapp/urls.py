@@ -8,13 +8,12 @@ urlpatterns = [
     path('logout/', auth_views.LogoutView.as_view(), name = 'logout'),
     path('register/', views.register, name='register'),
     path('mykeys/', views.mykeys, name = 'mykeys'),
-<<<<<<< HEAD
     path('confajax/', views.getconfajax, name = 'confajax'),
-    path('newkey/', views.newkey, name = 'newkey'),
+    path('key/new', views.newkey, name = 'newkey'),
+    path('key/delete/<int:key>/',views.deletekey,name='deletekey'),
+    path('key/updatename/', views.updatekeyname, name='updatekeyname'),
     path('logs/', views.viewlogs, name = 'logs'),
-=======
-    path('confajax/', views.getconfajax, name = 'confajax')
->>>>>>> refs/remotes/origin/main
+    path('dbdown/', views.dbdown, name='dbdown'),
     
 ]
     

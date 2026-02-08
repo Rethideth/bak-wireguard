@@ -1,5 +1,5 @@
 from wireguardapp.models import Interface, Peer, PeerAllowedIP, PeerSnapshot, Key
-from .wireguard import generateKeyPair,addWGPeer, genAndSaveClientConf
+from .wireguard import generateKeyPair,addWGPeer,removeWGPeer, genAndSaveClientConf
 from django.db import transaction
 from django.contrib.auth.models import User
 
@@ -68,22 +68,36 @@ def createNewClient(user : User, name : str):
     interface = createClientInterface(user,key,name)
     peer = createClientPeer(serverInterface.interface_key,interface)
     
-    with transaction.atomic():
-        # set temporary interface for wireguard
-        result = addWGPeer(
-                serverInterface.name, 
-                interface.interface_key.public_key,
-                ipAddress=interface.ip_address)
-        
-        Key.save(key)
-        Interface.save(interface)
-        Peer.save(peer)
-  
-        # save config for new client 
-        genAndSaveClientConf(interface,peer)
+    try:
+        with transaction.atomic():
+            # set temporary interface for wireguard
+            result = addWGPeer(
+                    serverInterface.name, 
+                    interface.interface_key.public_key,
+                    ipAddress=interface.ip_address)
+            
+            Key.save(key)
+            Interface.save(interface)
+            Peer.save(peer)
+    
+            # save config for new client 
+            genAndSaveClientConf(interface,peer)
+    except RuntimeError as e:
+        return e.__str__()
         
     return 
 
-def deleteClient(user,key):
+def deleteClient(user : User, key : Key):
+    serverInterface = Interface.objects.get(interface_type = Interface.SERVER)
 
-    pass
+    try:
+        with transaction.atomic():
+            result = removeWGPeer(
+                serverInterfaceName =   serverInterface.name,
+                peerKey =               key.public_key
+            )
+            key.delete()
+    except RuntimeError as e:
+        return e.__str__()
+        
+    return 

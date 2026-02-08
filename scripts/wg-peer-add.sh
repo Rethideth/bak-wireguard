@@ -6,7 +6,7 @@ PEER_KEY="$2"
 ALLOWED_IPS="$3"
 
 error() {
-    echo "[wg-add-peer] ERROR: $1" >&2
+    echo "[wg-peer-add] ERROR: $1" >&2
     exit 1
 }
 
@@ -20,5 +20,5 @@ if ! wg set "$INTERFACE" peer "$PEER_KEY" allowed-ips "$ALLOWED_IPS"; then
     error "wg set command failed"
 fi
 
-echo "[wg-add-peer] Peer added successfully"
+echo "[wg-peer-add] Peer added successfully"
 

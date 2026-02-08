@@ -14,13 +14,6 @@ class Key(models.Model):
         max_length=255,
         null=True
     )
-<<<<<<< HEAD
-=======
-    key_type = models.CharField(
-        max_length=64,
-        choices=TYPE_KEY,
-    )
->>>>>>> refs/remotes/origin/main
     public_key = models.CharField(
         max_length=44,
         null=False,

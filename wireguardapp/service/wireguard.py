@@ -54,7 +54,7 @@ def generateKeyPair():
 def addWGPeer(serverInterfaceName : str,peerKey : str, ipAddress : str):
     cmd = [
             "sudo",
-            "/var/www/bakproject/scripts/enablepeer.sh", 
+            "/var/www/bakproject/scripts/wg-peer-add.sh", 
             serverInterfaceName, 
             peerKey,
             ipAddress
@@ -73,6 +73,31 @@ def addWGPeer(serverInterfaceName : str,peerKey : str, ipAddress : str):
         raise RuntimeError(result.stderr.strip())
 
     logger.info("WireGuard peer added successfully")
+    logger.debug("STDOUT: %s", result.stdout)
+    return True
+
+def removeWGPeer(serverInterfaceName :str, peerKey : str):
+
+    cmd = [
+            "sudo",
+            "/var/www/bakproject/scripts/wg-peer-remove.sh", 
+            serverInterfaceName, 
+            peerKey,
+        ]
+    logger.debug("ARGS: %s,%s,%s", serverInterfaceName,peerKey)
+    result = subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+    )
+
+    if result.returncode != 0:
+        logger.error("wg set command failed")
+        logger.error("STDOUT: %s", result.stdout)
+        logger.error("STDERR: %s", result.stderr)
+        raise RuntimeError(result.stderr.strip())
+
+    logger.info("WireGuard peer removed successfully")
     logger.debug("STDOUT: %s", result.stdout)
     return True
 

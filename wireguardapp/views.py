@@ -1,17 +1,15 @@
-from django.shortcuts import render,redirect
+from django.shortcuts import render,redirect,get_object_or_404
 from django.http import HttpResponse
+from django.views.decorators.http import require_POST
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
 from wireguardapp.models import Interface, Peer, PeerAllowedIP, PeerSnapshot, Key
 from django.http import JsonResponse
 import json
-<<<<<<< HEAD
 
 from .service.wireguard import generateClientConf
-from .service.dbcommands import createNewClient
-=======
->>>>>>> refs/remotes/origin/main
+from .service.dbcommands import createNewClient,deleteClient
 
 from django.core.exceptions import PermissionDenied
 
@@ -24,12 +22,6 @@ import os
 import getpass
 # Create your views here.
 
-<<<<<<< HEAD
-=======
-CLIENT_ADDRESS = "10.10.0.2/24"
-ENDPOINT = "127.0.0.1:51820"
-ALLOWEDIPS = "10.10.0.1/32"
->>>>>>> refs/remotes/origin/main
 
 def home(request):
     return render(request, 'wireguardapp/main.html')
@@ -37,6 +29,7 @@ def home(request):
 @login_required
 def test(request):
     return render(request, 'wireguardapp/test.html')
+
 
 def register(request):
     if request.method == "POST":
@@ -56,63 +49,48 @@ def mykeys(request):
 
     return render(request, 'wireguardapp/mykeys.html', {'keys':keys})
 
-<<<<<<< HEAD
+@require_POST
 @login_required
 def getconfajax(request):
-    if request.method == 'POST':
-        data = json.loads(request.body)
-        clientkeytext = data.get('public_key')
+    data = json.loads(request.body)
+    key = get_object_or_404(
+        Key,
+        id=data['id'],
+        user=request.user
+    )
 
-        if not clientkeytext:
-            return JsonResponse(
-            {"error": "public_key is required"},
-            status=400
-            )
+    if not key:
+        return JsonResponse(
+        {"error": "public_key is required"},
+        status=400
+        )
+    
+    conf = generateClientConf(key)
 
-        key = Key.objects.get(public_key = clientkeytext)
-        
-        conf = generateClientConf(key)
+    return JsonResponse({'title':request.user.username,'config': conf})
 
-        return JsonResponse({'title':request.user.username,'config': conf})
-=======
-def getconfajax(request):
-    if request.method == 'POST':
-        data = json.loads(request.body)
-        keytext = data.get('public_key')
-        key = Key.objects.get(public_key = keytext)
-        title = f"{request.user.username}"
-        
-
-        conf = "[Interface]\n"
-        conf = conf + f"Address = {CLIENT_ADDRESS}\n"
-        conf = conf + f"PrivateKey = {key.private_key}\n\n"
-
-        conf = conf + "[Peer]\n"
-        conf = conf + f"PublicKey = {Key.objects.get(key_type='server').public_key}\n"
-        conf = conf + f"EndPoint = {ENDPOINT}\n"
-        conf = conf + f"AllowedIPs = {ALLOWEDIPS}\n"
-        conf = conf + f"PersistentKeepalive = 5\n"
-
-        return JsonResponse({'title':title,'config': conf})
-    pass
->>>>>>> refs/remotes/origin/main
-
-
+@require_POST
 @login_required
 def newkey(request):
-    if request.method == 'POST':
-        user = request.user
-        name = str(timezone.now().time())
-        createNewClient(user,name)
+    user = request.user
+    name = str(timezone.now().time())
+    createNewClient(user,name)
 
-        
     return redirect('mykeys')
 
+@require_POST
 @login_required
-def deletekey(request):
-    if request.method == "POST":
-
-        pass
+def deletekey(request,key):
+    user = request.user
+    key = get_object_or_404(
+        Key,
+        id=key,
+        user=request.user
+    )
+    result = deleteClient(user,key)
+    if result:
+        return redirect('home')
+    return redirect('mykeys')
 
 @login_required
 def viewlogs(request):
@@ -122,3 +100,22 @@ def viewlogs(request):
     path = os.getcwd()
     userDjango = getpass.getuser()
     return render(request, 'wireguardapp/logs.html', {'test1': path, "test2":userDjango} )
+
+@require_POST
+@login_required
+def updatekeyname(request):
+    data = json.loads(request.body)
+
+    key = get_object_or_404(
+        Key,
+        id=data["key_id"],
+        user=request.user
+    )
+
+    key.name = data["name"]
+    key.save(update_fields=["name"])
+
+    return JsonResponse({"success": True})
+
+def dbdown(request):
+    return render(request, 'wireguardapp/dbdown.html', status=503)
