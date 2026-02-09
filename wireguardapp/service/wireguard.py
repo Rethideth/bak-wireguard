@@ -1,12 +1,35 @@
 import subprocess
 from wireguardapp.models import Interface, Peer, PeerAllowedIP, PeerSnapshot, Key
+from .server import getServerInterface
 import logging
+from django.conf import settings
 
 logger = logging.getLogger('wg')
 
-ENDPOINT = "127.0.0.1:51820"
+ENDPOINT = "192.168.0.161:51820"
 
-KEY_DIR_PATH = "/var/www/bakproject/savedkeys"
+
+def generateServerConfText():
+    serverInterface = getServerInterface()
+    serverPeers = Peer.objects.filter(peer_key = serverInterface.interface_key)
+
+    conf = f"""
+[Interface]
+PrivateKey = {serverInterface.interface_key.private_key}
+ListenPort = {serverInterface.listen_port}
+Address = {serverInterface.ip_address}
+
+""".strip()
+    
+    for peer in serverPeers:
+        conf = conf + '\n\n'
+        conf = conf + f"""
+[Peer]
+PublicKey = {peer.interface.interface_key.public_key}
+AllowedIPs = {peer.interface.ip_address}
+""".strip()
+
+    return conf, serverInterface.name
 
 def generateClientConfText(clientInterface : Interface, serverPeer : Peer):
     conf = f"""
@@ -54,7 +77,7 @@ def generateKeyPair():
 def addWGPeer(serverInterfaceName : str,peerKey : str, ipAddress : str):
     cmd = [
             "sudo",
-            "/var/www/bakproject/scripts/wg-peer-add.sh", 
+            settings.BASE_DIR / "scripts/wg-peer-add.sh", 
             serverInterfaceName, 
             peerKey,
             ipAddress
@@ -72,7 +95,7 @@ def addWGPeer(serverInterfaceName : str,peerKey : str, ipAddress : str):
         logger.error("STDERR: %s", result.stderr)
         raise RuntimeError(result.stderr.strip())
 
-    logger.info("WireGuard peer added successfully")
+    logger.info(f"WireGuard peer {peerKey} added successfully")
     logger.debug("STDOUT: %s", result.stdout)
     return True
 
@@ -80,7 +103,7 @@ def removeWGPeer(serverInterfaceName :str, peerKey : str):
 
     cmd = [
             "sudo",
-            "/var/www/bakproject/scripts/wg-peer-remove.sh", 
+            settings.BASE_DIR / "scripts/wg-peer-remove.sh", 
             serverInterfaceName, 
             peerKey,
         ]
@@ -97,7 +120,7 @@ def removeWGPeer(serverInterfaceName :str, peerKey : str):
         logger.error("STDERR: %s", result.stderr)
         raise RuntimeError(result.stderr.strip())
 
-    logger.info("WireGuard peer removed successfully")
+    logger.info(f"WireGuard peer {peerKey} removed successfully")
     logger.debug("STDOUT: %s", result.stdout)
     return True
 
@@ -106,11 +129,5 @@ def reconfigureServerConf():
     
     pass
 
-def genAndSaveClientConf(clientInterface : Interface, serverPeer : Peer):
-    conf = generateClientConfText(clientInterface, serverPeer)
-    name = 'wg-' + clientInterface.name + ".conf"
-    with open('/var/www/bakproject/tempconf/' + name, 'w') as file:
-        file.write(conf)
 
-    return 
     

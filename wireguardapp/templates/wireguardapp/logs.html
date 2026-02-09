@@ -4,9 +4,73 @@
 
 {% block content %}
 
+
 <h1>Log toku dat ve VPN serveru</h1>
 
-{{ test1 }}
-{{ test2 }}
+
+<nav>
+  <div class="nav nav-tabs" id="nav-tab" role="tablist">
+    {% for interface, data in grouped_snapshots.items %}
+        <button class="nav-link {% if forloop.first %} active {% endif %}" 
+            id="nav-{{interface}}tab" 
+            data-bs-toggle="tab" 
+            data-bs-target="#nav-{{interface}}" 
+            type="button" 
+            role="tab"
+            aria-controls="nav-{{interface}}" 
+            aria-selected="{% if forloop.first %}true{% else %}false{% endif %}">{{interface}}</button>
+    {% endfor %}
+  </div>
+</nav>
+<div class="tab-content" id="nav-tabContent">
+    {% for interface, data in grouped_snapshots.items %}
+        <div class="tab-pane fade {% if forloop.first %} show active{% endif %}" id="nav-{{interface}}" role="tabpanel" aria-labelledby="nav-{{interface}}-tab" tabindex="0">
+
+            <table class="table table-striped table-bordered">
+                <thead>
+                    <tr>
+                        <th>Peer</th>
+                        <th>Endpoint</th>
+                        <th>Latest Handshake</th>
+                        <th>RX Bytes</th>
+                        <th>TX Bytes</th>
+                        <th>Collected At</th>
+                    </tr>
+                </thead>
+                <tbody class="table-group-divider">
+                    {% for snapshot in data.snapshots %}
+                        <tr>
+                            <td>{{ snapshot.peer.peer_key }}</td>
+                            <td>{{ snapshot.endpoint|default:"—" }}</td>
+                            <td>
+                                {% if snapshot.latest_handshake %}
+                                    {{ snapshot.latest_handshake|date:"Y-m-d H:i:s" }}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+                            <td>{{ snapshot.rx_bytes }}</td>
+                            <td>{{ snapshot.tx_bytes }}</td>
+                            <td>{{ snapshot.collected_at|date:"Y-m-d H:i:s" }}</td>
+                        </tr>
+                    
+                    {% empty %}
+                    <tr>
+                        <td colspan="7">No snapshots available.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+           
+
+        </div>
+    {% endfor %}
+
+</div>
+
+
+
+
+
 
 {% endblock %}

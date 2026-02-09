@@ -127,7 +127,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
-STATIC_ROOT = '/var/www/bakproject/static'
+STATIC_ROOT = BASE_DIR / '/static'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -138,6 +138,7 @@ LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 LOGIN_URL = '/login/'
 
+LOG_DIR = BASE_DIR / 'logs'
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -145,7 +146,12 @@ LOGGING = {
         "file": {
             "level": "DEBUG",
             "class": "logging.FileHandler",
-            "filename": "/var/www/bakproject/logs/wg.log",
+            "filename": LOG_DIR / "apache.log",
+        },
+        "wg": {
+            "level": "DEBUG",
+            "class": "logging.FileHandler",
+            "filename": LOG_DIR / "wg.log",
         },
     },
     "loggers": {
@@ -155,7 +161,7 @@ LOGGING = {
             "propagate": True,
         },
         "wg": {
-            "handlers": ["file"],
+            "handlers": ["wg"],
             "level": "DEBUG",
             "propagate": True,
         },

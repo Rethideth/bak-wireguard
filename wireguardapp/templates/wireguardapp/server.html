@@ -1,0 +1,124 @@
+{% extends "wireguardapp/base.html" %}
+
+{% block title %}WG{% endblock %}
+
+{% block content %}
+
+
+<div class="container mt-4">
+<h1 class="mb-4">Seznam připojení ku serveru</h1>
+    {% for interface,peers in interfaces.items %}
+    <div class="card mb-3">
+        <div class="card-header">
+                <input
+                type="text"
+                value="{{ interface.name }}"
+                class="form-control"
+                readonly
+                >
+        </div>
+        <div class="card-body">
+            <p class="card-text mb-2">Veřejný klíč</p>
+            <input id="public_key" class="form-control mb-2" type="text" value="{{ interface.interface_key.public_key }}" readonly>
+            <p>Ip adresa: {{interface.ip_address}}</p>
+            
+            <table class="table">
+                <thead>
+                    <tr>
+                    <th scope="col">User</th>
+                    <th scope="col">Key</th>
+                    <th scope="col">Key name</th>
+                    <th scope="col">delete?</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for peer in peers %}
+                    <tr class="tablerow">
+                    <th>{{peer.interface.interface_key.user}}</th>
+                    <td>{{peer.interface.interface_key.public_key}}</td>
+                    <td>{{peer.interface.interface_key.name}}</td>
+                    <td>
+                        <button 
+                            class="btn btn-secondary delete-button"
+                            name="button-deletekey"
+                            type="submit" 
+                            data-id="{{peer.interface.interface_key.id}}"
+                            onclick="return confirm('Opravdy chcete odstranit tento klíč?');">
+                            Odstranit klíč
+                        </button>
+                    </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                </table>
+            
+        </div>
+    </div>
+        {% empty %}
+        <p>Zatím nejsou žádné rozhraní serveru</p>
+    {% endfor %}
+
+</div>
+
+
+
+<script>
+    // CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                cookie = cookie.trim();
+                if (cookie.startsWith(name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    const csrftoken = getCookie('csrftoken');
+
+    // AJAX helper
+    function ajaxWithCSRF(url, data, successCallback) {
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken,
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(successCallback)
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Došlo k chybě při zasílání informací na server');
+        });
+    }
+
+    // Handle delete buttons
+    document.querySelectorAll('.delete-button').forEach(button => {
+        button.addEventListener('click', function() {
+            const id = this.dataset.id;
+            row = this.closest('.tablerow');
+
+            ajaxWithCSRF("{% url 'deletekey' %}", { 'id': id }, function(response) {
+                if (response.success) 
+                {
+                    row.remove(); // remove row from html list
+                } 
+                else 
+                {
+                    alert("Nepodařilo se odstranit klíč.");
+                }
+            });
+        });
+    });
+
+
+
+</script>
+
+{% endblock %}

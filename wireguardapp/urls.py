@@ -1,5 +1,6 @@
 from django.urls import path
-from . import views
+from . import views,ajax
+
 from django.contrib.auth import views as auth_views
 
 urlpatterns = [
@@ -8,12 +9,12 @@ urlpatterns = [
     path('logout/', auth_views.LogoutView.as_view(), name = 'logout'),
     path('register/', views.register, name='register'),
     path('mykeys/', views.mykeys, name = 'mykeys'),
-    path('confajax/', views.getconfajax, name = 'confajax'),
+    path('confajax/', ajax.getconfajax, name = 'confajax'),
     path('key/new', views.newkey, name = 'newkey'),
-    path('key/delete/<int:key>/',views.deletekey,name='deletekey'),
-    path('key/updatename/', views.updatekeyname, name='updatekeyname'),
+    path('key/delete/',ajax.deletekey,name='deletekey'),
+    path('key/updatename/', ajax.updatekeyname, name='updatekeyname'),
     path('logs/', views.viewlogs, name = 'logs'),
     path('dbdown/', views.dbdown, name='dbdown'),
-    
+    path('server/', views.serverinterfaces, name='server')
 ]
     

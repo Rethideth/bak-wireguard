@@ -11,5 +11,7 @@ wireguardapp/__pycache__/
 # Virtual environment
 venv/
 
-# logs
+# extra stuff
 logs/
+savedkeys/
+tempconf/

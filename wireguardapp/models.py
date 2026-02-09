@@ -34,7 +34,7 @@ class Interface(models.Model):
     TYPE_CONNECTION = [(SERVER, 'Server'), (CLIENT, 'Client')]
     
     name = models.CharField(
-        max_length=32,
+        max_length=100,
         unique=True,
         db_index=True
     )

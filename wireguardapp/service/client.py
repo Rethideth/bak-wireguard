@@ -1,27 +1,12 @@
 from wireguardapp.models import Interface, Peer, PeerAllowedIP, PeerSnapshot, Key
-from .wireguard import generateKeyPair,addWGPeer,removeWGPeer, genAndSaveClientConf
+from .wireguard import generateKeyPair,addWGPeer,removeWGPeer
+from .server import allocateIpaddress,getServerInterface
 from django.db import transaction
 from django.contrib.auth.models import User
 
 import ipaddress
 
-SUBNET              = "23"
-START_IPADDRESSES   = "10.10.0.0"
 KEEPALIVE           = 25
-
-
-def allocateIpaddress():
-    start = START_IPADDRESSES+'/'+SUBNET
-    base = ipaddress.ip_network(start)
-
-    occupied = Interface.objects.values_list('ip_address',flat=True)
-    mappedList = set(map(ipaddress.IPv4Network,occupied))
-
-    for ip in base.hosts():
-        if ipaddress.IPv4Network(ip) not in mappedList:
-            return str(ipaddress.IPv4Network(ip))
-
-    return "error"
 
 
 def createNewKey(user : User):
@@ -35,18 +20,22 @@ def createNewKey(user : User):
     return newkey
     
 
-def createClientInterface(user : User,key : Key, name : str):
+def createInterface(user : User,key : Key, name : str):
+    if user.is_superuser:
+        interfacetype = Interface.SERVER
+    else:
+        interfacetype = Interface.CLIENT
     interfaceName = user.username +'-'+name
     interface = Interface(
         name = interfaceName,
         interface_key = key,
         ip_address = allocateIpaddress(),
-        interface_type = Interface.CLIENT
+        interface_type = interface
     )
 
     return interface
 
-def createClientPeer(serverKey : Key, clientInterface : Interface):
+def createPeer(serverKey : Key, clientInterface : Interface):
     peer = Peer(
         interface = clientInterface,
         peer_key = serverKey,
@@ -59,14 +48,14 @@ def createNewClient(user : User, name : str):
     if same:
         return False
     
-    serverInterface = Interface.objects.get(interface_type = Interface.SERVER)
+    serverInterface = getServerInterface()
 
     result = False
 
     # create new client
     key = createNewKey(user)
-    interface = createClientInterface(user,key,name)
-    peer = createClientPeer(serverInterface.interface_key,interface)
+    interface = createInterface(user,key,name)
+    peer = createPeer(serverInterface.interface_key,interface)
     
     try:
         with transaction.atomic():
@@ -80,15 +69,14 @@ def createNewClient(user : User, name : str):
             Interface.save(interface)
             Peer.save(peer)
     
-            # save config for new client 
-            genAndSaveClientConf(interface,peer)
+
     except RuntimeError as e:
         return e.__str__()
         
     return 
 
 def deleteClient(user : User, key : Key):
-    serverInterface = Interface.objects.get(interface_type = Interface.SERVER)
+    serverInterface = getServerInterface()
 
     try:
         with transaction.atomic():

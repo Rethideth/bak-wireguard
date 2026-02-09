@@ -25,22 +25,38 @@
             class="btn btn-secondary conf-button " 
             type="submit"
             data-id="{{key.id}}">
-            Vytvořit konfiguraci</button>
-            <form method="post" action="{% url 'deletekey' key.id %}">
-                {% csrf_token %}
-                <button class="btn btn-secondary" name="button-deletekey" type="submit" onclick="return confirm('Opravdy chcete odstranit tento klíč?');">Odstranit klíč</button>
-            </form>
+                Vytvořit konfiguraci
+            </button>
+            <!-- Delete key -->
+            <button 
+                class="btn btn-secondary delete-button"
+                name="button-deletekey"
+                type="submit" 
+                data-id="{{key.id}}"
+                onclick="return confirm('Opravdy chcete odstranit tento klíč?');">
+                Odstranit klíč
+            </button>
+        
         </div>
     </div>
         {% empty %}
         <p>Zatím nemáte žádne kliče</p>
     {% endfor %}
+
+    <!-- New Key-->
     <form method="post" action="{% url 'newkey' %}">
         {% csrf_token %}
         <button class="btn btn-primary new-button" type="submit">Vytvořit nový klíč</button>
     </form>
 </div>
 
+{% if messages %}
+  {% for message in messages %}
+    <div class="alert alert-{{ message.tags }}">
+      {{ message }}
+    </div>
+  {% endfor %}
+{% endif %}
 
 
 <!-- Bootstrap Modal -->
@@ -104,7 +120,7 @@
         button.addEventListener('click', function() {
             const id = this.dataset.id;
 
-            ajaxWithCSRF("{% url 'confajax' %}", { 'id': publicKey }, function(response) {
+            ajaxWithCSRF("{% url 'confajax' %}", { 'id': id }, function(response) {
                 // Fill modal with config
                 const configText = document.getElementById('configText');
                 configText.textContent = response.config || 'Žádná konfigurace nebyla vrácena.';
@@ -112,6 +128,25 @@
                 // Show modal
                 const modal = new bootstrap.Modal(document.getElementById('configModal'));
                 modal.show();
+            });
+        });
+    });
+
+    // Handle delete buttons
+    document.querySelectorAll('.delete-button').forEach(button => {
+        button.addEventListener('click', function() {
+            const id = this.dataset.id;
+            card = this.closest('.card');
+
+            ajaxWithCSRF("{% url 'deletekey' %}", { 'id': id }, function(response) {
+                if (response.success) 
+                {
+                    card.remove(); // remove card from html list
+                } 
+                else 
+                {
+                    alert("Nepodařilo se odstranit klíč.");
+                }
             });
         });
     });

@@ -1,15 +1,14 @@
 from django.shortcuts import render,redirect,get_object_or_404
-from django.http import HttpResponse
 from django.views.decorators.http import require_POST
 from django.contrib.auth import login
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import UserCreationForm
 from wireguardapp.models import Interface, Peer, PeerAllowedIP, PeerSnapshot, Key
 from django.http import JsonResponse
 import json
 
-from .service.wireguard import generateClientConf
-from .service.dbcommands import createNewClient,deleteClient
+
+from .service.client import createNewClient,deleteClient
 
 from django.core.exceptions import PermissionDenied
 
@@ -49,73 +48,62 @@ def mykeys(request):
 
     return render(request, 'wireguardapp/mykeys.html', {'keys':keys})
 
-@require_POST
-@login_required
-def getconfajax(request):
-    data = json.loads(request.body)
-    key = get_object_or_404(
-        Key,
-        id=data['id'],
-        user=request.user
-    )
-
-    if not key:
-        return JsonResponse(
-        {"error": "public_key is required"},
-        status=400
-        )
-    
-    conf = generateClientConf(key)
-
-    return JsonResponse({'title':request.user.username,'config': conf})
 
 @require_POST
 @login_required
 def newkey(request):
     user = request.user
-    name = str(timezone.now().time())
-    createNewClient(user,name)
-
-    return redirect('mykeys')
-
-@require_POST
-@login_required
-def deletekey(request,key):
-    user = request.user
-    key = get_object_or_404(
-        Key,
-        id=key,
-        user=request.user
-    )
-    result = deleteClient(user,key)
+    name = str(timezone.now())
+    result = createNewClient(user,name)
     if result:
-        return redirect('home')
+        messages.error(request, 'Error, interface serveru je nyní offline. Skuste znova za chvíli.\n'+result)
+
     return redirect('mykeys')
+
+
+
+def dbdown(request):
+    return render(request, 'wireguardapp/dbdown.html', status=503)
 
 @login_required
 def viewlogs(request):
     if not request.user.is_superuser:
         raise PermissionDenied
     
-    path = os.getcwd()
-    userDjango = getpass.getuser()
-    return render(request, 'wireguardapp/logs.html', {'test1': path, "test2":userDjango} )
+    snapshots = PeerSnapshot.objects.select_related(
+        "peer", "peer__interface", "peer__peer_key"
+    ).filter(
+        peer__interface__interface_type='server'
+    ).order_by("peer__interface__name", "peer__peer_key", "-collected_at")
 
-@require_POST
+    
+    # Group snapshots by interface
+    grouped = dict()
+    for snap in snapshots:
+        interface = snap.peer.interface.name
+        if interface not in grouped:
+            grouped[interface] = {
+                "snapshots": [],
+            }
+        grouped[interface]['snapshots'].append(snap)
+
+    return render(request, 'wireguardapp/logs.html' , {"grouped_snapshots" : grouped, 'model' : PeerSnapshot})
+
+
 @login_required
-def updatekeyname(request):
-    data = json.loads(request.body)
+def serverinterfaces(request):
+    if not request.user.is_superuser:
+        raise PermissionDenied
+    
+    interfaces = Interface.objects.select_related(
+        "interface_key",
+    ).filter(interface_type = Interface.SERVER)
 
-    key = get_object_or_404(
-        Key,
-        id=data["key_id"],
-        user=request.user
-    )
+    grouped = dict()
+    for face in interfaces:
+        serverPeers = Peer.objects.filter(peer_key = face.interface_key)
+        grouped[face] = serverPeers
 
-    key.name = data["name"]
-    key.save(update_fields=["name"])
 
-    return JsonResponse({"success": True})
+    return render(request, 'wireguardapp/server.html' , {"interfaces" : grouped})
 
-def dbdown(request):
-    return render(request, 'wireguardapp/dbdown.html', status=503)
