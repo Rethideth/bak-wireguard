@@ -18,9 +18,10 @@
                 >
         </div>
         <div class="card-body">
-            <p class="card-text mb-2">Veřejný klíč</p>
+            <p class="card-text mb-2">Veřejný klíč: {{interface.interface_key.name}}</p>
             <input id="public_key" class="form-control mb-2" type="text" value="{{ interface.interface_key.public_key }}" readonly>
             <p>Ip adresa: {{interface.ip_address}}</p>
+            <p>End point: {{interface.server_endpoint}}</p>
             
             <table class="table">
                 <thead>

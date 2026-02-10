@@ -4,8 +4,6 @@ from django.contrib.auth.models import User
 
 
 class Key(models.Model):
-    TYPE_KEY = [('server', 'Server'), ('client', 'Client')]
-
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE
@@ -62,6 +60,10 @@ class Interface(models.Model):
     interface_type = models.CharField(
         max_length=32,
         choices=TYPE_CONNECTION,
+        null=True
+    )
+    server_endpoint = models.CharField(
+        max_length=32,
         null=True
     )
 

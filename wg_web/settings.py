@@ -153,6 +153,11 @@ LOGGING = {
             "class": "logging.FileHandler",
             "filename": LOG_DIR / "wg.log",
         },
+        "test": {
+            "level": "DEBUG",
+            "class": "logging.FileHandler",
+            "filename": LOG_DIR / "test.log",
+        }, 
     },
     "loggers": {
         "django": {
@@ -162,6 +167,11 @@ LOGGING = {
         },
         "wg": {
             "handlers": ["wg"],
+            "level": "DEBUG",
+            "propagate": True,
+        },
+        "test": {
+            "handlers": ["test"],
             "level": "DEBUG",
             "propagate": True,
         },

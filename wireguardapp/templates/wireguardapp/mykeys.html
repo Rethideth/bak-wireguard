@@ -28,6 +28,7 @@
                 Vytvořit konfiguraci
             </button>
             <!-- Delete key -->
+            {% if not user.is_superuser  %}
             <button 
                 class="btn btn-secondary delete-button"
                 name="button-deletekey"
@@ -36,18 +37,28 @@
                 onclick="return confirm('Opravdy chcete odstranit tento klíč?');">
                 Odstranit klíč
             </button>
+            {% endif %}
         
         </div>
     </div>
         {% empty %}
-        <p>Zatím nemáte žádne kliče</p>
+        {% if user.is_superuser %} 
+            <form method="post" action="{% url 'newkey' %}">
+                {% csrf_token %}
+                <button class="btn btn-primary new-button" type="submit" >Vytvořit nový klíč</button>
+            </form>
+        {% else %}
+            <p>Zatím nemáte žádne kliče</p>
+        {% endif%}
     {% endfor %}
 
+    {% if not user.is_superuser %}
     <!-- New Key-->
     <form method="post" action="{% url 'newkey' %}">
         {% csrf_token %}
-        <button class="btn btn-primary new-button" type="submit">Vytvořit nový klíč</button>
+        <button class="btn btn-primary new-button" type="submit" >Vytvořit nový klíč</button>
     </form>
+    {% endif%}
 </div>
 
 {% if messages %}
@@ -123,7 +134,7 @@
             ajaxWithCSRF("{% url 'confajax' %}", { 'id': id }, function(response) {
                 // Fill modal with config
                 const configText = document.getElementById('configText');
-                configText.textContent = response.config || 'Žádná konfigurace nebyla vrácena.';
+                configText.textContent = response.body || 'Žádná konfigurace nebyla vrácena.';
 
                 // Show modal
                 const modal = new bootstrap.Modal(document.getElementById('configModal'));

@@ -1,0 +1,13 @@
+{% extends "wireguardapp/base.html" %}
+
+{% block title %}WG{% endblock %}
+
+{% block content %}
+
+<form method="post" action="{% url 'newkey' %}">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit">Save</button>
+</form>
+
+{% endblock %}

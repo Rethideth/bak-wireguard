@@ -1,25 +1,49 @@
 from wireguardapp.models import Interface, Peer, PeerAllowedIP, PeerSnapshot, Key
 from django.contrib.auth.models import User
-
+from .dbcommands import createServerInterface,createNewKey
+from django.db import transaction
 import ipaddress
 
-def getServerInterface():
-    return Interface.objects.get(interface_type = Interface.SERVER)
+import logging
 
-def allocateIpaddress():
-    serverInterface = getServerInterface()
-    interface = ipaddress.ip_interface(serverInterface.ip_address)
-    base = interface.network
+logger = logging.getLogger('test')
 
-    clientInterfaces = Interface.objects.filter(interface_type = Interface.CLIENT).values_list('ip_address',flat=True)
-    occupied = {ipaddress.IPv4Interface(i).ip for i in clientInterfaces}
-    occupied.add(interface.ip)
+def createNewServer(user : User, name : str, ipinterface :str, endpoint:str):
+    if Interface.objects.filter(interface_type = Interface.SERVER).count() > 0:
+        return 'Může existovat jenom jeden server interface.'
+    try:
+        key = createNewKey(user,name)
+        interface = createServerInterface(
+            key = key,
+            ipinterface = ipinterface,
+            endpoint = endpoint)
+    except:
+        return "error"
+    
+    with transaction.atomic():
+        key.save()
+        interface.save()
 
-    for ip in base.hosts():
-        if ip not in occupied:
-            return f'{ip}/32'
+    return 
 
-    raise ValueError
+def generateServerConfText(serverInterface: Interface):
+    serverPeers = Peer.objects.filter(peer_key = serverInterface.interface_key)
 
-def createNewServer():
-    pass
+    conf = f"""
+[Interface]
+PrivateKey = {serverInterface.interface_key.private_key}
+ListenPort = {serverInterface.listen_port}
+Address = {serverInterface.ip_address}
+SaveConfig = true
+""".strip()
+    
+    for peer in serverPeers:
+        conf = conf + '\n\n'
+        conf = conf + f"""
+[Peer]
+PublicKey = {peer.interface.interface_key.public_key}
+AllowedIPs = {peer.interface.ip_address}
+""".strip()
+
+    return conf, serverInterface.name
+

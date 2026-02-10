@@ -8,17 +8,20 @@ from django.http import JsonResponse
 import json
 
 
-from .service.client import createNewClient,deleteClient
+from .service.client import createNewClient
+from .service.server import createNewServer
 
 from django.core.exceptions import PermissionDenied
 
-from .forms import CustomUserCreationForm
+from .forms import CustomUserCreationForm, ClientKeyForm,ServerKeyForm
 
 
 from datetime import datetime
 from django.utils import timezone
-import os
-import getpass
+import logging
+from django.conf import settings
+
+logger = logging.getLogger('test')
 # Create your views here.
 
 
@@ -45,21 +48,49 @@ def register(request):
 @login_required
 def mykeys(request):
     keys = Key.objects.filter(user=request.user)
-
     return render(request, 'wireguardapp/mykeys.html', {'keys':keys})
 
 
-@require_POST
+
 @login_required
 def newkey(request):
-    user = request.user
-    name = str(timezone.now())
-    result = createNewClient(user,name)
-    if result:
-        messages.error(request, 'Error, interface serveru je nyní offline. Skuste znova za chvíli.\n'+result)
+    if request.user.is_superuser:
+        formClass = ServerKeyForm
+    else:
+        formClass = ClientKeyForm
 
-    return redirect('mykeys')
+    if request.method == "POST":
+        form = formClass(request.POST)
+        if form.is_valid():
+            data = form.cleaned_data   
 
+            if isinstance(form, ServerKeyForm):
+                if Interface.objects.filter(interface_type = Interface.SERVER).count() >0:
+                    form.add_error(None, "Nemohou existovat více než jeden server interface.")
+                    return render(request, 'wireguardapp/newkey.html', {'form':form})
+                
+                result = createNewServer(
+                    request.user, 
+                    data['name'], 
+                    str(data['ip_interface']),
+                    data['endpoint'] )
+                
+
+            elif isinstance(form, ClientKeyForm):
+                result = createNewClient(
+                    user = request.user,
+                    name = data['name'],
+                )
+            if result:
+                form.add_error(None,result)
+                return render(request, 'wireguardapp/newkey.html', {'form':form})
+
+
+            return redirect("mykeys")
+    else:
+        form = formClass()
+
+    return render(request, 'wireguardapp/newkey.html',{'form':form})
 
 
 def dbdown(request):
@@ -106,4 +137,5 @@ def serverinterfaces(request):
 
 
     return render(request, 'wireguardapp/server.html' , {"interfaces" : grouped})
+
 

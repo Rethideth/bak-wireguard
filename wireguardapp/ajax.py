@@ -7,8 +7,7 @@ from wireguardapp.models import Interface, Peer, PeerAllowedIP, PeerSnapshot, Ke
 from django.http import JsonResponse
 import json
 
-from .service.wireguard import generateClientConf
-from .service.client import createNewClient,deleteClient
+from .service.client import deleteClient,generateClientConf
 
 @require_POST
 @login_required
@@ -22,13 +21,13 @@ def getconfajax(request):
 
     if not key:
         return JsonResponse(
-        {"error": "Error hetting key"},
+        {"success": False,"body": "Error getting key"},
         status=400
         )
     
     conf = generateClientConf(key)
 
-    return JsonResponse({'title':request.user.username,'config': conf})
+    return JsonResponse({"success": False,'body': conf})
 
 
 @require_POST

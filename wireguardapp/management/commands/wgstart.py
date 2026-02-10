@@ -1,7 +1,8 @@
 from django.core.management.base import BaseCommand
 import subprocess
 import tempfile
-from wireguardapp.service.wireguard import generateServerConfText
+from wireguardapp.service.server import generateServerConfText
+from wireguardapp.service.dbcommands import getServerInterface
 from django.conf import settings
 import logging
 
@@ -11,7 +12,8 @@ class Command(BaseCommand):
     help = "Update or start wireguard server interface"
 
     def handle(self, *args, **options):
-        conf, servername = generateServerConfText()
+        serverInterface = getServerInterface()
+        conf, servername = generateServerConfText(serverInterface)
 
         with tempfile.NamedTemporaryFile(
             mode='w',
@@ -36,7 +38,7 @@ class Command(BaseCommand):
                 capture_output=True,
             )
         except subprocess.CalledProcessError as e:
-            print('error: ' + e.stderr)
+            print('error: %s',  e.stderr)
 
         return 
 

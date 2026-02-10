@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 import subprocess
 import tempfile
-from wireguardapp.service.server import getServerInterface
+from wireguardapp.service.dbcommands import getServerInterface
 from django.conf import settings
 import logging
 
@@ -12,7 +12,6 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         serverInterface = getServerInterface()
-
 
         cmd = [
             "sudo",

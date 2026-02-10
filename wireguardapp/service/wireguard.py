@@ -1,60 +1,10 @@
 import subprocess
 from wireguardapp.models import Interface, Peer, PeerAllowedIP, PeerSnapshot, Key
-from .server import getServerInterface
 import logging
 from django.conf import settings
 
 logger = logging.getLogger('wg')
 
-ENDPOINT = "192.168.0.161:51820"
-
-
-def generateServerConfText():
-    serverInterface = getServerInterface()
-    serverPeers = Peer.objects.filter(peer_key = serverInterface.interface_key)
-
-    conf = f"""
-[Interface]
-PrivateKey = {serverInterface.interface_key.private_key}
-ListenPort = {serverInterface.listen_port}
-Address = {serverInterface.ip_address}
-
-""".strip()
-    
-    for peer in serverPeers:
-        conf = conf + '\n\n'
-        conf = conf + f"""
-[Peer]
-PublicKey = {peer.interface.interface_key.public_key}
-AllowedIPs = {peer.interface.ip_address}
-""".strip()
-
-    return conf, serverInterface.name
-
-def generateClientConfText(clientInterface : Interface, serverPeer : Peer):
-    conf = f"""
-[Interface]
-PrivateKey = {clientInterface.interface_key.private_key}
-Address = {clientInterface.ip_address}
-
-[Peer]
-PublicKey = {serverPeer.peer_key.public_key}
-Endpoint = {ENDPOINT}
-AllowedIPs = 0.0.0.0/0
-PersistentKeepalive = {serverPeer.persistent_keepalive}
-""".strip()
-    
-    return conf
-    
-
-def generateClientConf(key : Key):
-    clientInterface = Interface.objects.get(interface_key = key)
-    serverPeer = Peer.objects.get(interface = clientInterface)
-
-    if (clientInterface.interface_type == Interface.SERVER):
-        return "Pro server nemůže být vrácená konfigurace."
-
-    return generateClientConfText(clientInterface, serverPeer)
 
 #private key, public_key
 def generateKeyPair():
@@ -124,10 +74,6 @@ def removeWGPeer(serverInterfaceName :str, peerKey : str):
     logger.debug("STDOUT: %s", result.stdout)
     return True
 
-
-def reconfigureServerConf():
-    
-    pass
 
 
     
