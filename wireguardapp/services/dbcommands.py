@@ -8,23 +8,18 @@ KEEPALIVE = 25
 PORT =      51820  
 
 
-def getServerInterface():
-    """
-    Returns the server interface.
-    """
-    return Interface.objects.get(interface_type = Interface.SERVER)
-
-
 def allocateIpaddress(serverInterface:Interface):
     """
     Allocates an ip address based on a given server interface
     
-    Args:
-        serverInterface (Interface): interface of a server 
-        in a form for example 10.0.0.1/24.
+    Parameters:
+        serverInterface (Interface): interface of a server in a form for example 10.0.0.1/24.
 
-    Returns
+    Returns:
         str: ip adrress with bit mask (e.g. 10.0.0.12/32)
+    Exceptions:
+        TypeError: Raised if the given interface type does not have interface_type = 'server'
+        ValueError: Raised if there are no available ip addresses from the server interface.
     """
     if (serverInterface.interface_type != Interface.SERVER):
         raise TypeError
@@ -49,7 +44,7 @@ def createNewKey(user : User, name: str = None):
     
     :param user: The key object will be generated for this user
     :type user: User
-    :param name: Name of this key. Used to identify the key for the user e.g 'My key for my notebook'.
+    :param name: Name of this key. Used to identify the key for the user e.g. 'My key for my notebook'.
     Does not affect wireguard config or commands.
     :type name: str
     """

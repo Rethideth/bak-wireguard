@@ -1,6 +1,7 @@
 from wireguardapp.models import Interface, Peer, PeerAllowedIP, PeerSnapshot, Key
 from django.contrib.auth.models import User
 from .dbcommands import createServerInterface,createNewKey
+from .wireguard import startWGserver,stopWGserver,isWGserverUp
 from django.db import transaction
 import ipaddress
 
@@ -18,7 +19,7 @@ def createNewServer(user : User, name : str, ipinterface :str, endpoint:str):
             ipinterface = ipinterface,
             endpoint = endpoint)
     except:
-        return "error"
+        return "Nemohlo se vytvořit klíč a interface pro server-"
     
     with transaction.atomic():
         key.save()
@@ -26,24 +27,13 @@ def createNewServer(user : User, name : str, ipinterface :str, endpoint:str):
 
     return 
 
-def generateServerConfText(serverInterface: Interface):
-    serverPeers = Peer.objects.filter(peer_key = serverInterface.interface_key)
+def startServer():
+    return startWGserver()
 
-    conf = f"""
-[Interface]
-PrivateKey = {serverInterface.interface_key.private_key}
-ListenPort = {serverInterface.listen_port}
-Address = {serverInterface.ip_address}
-SaveConfig = true
-""".strip()
-    
-    for peer in serverPeers:
-        conf = conf + '\n\n'
-        conf = conf + f"""
-[Peer]
-PublicKey = {peer.interface.interface_key.public_key}
-AllowedIPs = {peer.interface.ip_address}
-""".strip()
+def stopServer():
+    return stopWGserver()
 
-    return conf, serverInterface.name
+def checkServer():
+    return isWGserverUp()
+
 

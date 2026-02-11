@@ -15,6 +15,8 @@ urlpatterns = [
     path('key/updatename/', ajax.updatekeyname, name='updatekeyname'),
     path('logs/', views.viewlogs, name = 'logs'),
     path('dbdown/', views.dbdown, name='dbdown'),
-    path('server/', views.serverinterfaces, name='server')
+    path('server/', views.serverinterfaces, name='server'),
+    path('server/toggle', ajax.toggleServer,name='toggleserver'),
+    path('test/',views.test)
 ]
     

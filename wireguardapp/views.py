@@ -8,8 +8,8 @@ from django.http import JsonResponse
 import json
 
 
-from .service.client import createNewClient
-from .service.server import createNewServer
+from .services.client import createNewClient
+from .services.server import createNewServer,checkServer
 
 from django.core.exceptions import PermissionDenied
 
@@ -136,6 +136,8 @@ def serverinterfaces(request):
         grouped[face] = serverPeers
 
 
-    return render(request, 'wireguardapp/server.html' , {"interfaces" : grouped})
+    return render(request, 'wireguardapp/server.html' , {"interfaces" : grouped, "is_up":checkServer()})
 
 
+def test(request):
+    return render(request, 'wireguardapp/test.html' )

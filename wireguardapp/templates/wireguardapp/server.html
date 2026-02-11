@@ -6,9 +6,10 @@
 
 
 <div class="container mt-4">
-<h1 class="mb-4">Seznam připojení ku serveru</h1>
+<h1 class="mb-4">Rozhraní serveru</h1>
     {% for interface,peers in interfaces.items %}
     <div class="card mb-3">
+        <!-- if there would be more server interfaces if the project changes-->
         <div class="card-header">
                 <input
                 type="text"
@@ -22,37 +23,51 @@
             <input id="public_key" class="form-control mb-2" type="text" value="{{ interface.interface_key.public_key }}" readonly>
             <p>Ip adresa: {{interface.ip_address}}</p>
             <p>End point: {{interface.server_endpoint}}</p>
-            
-            <table class="table">
-                <thead>
-                    <tr>
-                    <th scope="col">User</th>
-                    <th scope="col">Key</th>
-                    <th scope="col">Key name</th>
-                    <th scope="col">delete?</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for peer in peers %}
-                    <tr class="tablerow">
-                    <th>{{peer.interface.interface_key.user}}</th>
-                    <td>{{peer.interface.interface_key.public_key}}</td>
-                    <td>{{peer.interface.interface_key.name}}</td>
-                    <td>
-                        <button 
-                            class="btn btn-secondary delete-button"
-                            name="button-deletekey"
-                            type="submit" 
-                            data-id="{{peer.interface.interface_key.id}}"
-                            onclick="return confirm('Opravdy chcete odstranit tento klíč?');">
-                            Odstranit klíč
-                        </button>
-                    </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
+
+            <div style="overflow-y: auto;max-height: 300px;" >
+                <table class="table " >
+                    <thead>
+                        <tr>
+                        <th scope="col">Uživatel</th>
+                        <th scope="col">Veřejný klíč</th>
+                        <th scope="col">Jméno klíče</th>
+                        <th scope="col">Smazat klíč?</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for peer in peers %}
+                        <tr class="tablerow">
+                        <th>{{peer.interface.interface_key.user}}</th>
+                        <td>{{peer.interface.interface_key.public_key}}</td>
+                        <td>{{peer.interface.interface_key.name}}</td>
+                        <td>
+                            <button 
+                                class="btn btn-secondary delete-button"
+                                name="button-deletekey"
+                                type="submit" 
+                                data-id="{{peer.interface.interface_key.id}}"
+                                onclick="return confirm('Opravdy chcete odstranit tento klíč?');">
+                                Odstranit klíč
+                            </button>
+                        </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
                 </table>
+            </div>
+
+            <button id="wg-toggle"
+                class="btn {% if is_up %}btn-success{% else %}btn-danger{% endif %}">
             
+            <span id="btn-text">
+                {% if is_up %}Interface UP{% else %}Interface DOWN{% endif %}
+            </span>
+
+            <span id="btn-spinner"
+                class="spinner-border spinner-border-sm ms-2 d-none"
+                role="status">
+            </span>
+        </button>
         </div>
     </div>
         {% empty %}
@@ -118,6 +133,39 @@
         });
     });
 
+    const btn = document.getElementById("wg-toggle");
+    const btnText = document.getElementById("btn-text");
+    const spinner = document.getElementById("btn-spinner");
+    document.getElementById("wg-toggle").addEventListener("click", function() {
+
+        btn.disabled = true;
+        spinner.classList.remove("d-none");
+
+        ajaxWithCSRF("{% url 'toggleserver' %}",{}, function(response)
+        {
+            if (response.success)
+            {
+                if (response.is_up) {
+                    btn.classList.remove("btn-danger");
+                    btn.classList.add("btn-success");
+                    btnText.textContent = "Interface UP";
+                } else {
+                    btn.classList.remove("btn-success");
+                    btn.classList.add("btn-danger");
+                    btnText.textContent = "Interface DOWN";
+                }
+            }
+            else
+            {
+                alert("Došlo k chybě při zapínání/vypinání serveru: " +response.error );
+            }
+
+            spinner.classList.add("d-none");
+            btn.disabled = false;
+            
+        });
+
+    });
 
 
 </script>

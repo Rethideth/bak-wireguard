@@ -7,7 +7,8 @@ from wireguardapp.models import Interface, Peer, PeerAllowedIP, PeerSnapshot, Ke
 from django.http import JsonResponse
 import json
 
-from .service.client import deleteClient,generateClientConf
+from .services.client import deleteClient,generateClientConf
+from .services.server import checkServer,startServer,stopServer
 
 @require_POST
 @login_required
@@ -56,7 +57,7 @@ def deletekey(request):
         Key,
         id=keyId
     )
-    if (key.user != user and not user.is_superuser):
+    if (key.user != user or not user.is_superuser):
         return JsonResponse({"success": False, "body" : "Musíte být vlastníkem klíče nebo superuser"})
     
     result = deleteClient(user,key)
@@ -65,3 +66,19 @@ def deletekey(request):
     
     return JsonResponse({"success": True, "body" : "Klíč byl odstraněn"})
 
+@require_POST
+@login_required
+def toggleServer(request):
+    user = request.user
+    if not user.is_superuser:
+        return JsonResponse({"success" : False, "error" : "Nejste supersuper pro vypínání/zapínání serveru."})
+
+    if checkServer():
+        result = stopServer()
+    else:
+        result = startServer()
+
+    if result:
+        return JsonResponse({"success" : False, "error" : result})
+    else:
+        return JsonResponse({"success" : True, "is_up": checkServer()})

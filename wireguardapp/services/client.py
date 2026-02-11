@@ -1,12 +1,12 @@
 from wireguardapp.models import Interface, Peer, PeerAllowedIP, PeerSnapshot, Key
-from .wireguard import addWGPeer,removeWGPeer
-from .dbcommands import getServerInterface,createNewKey,createClientInterface,createPeer
+from .wireguard import addWGPeer,removeWGPeer,generateClientConfText
+from .dbcommands import createNewKey,createClientInterface,createPeer
+from .selector import getServerInterface
 from django.db import transaction
 from django.contrib.auth.models import User
 import logging
 
 logger = logging.getLogger('test')
-
 
 
 def createNewClient(user : User, name : str, serverInterface : Interface = getServerInterface()):
@@ -58,21 +58,7 @@ def deleteClient(user : User, key : Key):
         
     return 
 
-def generateClientConfText(clientInterface : Interface, serverPeer : Peer,endpoint:str, listenPort:str):
-    conf = f"""
-[Interface]
-PrivateKey = {clientInterface.interface_key.private_key}
-Address = {clientInterface.ip_address}
 
-[Peer]
-PublicKey = {serverPeer.peer_key.public_key}
-Endpoint = {endpoint}:{listenPort}
-AllowedIPs = 0.0.0.0/0
-PersistentKeepalive = {serverPeer.persistent_keepalive}
-""".strip()
-    
-    return conf
-    
 
 def generateClientConf(key : Key):
     clientInterface = Interface.objects.get(interface_key = key)
