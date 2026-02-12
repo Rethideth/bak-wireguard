@@ -3,12 +3,13 @@ from django.views.decorators.http import require_POST
 from django.contrib.auth import login
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from wireguardapp.models import Interface, Peer, PeerAllowedIP, PeerSnapshot, Key
+from wireguardapp.models import Interface, Peer, PeerSnapshot, Key
 from django.http import JsonResponse
 import json
 
+
 from .services.client import deleteClient,generateClientConf
-from .services.server import checkServer,startServer,stopServer
+from .services.server import checkServer,startServer,stopServer,getWGPeerConnectionState
 
 @require_POST
 @login_required
@@ -26,9 +27,10 @@ def getconfajax(request):
         status=400
         )
     
-    conf = generateClientConf(key)
+    confFull = generateClientConf(key)
+    confSplit = generateClientConf(key,True)
 
-    return JsonResponse({"success": False,'body': conf})
+    return JsonResponse({"success": False,'body1': confFull, "body2":confSplit})
 
 
 @require_POST
@@ -82,3 +84,8 @@ def toggleServer(request):
         return JsonResponse({"success" : False, "error" : result})
     else:
         return JsonResponse({"success" : True, "is_up": checkServer()})
+
+@require_POST
+@login_required
+def getpeerstate(request):
+    return JsonResponse({"peers":getWGPeerConnectionState()})

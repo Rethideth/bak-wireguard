@@ -3,13 +3,13 @@ from django.views.decorators.http import require_POST
 from django.contrib.auth import login
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from wireguardapp.models import Interface, Peer, PeerAllowedIP, PeerSnapshot, Key
+from wireguardapp.models import Interface, Peer, PeerSnapshot, Key
 from django.http import JsonResponse
 import json
 
 
 from .services.client import createNewClient
-from .services.server import createNewServer,checkServer
+from .services.server import createNewServer,checkServer,getServerInterfaceWithPeers,getLatestPeerSnapshots,getServerPeerSnapshots,getServerInterface
 
 from django.core.exceptions import PermissionDenied
 
@@ -108,35 +108,21 @@ def viewlogs(request):
     ).order_by("peer__interface__name", "peer__peer_key", "-collected_at")
 
     
-    # Group snapshots by interface
-    grouped = dict()
-    for snap in snapshots:
-        interface = snap.peer.interface.name
-        if interface not in grouped:
-            grouped[interface] = {
-                "snapshots": [],
-            }
-        grouped[interface]['snapshots'].append(snap)
+    interface = getServerInterface()
+    grouped = getLatestPeerSnapshots()
+    
 
-    return render(request, 'wireguardapp/logs.html' , {"grouped_snapshots" : grouped, 'model' : PeerSnapshot})
+    return render(request, 'wireguardapp/logs.html' , {"interface":interface, "latest_snapshots" : grouped, 'model' : PeerSnapshot})
 
 
 @login_required
 def serverinterfaces(request):
     if not request.user.is_superuser:
         raise PermissionDenied
-    
-    interfaces = Interface.objects.select_related(
-        "interface_key",
-    ).filter(interface_type = Interface.SERVER)
 
-    grouped = dict()
-    for face in interfaces:
-        serverPeers = Peer.objects.filter(peer_key = face.interface_key)
-        grouped[face] = serverPeers
+    interface, serverPeers = getServerInterfaceWithPeers()
 
-
-    return render(request, 'wireguardapp/server.html' , {"interfaces" : grouped, "is_up":checkServer()})
+    return render(request, 'wireguardapp/server.html' , {"interface" : interface, "peers":serverPeers, "is_up":checkServer()})
 
 
 def test(request):

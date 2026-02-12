@@ -79,8 +79,21 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body" id="modalBody">
-        <!-- AJAX content will appear here -->
-        <pre id="configText"></pre>
+        <!-- Content -->
+        <nav>
+        <div class="nav nav-tabs" id="nav-tab" role="tablist">
+            <button class="nav-link active" id="nav-full-tab" data-bs-toggle="tab" data-bs-target="#nav-full" type="button" role="tab" aria-controls="nav-full" aria-selected="true">Full tunel</button>
+            <button class="nav-link" id="nav-split-tab" data-bs-toggle="tab" data-bs-target="#nav-split" type="button" role="tab" aria-controls="nav-split" aria-selected="false">Split tunel</button>
+        </div>
+        </nav>
+        <div class="tab-content" id="nav-tabContent">
+            <div class="tab-pane fade show active" id="nav-full" role="tabpanel" aria-labelledby="nav-full-tab" tabindex="0">
+                <pre id="configtext1"></pre>
+            </div>
+            <div class="tab-pane fade" id="nav-split" role="tabpanel" aria-labelledby="nav-split-tab" tabindex="0">
+                <pre id="configtext2"></pre>
+            </div>
+        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-primary" id="copyButton">Kopírovat do schránky</button>
@@ -133,8 +146,11 @@
 
             ajaxWithCSRF("{% url 'confajax' %}", { 'id': id }, function(response) {
                 // Fill modal with config
-                const configText = document.getElementById('configText');
-                configText.textContent = response.body || 'Žádná konfigurace nebyla vrácena.';
+                const configText1 = document.getElementById('configtext1');
+                const configText2 = document.getElementById('configtext2');
+                configText1.textContent = response.body1 || 'Žádná konfigurace nebyla vrácena.';
+                configText2.textContent = response.body2 || 'Žádná konfigurace nebyla vrácena.';
+
 
                 // Show modal
                 const modal = new bootstrap.Modal(document.getElementById('configModal'));
@@ -164,8 +180,16 @@
 
     // Copy to clipboard button
     document.getElementById('copyButton').addEventListener('click', function() {
-        const configText = document.getElementById('configText').textContent;
-        navigator.clipboard.writeText(configText)
+        const activeTabPane = document.querySelector('.tab-pane.active');
+
+        if (activeTabPane) {
+            const pre = activeTabPane.querySelector('pre');
+        
+            if (pre) {
+                const text = pre.textContent;
+                navigator.clipboard.writeText(text);
+            }
+        }
     });
 
     // Change name of the key

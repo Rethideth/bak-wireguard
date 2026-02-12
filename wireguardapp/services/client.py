@@ -1,10 +1,11 @@
-from wireguardapp.models import Interface, Peer, PeerAllowedIP, PeerSnapshot, Key
+from wireguardapp.models import Interface, Peer,PeerSnapshot, Key
 from .wireguard import addWGPeer,removeWGPeer,generateClientConfText
 from .dbcommands import createNewKey,createClientInterface,createPeer
 from .selector import getServerInterface
 from django.db import transaction
 from django.contrib.auth.models import User
 import logging
+import ipaddress
 
 logger = logging.getLogger('test')
 
@@ -60,7 +61,7 @@ def deleteClient(user : User, key : Key):
 
 
 
-def generateClientConf(key : Key):
+def generateClientConf(key : Key, onlyVpn : bool = False):
     clientInterface = Interface.objects.get(interface_key = key)
     if (clientInterface.interface_type == Interface.SERVER):
         return "Pro server nemůže být vrácená konfigurace."
@@ -68,8 +69,16 @@ def generateClientConf(key : Key):
     serverPeer = Peer.objects.get(interface = clientInterface)
     serverInterface = getServerInterface()
 
-    return generateClientConfText( 
+    if (onlyVpn):
+        return generateClientConfText( 
         clientInterface = clientInterface,
         serverPeer = serverPeer,
         endpoint = serverInterface.server_endpoint,
-        listenPort = serverInterface.listen_port)
+        listenPort = serverInterface.listen_port,
+        allowedIPs = ipaddress.IPv4Interface(serverInterface.ip_address).network)
+    else:
+        return generateClientConfText( 
+            clientInterface = clientInterface,
+            serverPeer = serverPeer,
+            endpoint = serverInterface.server_endpoint,
+            listenPort = serverInterface.listen_port)

@@ -7,7 +7,9 @@
 
 <div class="container mt-4">
 <h1 class="mb-4">Rozhraní serveru</h1>
-    {% for interface,peers in interfaces.items %}
+    {% if not interface %}
+        <p>Zatím nejsou žádné rozhraní serveru</p>
+    {% else %}
     <div class="card mb-3">
         <!-- if there would be more server interfaces if the project changes-->
         <div class="card-header">
@@ -70,10 +72,7 @@
         </button>
         </div>
     </div>
-        {% empty %}
-        <p>Zatím nejsou žádné rozhraní serveru</p>
-    {% endfor %}
-
+    {% endif%}
 </div>
 
 

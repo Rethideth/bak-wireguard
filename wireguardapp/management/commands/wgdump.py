@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 import subprocess
 from datetime import datetime
-from wireguardapp.models import Interface, Peer, PeerAllowedIP, PeerSnapshot, Key
+from wireguardapp.models import Interface, Peer, PeerSnapshot, Key
 import logging
 
 
@@ -77,10 +77,7 @@ class Command(BaseCommand):
                     persistent_keepalive=None if keepalive == "off" else int(keepalive)
                 )
 
-                # Sync allowed IPs
-                PeerAllowedIP.objects.filter(peer=peer).delete()
-                for cidr in allowed_ips.split(","):
-                    PeerAllowedIP.objects.create(peer=peer, cidr=cidr)
+
 
                 # Insert snapshot
                 handshake_dt = None if latest_handshake == "0" else datetime.fromtimestamp(int(latest_handshake))

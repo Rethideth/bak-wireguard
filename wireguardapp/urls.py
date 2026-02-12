@@ -17,6 +17,7 @@ urlpatterns = [
     path('dbdown/', views.dbdown, name='dbdown'),
     path('server/', views.serverinterfaces, name='server'),
     path('server/toggle', ajax.toggleServer,name='toggleserver'),
+    path('server/state',ajax.getpeerstate,name='peerstate'),
     path('test/',views.test)
 ]
     

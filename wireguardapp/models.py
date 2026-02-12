@@ -17,12 +17,10 @@ class Key(models.Model):
         null=False,
         unique=True
     )
-    private_key = models.CharField(
-        max_length=44,
-        null=True
+    private_key = models.TextField(
     )
     def __str__(self):
-        return f"{self.user}:{self.public_key[:8]}"
+        return f"{self.user}:{self.name}"
     
 
 
@@ -95,21 +93,6 @@ class Peer(models.Model):
 
     def __str__(self):
         return f"{self.interface.name} → {self.peer_key}"
-
-
-class PeerAllowedIP(models.Model):
-    peer = models.ForeignKey(
-        Peer,
-        on_delete=models.CASCADE,
-        related_name="allowed_ips"
-    )
-    cidr = models.CharField(
-        max_length=64
-    )
-
-
-    def __str__(self):
-        return f"{self.peer} → {self.cidr}"
 
 
 class PeerSnapshot(models.Model):

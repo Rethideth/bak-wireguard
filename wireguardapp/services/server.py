@@ -1,7 +1,8 @@
-from wireguardapp.models import Interface, Peer, PeerAllowedIP, PeerSnapshot, Key
+from wireguardapp.models import Interface, Peer, PeerSnapshot, Key
 from django.contrib.auth.models import User
 from .dbcommands import createServerInterface,createNewKey
-from .wireguard import startWGserver,stopWGserver,isWGserverUp
+from .wireguard import startWGserver,stopWGserver,isWGserverUp,getWGpeersstate
+from .selector import getServerInterface,getServerPeers,getLatestPeerSnapshots,getServerPeerSnapshots
 from django.db import transaction
 import ipaddress
 
@@ -37,3 +38,16 @@ def checkServer():
     return isWGserverUp()
 
 
+def getServerInterfaceWithPeers():
+    interface = getServerInterface()
+    serverPeers = getServerPeers(interface=interface)
+    return interface, serverPeers
+
+def getServerPeersSnapshots():
+    return getServerPeerSnapshots()
+
+def getLastServerPeersSnapshot():
+    return getLatestPeerSnapshots()
+
+def getWGPeerConnectionState():
+    return getWGpeersstate()

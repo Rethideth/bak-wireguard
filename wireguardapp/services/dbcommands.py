@@ -1,6 +1,7 @@
-from wireguardapp.models import Interface, Peer, PeerAllowedIP, PeerSnapshot, Key
+from wireguardapp.models import Interface, Peer, PeerSnapshot, Key
 from django.contrib.auth.models import User
 from .wireguard import generateKeyPair
+from .crypto import encrypt_value,decrypt_value
 import ipaddress
 from django.utils import timezone
 
@@ -51,7 +52,7 @@ def createNewKey(user : User, name: str = None):
     privateKey, publicKey = generateKeyPair()
     newkey = Key(
         user = user,
-        private_key = privateKey,
+        private_key = encrypt_value(privateKey),
         public_key = publicKey,
         name = name
     )
