@@ -4,17 +4,13 @@ from django.contrib.auth import login
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from wireguardapp.models import Interface, Peer, PeerSnapshot, Key
-from django.http import JsonResponse
-import json
-
 
 from .services.client import createNewClient
-from .services.server import createNewServer,checkServer,getServerInterfaceWithPeers,getLatestPeerSnapshots,getServerPeerSnapshots,getServerInterface
+from .services.server import createNewServer,checkServer,getServerInterfaceWithPeers,getLastDayDiffSnapshot,getServerInterface
 
 from django.core.exceptions import PermissionDenied
 
 from .forms import CustomUserCreationForm, ClientKeyForm,ServerKeyForm
-
 
 from datetime import datetime
 from django.utils import timezone
@@ -101,18 +97,11 @@ def viewlogs(request):
     if not request.user.is_superuser:
         raise PermissionDenied
     
-    snapshots = PeerSnapshot.objects.select_related(
-        "peer", "peer__interface", "peer__peer_key"
-    ).filter(
-        peer__interface__interface_type='server'
-    ).order_by("peer__interface__name", "peer__peer_key", "-collected_at")
-
-    
     interface = getServerInterface()
-    grouped = getLatestPeerSnapshots()
+    grouped = getLastDayDiffSnapshot()
     
 
-    return render(request, 'wireguardapp/logs.html' , {"interface":interface, "latest_snapshots" : grouped, 'model' : PeerSnapshot})
+    return render(request, 'wireguardapp/logs.html' , {"interface":interface, "last_day_snapshots" : grouped, 'model' : PeerSnapshot})
 
 
 @login_required

@@ -4,6 +4,16 @@
 
 {% block content %}
 
+<script>
+    function formatBytes(bytes) {
+        if (bytes === 0) return "0 B";
+        const k = 1024;
+        const sizes = ["B", "KB", "MB", "GB"];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+    }
+</script>
+
 
 <h1>Log toku dat ve VPN serveru</h1>
 
@@ -18,7 +28,7 @@
             type="button" 
             role="tab"
             aria-controls="nav-latest" 
-            aria-selected="true">Poslední</button>
+            aria-selected="true">Poslední den</button>
         <button class="nav-link" 
             id="nav-activetab" 
             data-bs-toggle="tab" 
@@ -39,27 +49,27 @@
                 <tr>
                     <th>Peer</th>
                     <th>Endpoint</th>
-                    <th>Latest Handshake</th>
-                    <th>RX Bytes</th>
-                    <th>TX Bytes</th>
-                    <th>Collected At</th>
+                    <th>Download</th>
+                    <th>Upload</th>
                 </tr>
             </thead>
             <tbody class="table-group-divider">
-                {% for snapshot in latest_snapshots %}
+                {% for snapshot in last_day_snapshots %}
                     <tr>
-                        <td>{{ snapshot.peer.peer_key }}</td>
+                        <td>{{ snapshot.peer }}</td>
                         <td>{{ snapshot.endpoint|default:"—" }}</td>
+                        
                         <td>
-                            {% if snapshot.latest_handshake %}
-                                {{ snapshot.latest_handshake|date:"Y-m-d H:i:s" }}
-                            {% else %}
-                                —
-                            {% endif %}
+                            <script>
+                                document.write(formatBytes({{snapshot.rx_growth|default:0}}));
+                            </script>
                         </td>
-                        <td>{{ snapshot.rx_bytes }}</td>
-                        <td>{{ snapshot.tx_bytes }}</td>
-                        <td>{{ snapshot.collected_at|date:"Y-m-d H:i:s" }}</td>
+                        <td>
+                            <script>
+                                document.write(formatBytes({{snapshot.tx_growth|default:0}}));
+                            </script>
+                        </td>
+                        
                     </tr>
                 
                 {% empty %}
@@ -78,7 +88,7 @@
             <table class="table table-striped">
                 <thead>
                 <tr>
-                    <th>Public Key</th>
+                    <th>Peer</th>
                     <th>Endpoint</th>
                     <th>Last Handshake</th>
                     <th>Download</th>
@@ -94,13 +104,7 @@
 </div>
 
 <script>
-    function formatBytes(bytes) {
-        if (bytes === 0) return "0 B";
-        const k = 1024;
-        const sizes = ["B", "KB", "MB", "GB"];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-    }
+
 
     // CSRF token
     function getCookie(name) {
@@ -146,13 +150,13 @@
                 response.peers.forEach(peer => {
                     const row = `
                         <tr>
-                            <td>${peer.public_key}</td>
+                            <td>${peer.peer}</td>
                             <td>${peer.endpoint}</td>
                             <td>${peer.handshake > 0 ? "Connected" : "—"}</td>
                             <td>${formatBytes(peer.rx)}</td>
                             <td>${formatBytes(peer.tx)}</td>
                             <td>
-                            ${peer.connected 
+                            ${peer.is_connected 
                                 ? '<span class="badge bg-success">Online</span>' 
                                 : '<span class="badge bg-secondary">Offline</span>'}
                             </td>

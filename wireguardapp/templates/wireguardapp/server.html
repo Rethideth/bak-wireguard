@@ -39,9 +39,9 @@
                     <tbody>
                         {% for peer in peers %}
                         <tr class="tablerow">
-                        <th>{{peer.interface.interface_key.user}}</th>
-                        <td>{{peer.interface.interface_key.public_key}}</td>
-                        <td>{{peer.interface.interface_key.name}}</td>
+                        <th>{{peer.peer_key.user}}</th>
+                        <td>{{peer.peer_key.public_key}}</td>
+                        <td>{{peer.peer_key.name}}</td>
                         <td>
                             <button 
                                 class="btn btn-secondary delete-button"
