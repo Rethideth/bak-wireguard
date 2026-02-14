@@ -6,6 +6,8 @@ Also shows active connection state and their sent/recieved bytes.
 
 Uses Apache2 server to host the website. The site is created by django and connected to the server using mod_wsgi.
 
+Uses scripts owned by root and permitted sudo for www-data to execute wireguard commands.
+
 ## Apache config
 
 ```
