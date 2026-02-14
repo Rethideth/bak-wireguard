@@ -101,14 +101,14 @@ Following port forwarding, NAT and masking is in the wireguard server config
 PostUp:
 ```
 sysctl -w net.ipv4.ip_forward=1
-iptables -t nat -A POSTROUTING -o {INTERNET_INTERFACE} -j MASQUERADE
-iptables -A FORWARD -i wg-server -j ACCEPT; iptables -A FORWARD -o wg-server -j ACCEPT
-PostDown = 
+iptables -t nat -A POSTROUTING -o <INTERNET_INTERFACE> -j MASQUERADE
+iptables -A FORWARD -i wg-server -j ACCEPT
+iptables -A FORWARD -o wg-server -j ACCEPT
 ```
 PostDown:
 ```
 sysctl -w net.ipv4.ip_forward=0
-iptables -t nat -D POSTROUTING -o {INTERNET_INTERFACE} -j MASQUERADE
+iptables -t nat -D POSTROUTING -o <INTERNET_INTERFACE> -j MASQUERADE
 iptables -D FORWARD -i wg-server -j ACCEPT
 iptables -D FORWARD -o wg-server -j ACCEPT
 
