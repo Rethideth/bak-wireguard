@@ -111,21 +111,19 @@ sudo chmod 744 wg-peer-add.sh wg-peer-remove.sh wg-start.sh wg-stop.sh
 ## Routing
 Allow wireguard port
 `sudo ufw allow 51820/udp`
-Following port forwarding, NAT and masking is in the wireguard server config
+Enable port forwarding `sysctl -w net.ipv4.ip_forward=1`.
+Following NAT and masking is in the wireguard server config
 PostUp:
 ```
-sysctl -w net.ipv4.ip_forward=1
-iptables -t nat -A POSTROUTING -o <INTERNET_INTERFACE> -j MASQUERADE
-iptables -A FORWARD -i wg-server -j ACCEPT
-iptables -A FORWARD -o wg-server -j ACCEPT
+iptables -t nat -A POSTROUTING -o <internet_interface> -j MASQUERADE
+iptables -A FORWARD -i <wireguard_interface> -o <internet_interface> -j ACCEPT
+iptables -A FORWARD -o <wireguard_interface> -i <internet_interface> -m state --state RELATED,ESTABLISHED -j  -j ACCEPT
 ```
 PostDown:
 ```
-sysctl -w net.ipv4.ip_forward=0
-iptables -t nat -D POSTROUTING -o <INTERNET_INTERFACE> -j MASQUERADE
-iptables -D FORWARD -i wg-server -j ACCEPT
-iptables -D FORWARD -o wg-server -j ACCEPT
-
+iptables -t nat -D POSTROUTING -o <internet_interface> -j MASQUERADE
+iptables -D FORWARD -i <wireguard_interface> -o <internet_interface> -j ACCEPT
+iptables -D FORWARD -o <wireguard_interface> -i <internet_interface> -m state --state RELATED,ESTABLISHED -j  -j ACCEPT
 ```
 
 ## Database 
