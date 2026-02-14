@@ -159,10 +159,9 @@ sudo chmod 660 /var/log/wgweb/wg.log /var/log/wgweb/test.log
 
 ## Encryption
 
-In shell (use `python3`) copy the decoded (from binary) key and put in a .env file in project root directory. 
+In shell use the command below to generate a Fernet key.
 ```
-from cryptography.fernet import Fernet
-print(Fernet.generate_key().decode())
+python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
 ```
 In the .env file copy the key that was printed and paste it at `<key>`:
 ```FERNET_KEY=<key>```
