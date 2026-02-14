@@ -10,6 +10,8 @@ Uses scripts owned by root and permitted sudo for www-data to execute wireguard 
 
 Private key are encrypted by Fernet symmetric encryption cryptography.fernet.Fernet. The fernet key is stored in a enviroment file .env, and read when a private key need to be decrypted. 
 
+Logic of the website is in wireguardapp/services.
+
 ## Apache config
 
 ```
