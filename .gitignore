@@ -13,6 +13,4 @@ venv/
 
 # extra stuff
 logs/
-savedkeys/
-tempconf/
 .env

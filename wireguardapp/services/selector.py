@@ -5,16 +5,6 @@ from django.db.models import OuterRef, Subquery
 from django.db.models import F, Window
 from django.db.models.functions import RowNumber
 
-def getServerInterface() -> Interface:
-    """
-    Returns the server interface.
-
-    :returns: Returns the server interface
-    :rtype: Interface
-    """
-    interface = Interface.objects.get(interface_type = Interface.SERVER)
-    return interface
-
 def getUserKeys(user : User):
     """
     Returns users all keys.
@@ -26,7 +16,7 @@ def getUserKeys(user : User):
     """
     return Key.objects.filter(user = user)
 
-def getServerPeerSnapshots():
+def getServerPeerSnapshots(serverInterface : Interface):
     """
     Returns a list of snapshots ordered by interfaces (asc), peers (asc) and date of collected snapshots(desc).
     Only gets server peers.
@@ -35,11 +25,11 @@ def getServerPeerSnapshots():
     :rtype: QuerySet[Snapshots]
     """
     snapshots = PeerSnapshot.objects.filter(
-        peer__interface=getServerInterface()
+        peer__interface=serverInterface
     ).order_by("peer__interface__name", "peer__peer_key", "-collected_at")
     return snapshots
     
-def getOrderedPeerSnapshots():
+def getOrderedPeerSnapshots(serverInterface : Interface):
     """
     Returns a list of snapshots grouped by server peers and ordered by collected_at date of the server interface.
 
@@ -52,7 +42,7 @@ def getOrderedPeerSnapshots():
             partition_by=[F('peer')],
             order_by=F('collected_at').desc()
         )
-    ).filter(peer__interface = getServerInterface())
+    ).filter(peer__interface = serverInterface)
     return ranked
 
 def getInterfacePeers(interface :Interface):

@@ -6,7 +6,9 @@ from django.contrib.auth.models import User
 class Key(models.Model):
     user = models.ForeignKey(
         User,
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True
     )
     name = models.CharField(
         max_length=255,
@@ -81,6 +83,7 @@ class Peer(models.Model):
         on_delete=models.CASCADE,
         related_name='peerkey',
         verbose_name="Connected to"
+        
     )
     persistent_keepalive = models.PositiveIntegerField(
         null=True,

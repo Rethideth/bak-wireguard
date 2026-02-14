@@ -21,10 +21,18 @@
                 >
         </div>
         <div class="card-body">
-            <p class="card-text mb-2">Veřejný klíč: {{interface.interface_key.name}}</p>
-            <input id="public_key" class="form-control mb-2" type="text" value="{{ interface.interface_key.public_key }}" readonly>
-            <p>Ip adresa: {{interface.ip_address}}</p>
-            <p>End point: {{interface.server_endpoint}}</p>
+            <label for="public_key" class="form-label">Veřejný klíč: {{interface.interface_key.name}}</label>
+            <input id="public_key" class="form-control mb-4" type="text" value="{{ interface.interface_key.public_key }}" readonly>
+
+            <label for="ipaddress" class="form-label">Ip adresa wireguard rozhraní</label>
+            <input id="ipaddress" class="form-control mb-2" type="text" value="{{interface.ip_address}}" readonly>
+
+            <label for="endpoint" class="form-label">Endpoint serveru</label>
+            <input id="endpoint" class="form-control mb-2" type="text" value="{{interface.server_endpoint}}" readonly>
+            
+            <label for="listenport" class="form-label">Port wireguard rozhraní</label>
+            <input id="listenport" class="form-control mb-2" type="text" value="{{interface.listen_port}}" readonly>
+
 
             <div style="overflow-y: auto;max-height: 300px;" >
                 <table class="table " >
@@ -47,7 +55,7 @@
                                 class="btn btn-secondary delete-button"
                                 name="button-deletekey"
                                 type="submit" 
-                                data-id="{{peer.interface.interface_key.id}}"
+                                data-id="{{peer.peer_key.id}}"
                                 onclick="return confirm('Opravdy chcete odstranit tento klíč?');">
                                 Odstranit klíč
                             </button>

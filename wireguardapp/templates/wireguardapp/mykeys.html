@@ -42,14 +42,7 @@
         </div>
     </div>
         {% empty %}
-        {% if user.is_superuser %} 
-            <form method="post" action="{% url 'newkey' %}">
-                {% csrf_token %}
-                <button class="btn btn-primary new-button" type="submit" >Vytvořit nový klíč</button>
-            </form>
-        {% else %}
             <p>Zatím nemáte žádne kliče</p>
-        {% endif%}
     {% endfor %}
 
     {% if not user.is_superuser %}
@@ -135,7 +128,6 @@
         .then(successCallback)
         .catch(error => {
             console.error('Error:', error);
-            alert('Došlo k chybě při zasílání informací na server');
         });
     }
 
@@ -169,10 +161,11 @@
                 if (response.success) 
                 {
                     card.remove(); // remove card from html list
+                    alert(response.body);
                 } 
                 else 
                 {
-                    alert("Nepodařilo se odstranit klíč.");
+                    alert(response.body);
                 }
             });
         });

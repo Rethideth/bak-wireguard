@@ -19,9 +19,6 @@
                 </li>
                 {% if user.is_authenticated %}
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'mykeys' %}">Moje klíče</a>
-                </li>
-                <li class="nav-item">
                     <form method="post" class="nav-link" action="{% url 'logout' %}">
                         {% csrf_token %}
                         <button type="submit"  style="background:none;border:none;padding:0;color:inherit;cursor:pointer;">Logout</button>
@@ -34,10 +31,19 @@
                 <li class="nav-item">
                     <a class="nav-link" href="{% url 'register' %}">Registrovat se</a>
                 </li>
-                {% endif%}
+                {% endif %}
+                {% if user.is_authenticated and not user.is_superuser %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'mykeys' %}">Moje klíče</a>
+                </li>
+                {% endif %}
                 {% if user.is_authenticated and user.is_superuser %}
+                <li class="nav-item">
                     <a class="nav-link" href="{% url 'logs' %}">Log</a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link" href="{% url 'server' %}">Server</a>
+                </li>
                 {% endif %}
                 </ul>
             </div>

@@ -5,8 +5,9 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from wireguardapp.models import Interface, Peer, PeerSnapshot, Key
 
+
 from .services.client import createNewClient
-from .services.server import createNewServer,checkServer,getServerInterfaceWithPeers,getLastDayDiffSnapshot,getServerInterface
+from .services.server import createNewServer,checkServer,getServerInterfacePeers,getLastDayDiffSnapshot, getServerInterface
 
 from django.core.exceptions import PermissionDenied
 
@@ -50,43 +51,16 @@ def mykeys(request):
 
 @login_required
 def newkey(request):
-    if request.user.is_superuser:
-        formClass = ServerKeyForm
-    else:
-        formClass = ClientKeyForm
-
     if request.method == "POST":
-        form = formClass(request.POST)
-        if form.is_valid():
-            data = form.cleaned_data   
+        result = createNewClient(
+            user = request.user,
+            name = None,
+        )
+        if result:
+            messages.error(request = request, message = result)
 
-            if isinstance(form, ServerKeyForm):
-                if Interface.objects.filter(interface_type = Interface.SERVER).count() >0:
-                    form.add_error(None, "Nemohou existovat více než jeden server interface.")
-                    return render(request, 'wireguardapp/newkey.html', {'form':form})
-                
-                result = createNewServer(
-                    request.user, 
-                    data['name'], 
-                    str(data['ip_interface']),
-                    data['endpoint'] )
-                
+    return redirect("mykeys")
 
-            elif isinstance(form, ClientKeyForm):
-                result = createNewClient(
-                    user = request.user,
-                    name = data['name'],
-                )
-            if result:
-                form.add_error(None,result)
-                return render(request, 'wireguardapp/newkey.html', {'form':form})
-
-
-            return redirect("mykeys")
-    else:
-        form = formClass()
-
-    return render(request, 'wireguardapp/newkey.html',{'form':form})
 
 
 def dbdown(request):
@@ -98,8 +72,7 @@ def viewlogs(request):
         raise PermissionDenied
     
     interface = getServerInterface()
-    grouped = getLastDayDiffSnapshot()
-    
+    grouped = getLastDayDiffSnapshot(interface)
 
     return render(request, 'wireguardapp/logs.html' , {"interface":interface, "last_day_snapshots" : grouped, 'model' : PeerSnapshot})
 
@@ -109,9 +82,10 @@ def serverinterfaces(request):
     if not request.user.is_superuser:
         raise PermissionDenied
 
-    interface, serverPeers = getServerInterfaceWithPeers()
+    interface = getServerInterface()
+    serverPeers = getServerInterfacePeers(interface)
 
-    return render(request, 'wireguardapp/server.html' , {"interface" : interface, "peers":serverPeers, "is_up":checkServer()})
+    return render(request, 'wireguardapp/server.html' , {"interface" : interface, "peers" : serverPeers, "is_up" : checkServer(interface)})
 
 
 def test(request):

@@ -1,8 +1,8 @@
 from wireguardapp.models import Interface, Peer, PeerSnapshot, Key
 from django.contrib.auth.models import User
-from .dbcommands import createServerInterface,createNewKey
+from .dbcommands import createServerInterface,createNewKey,getorcreateServerInterface
 from .wireguard import startWGserver,stopWGserver,isWGserverUp,getWGPeersState
-from .selector import getServerInterface,getInterfacePeers,getOrderedPeerSnapshots,getServerPeerSnapshots
+from .selector import getInterfacePeers,getOrderedPeerSnapshots,getServerPeerSnapshots
 from django.db import transaction
 from django.db.models import OuterRef, Subquery
 from django.db.models import F, Window
@@ -13,6 +13,9 @@ import ipaddress
 import logging
 
 logger = logging.getLogger('test')
+
+def getServerInterface() -> Interface:
+    return getorcreateServerInterface()
 
 def createNewServer(user : User, name : str, ipinterface :str, endpoint:str):
     """
@@ -55,38 +58,34 @@ def createNewServer(user : User, name : str, ipinterface :str, endpoint:str):
 
     return 
 
-def startServer():
-    """ Tries to start the wireguard server interface service."""
-    return startWGserver()
+def startServer(serverInterface : Interface):
+    """ Tries to start the wireguard server interface service. See `wireguard.startWGserver` for more."""
+    return startWGserver(serverInterface)
 
-def stopServer():
-    """ Tries to stop the wireguard server interface service."""
-    return stopWGserver()
+def stopServer(serverInterface : Interface):
+    """ Tries to stop the wireguard server interface service. See `wireguard.stopWGserver` for more."""
+    return stopWGserver(serverInterface)
 
-def checkServer():
-    """ Checks if the server interface is running or stopped. 
-    :return: True for running and False for stopped server interface.
-    :rtype: bool
+def checkServer(serverInterface : Interface):
+    """ Checks if the server interface is running or stopped. See `wireguard.isWGserverUp` for more."""
+    return isWGserverUp(serverInterface)
+
+
+def getServerInterfacePeers(serverInterface : Interface):
     """
-    return isWGserverUp()
+    Gets the peers of the `serverInterface`.
 
-
-def getServerInterfaceWithPeers():
+    :return: The peers of the given interface.
+    :rtype: QuerySet[Peer]
     """
-    Gets the server interface and its own peers returned in a tuple.
+    serverPeers = getInterfacePeers(interface = serverInterface)
+    return serverPeers
 
-    :return: Tuple of the server interface and its own peers.
-    :rtype: tuple[Interface, QuerySet[Peer]]
-    """
-    interface = getServerInterface()
-    serverPeers = getInterfacePeers(interface = interface)
-    return interface, serverPeers
-
-def getServerPeersSnapshots():
+def getServerPeersSnapshots(serverInterface : Interface):
     """ Gets all server peer snapshots ordered by peer (ascending) and collected_at date (descending). """
     return getServerPeerSnapshots()
 
-def getLastDayDiffSnapshot() -> list[dict]:
+def getLastDayDiffSnapshot(serverInterface : Interface) -> list[dict]:
     """
     Gets a Snapshot of each server Peer and their bytes recieved/sent difference of the latest snapshot and second latest snapshot.
     
@@ -105,7 +104,7 @@ def getLastDayDiffSnapshot() -> list[dict]:
         ]
 
     """
-    ranked = getOrderedPeerSnapshots().filter(row_number__lte=2)
+    ranked = getOrderedPeerSnapshots(serverInterface).filter(row_number__lte=2)
 
     grouped = defaultdict(list)
 
@@ -127,10 +126,10 @@ def getLastDayDiffSnapshot() -> list[dict]:
 
     return table
 
-def getWGPeerConnectionState():
+def getWGPeerConnectionState(serverInterface : Interface):
     """
     Wrapper of the `getWGPeerState` function
 
     This function accesses the wireguard service for the `getWGPeersState` function.
     """
-    return getWGPeersState()
+    return getWGPeersState(serverInterface)

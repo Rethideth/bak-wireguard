@@ -9,7 +9,7 @@ import json
 
 
 from .services.client import deleteClient,generateClientConf
-from .services.server import checkServer,startServer,stopServer,getWGPeerConnectionState
+from .services.server import checkServer,startServer,stopServer,getWGPeerConnectionState,getServerInterface
 
 @require_POST
 @login_required
@@ -59,8 +59,9 @@ def deletekey(request):
         Key,
         id=keyId
     )
-    if (key.user != user or not user.is_superuser):
-        return JsonResponse({"success": False, "body" : "Musíte být vlastníkem klíče nebo superuser"})
+    if key.user != user:
+        if not user.is_superuser:
+            return JsonResponse({"success": False, "body" : "Musíte být vlastníkem klíče nebo superuser."})
     
     result = deleteClient(user,key)
     if result:
@@ -75,17 +76,20 @@ def toggleServer(request):
     if not user.is_superuser:
         return JsonResponse({"success" : False, "error" : "Nejste supersuper pro vypínání/zapínání serveru."})
 
-    if checkServer():
-        result = stopServer()
+    serverInterface = getServerInterface()
+
+    if checkServer(serverInterface):
+        result = stopServer(serverInterface)
     else:
-        result = startServer()
+        result = startServer(serverInterface)
 
     if result:
         return JsonResponse({"success" : False, "error" : result})
     else:
-        return JsonResponse({"success" : True, "is_up": checkServer()})
+        return JsonResponse({"success" : True, "is_up": checkServer(serverInterface)})
 
 @require_POST
 @login_required
 def getpeerstate(request):
-    return JsonResponse({"peers":getWGPeerConnectionState()})
+    serverInterface = getServerInterface()
+    return JsonResponse({"peers":getWGPeerConnectionState(serverInterface=serverInterface)})

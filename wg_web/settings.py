@@ -141,16 +141,13 @@ LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 LOGIN_URL = '/login/'
 
-LOG_DIR = BASE_DIR / 'logs'
+LOG_DIR = Path('/var/log/wgweb')
+LOG_DIR.mkdir(exist_ok=True)
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "handlers": {
-        "file": {
-            "level": "DEBUG",
-            "class": "logging.FileHandler",
-            "filename": LOG_DIR / "apache.log",
-        },
         "wg": {
             "level": "DEBUG",
             "class": "logging.FileHandler",
@@ -163,11 +160,6 @@ LOGGING = {
         }, 
     },
     "loggers": {
-        "django": {
-            "handlers": ["file"],
-            "level": "DEBUG",
-            "propagate": True,
-        },
         "wg": {
             "handlers": ["wg"],
             "level": "DEBUG",

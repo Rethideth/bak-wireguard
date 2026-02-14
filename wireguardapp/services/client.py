@@ -1,7 +1,7 @@
 from wireguardapp.models import Interface, Peer,PeerSnapshot, Key
 from .wireguard import addWGPeer,removeWGPeer,generateClientConfText
 from .dbcommands import createNewKey,createClientInterface,createClientServerPeers
-from .selector import getServerInterface
+from .server import getServerInterface
 from django.db import transaction
 from django.contrib.auth.models import User
 import logging
@@ -40,11 +40,11 @@ def createNewClient(user : User, name : str, serverInterface : Interface = getSe
         interface = createClientInterface(user,key, serverInterface)
         clientPeer, serverPeer = createClientServerPeers(serverInterface,interface)
     except TypeError as e:
-        return e.__str__()
+        return 'Interface pro alokaci ip adresy není typu server.'
     except ValueError as e:
-        return e.__str__()
+        return 'Volné ip adresy pro tento interface byly vyčerpány.'
     except:
-        return "Error with creating client"
+        return "Nastala chyba při vytváření klienta."
 
     try:
         with transaction.atomic():
@@ -61,7 +61,7 @@ def createNewClient(user : User, name : str, serverInterface : Interface = getSe
     
 
     except RuntimeError as e:
-        return e.__str__()
+        return 'Nepodařilo se přidat klientův peer do serveru.'
         
     return 
 
@@ -88,7 +88,7 @@ def deleteClient(user : User, key : Key):
             )
             key.delete()
     except RuntimeError as e:
-        return e.__str__()
+        return 'Nepodařilo se odstranit klientův peer ze serveru. Server není online.'
         
     return 
 
@@ -116,7 +116,7 @@ def generateClientConf(key : Key, onlyVpn : bool = False) -> str:
         return "Pro server nemůže být vrácená konfigurace."
     
     serverPeer = Peer.objects.get(interface = clientInterface)
-    serverInterface = getServerInterface()
+    serverInterface = Interface.objects.get(interface_key__public_key = serverPeer.peer_key)
 
     if (onlyVpn):
         return generateClientConfText( 

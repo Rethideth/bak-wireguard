@@ -9,6 +9,22 @@ KEEPALIVE = 25
 PORT =      51820  
 
 
+def getorcreateServerInterface() -> Interface:
+    """
+    Returns the server interface.
+
+    :returns: Returns the server interface
+    :rtype: Interface
+    """
+    try:
+        interface = Interface.objects.get(interface_type = Interface.SERVER)
+    except: 
+        newkey = createNewKey(None, 'server key')
+        interface = createServerInterface(newkey,'10.10.0.1/24','127.0.0.1')
+        newkey.save()
+        interface.save()
+    return interface
+
 def allocateIpaddress(serverInterface:Interface):
     """
     Allocates an ip address based on a given server interface
