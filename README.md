@@ -145,7 +145,7 @@ sudo chmod 660 /var/log/wgweb/wg.log /var/log/wgweb/test.log
 
 ## Encryption
 
-In shell copy the decoded (from binary) key and put in a .env file in project root directory. 
+In shell (use `python3`) copy the decoded (from binary) key and put in a .env file in project root directory. 
 ```
 from cryptography.fernet import Fernet
 print(Fernet.generate_key().decode())
@@ -158,6 +158,7 @@ In the .env file copy the key that was printed and paste it at `<key>`:
 ### Python
 ```
 sudo apt install python3-pip
+sudo apt install python3-venv
 ```
 
 ### Django
@@ -167,6 +168,12 @@ in virtual enviroment
   pip install mysqlclient
   pip install cryptography
   pip install python-dotenv
+```
+
+### Apache
+
+```
+sudo apt-get install python3-pip apache2 libapache2-mod-wsgi-py3
 ```
 ### Database
 ```
