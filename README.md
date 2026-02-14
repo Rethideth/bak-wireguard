@@ -8,6 +8,8 @@ Uses Apache2 server to host the website. The site is created by django and conne
 
 Uses scripts owned by root and permitted sudo for www-data to execute wireguard commands.
 
+Private key are encrypted by Fernet symmetric encryption cryptography.fernet.Fernet. The fernet key is stored in a enviroment file .env, and read when a private key need to be decrypted. 
+
 ## Apache config
 
 ```
