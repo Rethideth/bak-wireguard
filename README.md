@@ -158,6 +158,7 @@ In the .env file copy the key that was printed and paste it at `<key>`:
 ### Python
 ```
 sudo apt install python3-pip
+sudo apt install python3-venv
 ```
 
 ### Django
@@ -167,6 +168,12 @@ in virtual enviroment
   pip install mysqlclient
   pip install cryptography
   pip install python-dotenv
+```
+
+### Apache
+
+```
+sudo apt-get install python3-pip apache2 libapache2-mod-wsgi-py3
 ```
 ### Database
 ```
