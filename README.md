@@ -1,3 +1,11 @@
+# Overview
+A web interface for Wireguard.  
+Uses django users to create users for creating users keys.
+Creates a one server interface and allows to create clients keys and their configuration for connection.
+Also shows active connection state and their sent/recieved bytes.
+
+Uses Apache2 server to host the website. The site is created by django and connected to the server using mod_wsgi.
+
 ## Apache config
 
 ```
