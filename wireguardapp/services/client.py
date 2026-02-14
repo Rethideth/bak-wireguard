@@ -116,7 +116,7 @@ def generateClientConf(key : Key, onlyVpn : bool = False) -> str:
         return "Pro server nemůže být vrácená konfigurace."
     
     serverPeer = Peer.objects.get(interface = clientInterface)
-    serverInterface = Interface.objects.get(interface_key__public_key = serverPeer.peer_key)
+    serverInterface = Interface.objects.get(interface_key__public_key = serverPeer.peer_key.public_key)
 
     if (onlyVpn):
         return generateClientConfText( 

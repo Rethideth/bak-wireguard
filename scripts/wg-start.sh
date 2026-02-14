@@ -11,6 +11,7 @@ if [[ ! -f "$SRC" ]]; then
   exit 1
 fi
 
+sysctl -w net.ipv4.ip_forward=1
 
 install -o root -g root -m 600 "$SRC" "$DST"
 

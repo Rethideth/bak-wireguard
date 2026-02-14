@@ -75,6 +75,7 @@ def generateServerConfText(serverInterface : Interface):
     """
     Creates the text for the server configuration file based on the interface given.
     Raises an exception if it is not given a server interface.
+    Starting script enables port forwarding.
     
     :param serverInterface: The server interface to create the configuration file.
     :type serverInterface: 
@@ -94,16 +95,15 @@ def generateServerConfText(serverInterface : Interface):
         ListenPort =                # Server listening port (51820)
         Address =                   # Server ip interface. Has its own ip address and bit mask
         SaveConfig = true           # On Interface down, saves the state of the wireguard peers from `wg set` and writes it into the config
-        PostUp =                                                                        # add network rules on interface starting
-            sysctl -w net.ipv4.ip_forward=1;                                            # enable port forwarding
-            iptables -t nat -A POSTROUTING -o <internet_interface> -j MASQUERADE;       # rewrites the incoming traffic origin address to the interface 
-            iptables -A FORWARD -i <wireguard_interface> -j ACCEPT;                                 # enables forwarding of packets from and into wg-server
-            iptables -A FORWARD -o wg-server -j ACCEPT; 
-    PostDown =                                                                          # removes network rules in interface stopping
-            sysctl -w net.ipv4.ip_forward=0; 
-            iptables -t nat -D POSTROUTING -o {INTERNET_INTERFACE} -j MASQUERADE; 
-            iptables -D FORWARD -i wg-server -j ACCEPT; 
-            iptables -D FORWARD -o wg-server -j ACCEPT; 
+        PostUp =                                                                            # add network rules on interface starting
+            iptables -t nat -A POSTROUTING -o <internet_interface> -j MASQUERADE;           # rewrites the incoming traffic origin address to the interface with internet access
+            iptables -A FORWARD -i <wireguard_interface> -o <internet_interface> -j ACCEPT; # enables forwarding of packets from and into wg-server
+            iptables -A FORWARD -o <wireguard_interface> -i <internet_interface> -m state --state RELATED,ESTABLISHED -j ACCEPT; 
+                                                                                            # enables responses 
+    PostDown =                                                                              # removes network rules in interface stopping
+            iptables -t nat -D POSTROUTING -o <internet_interface>  -j MASQUERADE; 
+            iptables -D FORWARD -i <wireguard_interface> -o <internet_interface> -j ACCEPT; 
+            iptables -D FORWARD -o <wireguard_interface> -i <internet_interface> -m state --state RELATED,ESTABLISHED -j ACCEPT; 
 
         [Peer]
         PublicKey =                 # clients public key  
@@ -121,14 +121,12 @@ PrivateKey = {decrypt_value(serverInterface.interface_key.private_key)}
 ListenPort = {serverInterface.listen_port}
 Address = {serverInterface.ip_address}
 SaveConfig = true
-PostUp = sysctl -w net.ipv4.ip_forward=1
 PostUp = iptables -t nat -A POSTROUTING -o {INTERNET_INTERFACE} -j MASQUERADE
-PostUp = iptables -A FORWARD -i {serverInterface.name} -j ACCEPT
-PostUp = iptables -A FORWARD -o {serverInterface.name} -j ACCEPT
-PostDown = sysctl -w net.ipv4.ip_forward=0; \\
-PostDown = iptables -t nat -D POSTROUTING -o {INTERNET_INTERFACE} -j MASQUERADE; \\
-PostDown = iptables -D FORWARD -i {serverInterface.name} -j ACCEPT; \\
-PostDown = iptables -D FORWARD -o {serverInterface.name} -j ACCEPT \\
+PostUp = iptables -A FORWARD -i {serverInterface.name} -o {INTERNET_INTERFACE} -j ACCEPT
+PostUp = iptables -A FORWARD -o {serverInterface.name} -i {INTERNET_INTERFACE} -m state --state RELATED,ESTABLISHED -j ACCEPT
+PostDown = iptables -t nat -D POSTROUTING -o {INTERNET_INTERFACE} -j MASQUERADE
+PostDown = iptables -D FORWARD -i {serverInterface.name} -o {INTERNET_INTERFACE} -j ACCEPT 
+PostDown = iptables -D FORWARD -o {serverInterface.name} -i {INTERNET_INTERFACE} -m state --state RELATED,ESTABLISHED -j ACCEPT 
 """.strip()
     
     for peer in serverPeers:
