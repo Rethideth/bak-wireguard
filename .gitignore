@@ -14,3 +14,4 @@ venv/
 # extra stuff
 logs/
 .env
+sphinx

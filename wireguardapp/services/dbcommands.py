@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from .wireguard import generateKeyPair
 from .crypto import encrypt_value,decrypt_value
 import ipaddress
+import re
 from django.utils import timezone
 
 KEEPALIVE = 25
@@ -110,6 +111,22 @@ def createClientInterface(user : User,key : Key, serverInterface :Interface) -> 
 
     return interface
 
+def makeServerNewName() -> str:
+    """
+    Provides a unique name for a server interface.
+    Creates a name in a form `wg-server{num}`.
+
+    :return: Generated name for the server interface.
+    :rtype: str
+    """
+
+    names = Interface.objects.filter(interface_type = Interface.SERVER).values_list('name',flat=True)
+    nums = [int(re.search(r'\d+',x).group()) for x in names]
+
+    num = max(nums,default=-1)
+
+    return f'wg-server{num+1}'
+
 def createServerInterface(key : Key, ipinterface : str, endpoint : str):
     """
     Creates a Interface object for a server interface.
@@ -134,7 +151,8 @@ def createServerInterface(key : Key, ipinterface : str, endpoint : str):
     """
     # not correct format -> error
     ipaddress.ip_interface(ipinterface)
-    name = 'wg-server'
+
+    name = makeServerNewName()
     interface = Interface(
         name = name,
         interface_key = key,

@@ -36,7 +36,7 @@ class ClientKeyForm(forms.Form):
 
 
 
-class ServerKeyForm(forms.Form):
+class ServerInterfaceForm(forms.Form):
     def checkInterface(value):
         try:
             interface = ipaddress.ip_interface(value) 
@@ -56,8 +56,8 @@ class ServerKeyForm(forms.Form):
     name = forms.CharField(max_length=255)
     ip_interface = forms.CharField(help_text='Například: 10.10.0.1/24',
                                  validators=[checkInterface])
-    endpoint = forms.GenericIPAddressField(protocol='ipv4')
-    
+    endpoint = forms.CharField(max_length=64)
+    port = forms.IntegerField(max_value=65535,initial=51820)
 
 
 

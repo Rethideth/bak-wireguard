@@ -18,6 +18,7 @@ urlpatterns = [
     path('server/', views.serverinterfaces, name='server'),
     path('server/toggle', ajax.toggleServer,name='toggleserver'),
     path('server/state',ajax.getpeerstate,name='peerstate'),
+    path('server/new', views.newinterface,name='newinterface'),
     path('test/',views.test)
 ]
     

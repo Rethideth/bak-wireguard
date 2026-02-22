@@ -17,13 +17,12 @@ logger = logging.getLogger('test')
 def getServerInterface() -> Interface:
     return getorcreateServerInterface()
 
-def createNewServer(user : User, name : str, ipinterface :str, endpoint:str):
+def createNewServer(name : str, ipinterface :str, endpoint:str):
     """
-    Creates a new server for wireguard. There will be only one server interface. 
+    Creates a new server for wireguard.
     Will create a new key and a interface and then save them, if there weren't any errors.
+    The key of the server interface is not owned by any user.
     
-    :param user: The user who has the server key.
-    :type user: User
 
     :param name: The name for the server key.
     :type name: str
@@ -41,16 +40,16 @@ def createNewServer(user : User, name : str, ipinterface :str, endpoint:str):
     :return: None if executed without errors, string for a message what kind of error happened to send back to the web page form.
     :rtype: None | str
     """
-    if Interface.objects.filter(interface_type = Interface.SERVER).count() > 0:
-        return 'Může existovat jenom jeden server interface.'
     try:
-        key = createNewKey(user,name)
+        key = createNewKey(None,name)
         interface = createServerInterface(
             key = key,
             ipinterface = ipinterface,
             endpoint = endpoint)
+    except ValueError:
+        return "Ip adresa interface není validní."
     except:
-        return "Nemohlo se vytvořit klíč a interface pro server-"
+        return "Selhalo vytváření nového interface serveru."
     
     with transaction.atomic():
         key.save()

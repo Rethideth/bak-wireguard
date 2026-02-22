@@ -11,10 +11,11 @@ from .services.server import createNewServer,checkServer,getServerInterfacePeers
 
 from django.core.exceptions import PermissionDenied
 
-from .forms import CustomUserCreationForm, ClientKeyForm,ServerKeyForm
+from .forms import CustomUserCreationForm, ClientKeyForm,ServerInterfaceForm
 
 from datetime import datetime
 from django.utils import timezone
+from django.http import HttpRequest
 import logging
 from django.conf import settings
 
@@ -22,15 +23,16 @@ logger = logging.getLogger('test')
 # Create your views here.
 
 
-def home(request):
+def home(request : HttpRequest):
+    
     return render(request, 'wireguardapp/main.html')
 
 @login_required
-def test(request):
+def test(request : HttpRequest):
     return render(request, 'wireguardapp/test.html')
 
 
-def register(request):
+def register(request : HttpRequest):
     if request.method == "POST":
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
@@ -43,14 +45,14 @@ def register(request):
     return render(request, 'registration/register.html', {'form': form})
 
 @login_required
-def mykeys(request):
+def mykeys(request : HttpRequest):
     keys = Key.objects.filter(user=request.user)
     return render(request, 'wireguardapp/mykeys.html', {'keys':keys})
 
 
 
 @login_required
-def newkey(request):
+def newkey(request : HttpRequest):
     if request.method == "POST":
         result = createNewClient(
             user = request.user,
@@ -61,13 +63,18 @@ def newkey(request):
 
     return redirect("mykeys")
 
+def newinterface(request : HttpRequest):
+    if request.method == "POST":
+        pass
+
+    return redirect("serverinterfaces")
 
 
-def dbdown(request):
+def dbdown(request : HttpRequest):
     return render(request, 'wireguardapp/dbdown.html', status=503)
 
 @login_required
-def viewlogs(request):
+def viewlogs(request : HttpRequest):
     if not request.user.is_superuser:
         raise PermissionDenied
     
@@ -78,7 +85,7 @@ def viewlogs(request):
 
 
 @login_required
-def serverinterfaces(request):
+def serverinterfaces(request : HttpRequest):
     if not request.user.is_superuser:
         raise PermissionDenied
 
@@ -88,5 +95,5 @@ def serverinterfaces(request):
     return render(request, 'wireguardapp/server.html' , {"interface" : interface, "peers" : serverPeers, "is_up" : checkServer(interface)})
 
 
-def test(request):
+def test(request : HttpRequest):
     return render(request, 'wireguardapp/test.html' )

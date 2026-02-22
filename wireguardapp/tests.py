@@ -1,9 +1,11 @@
 from unittest import TestCase
 from django.contrib.auth import get_user_model
+from wireguardapp.services.dbcommands import createNewKey
 from .models import Interface,Peer, Key
 import ipaddress
 import os
 import subprocess
+import re
 # Create your tests here.
 
 SUBNET              = "23"
@@ -22,27 +24,19 @@ class TestSyntax(TestCase):
                 return str(ipaddress.IPv4Network(ip))
         return False
     
+    def testKey(self):
+        key = createNewKey(None, "baf")
+        print(key)
+        key.save()
+        return True
+    
+    def testname(self):
+        names = ["wg-server1",'wg-server2','wg-server4']
+        names2 = []
+        nums = [int(re.search(r'\d+',x).group()) for x in names]
+        num = max(nums,default=-1)
+        
+        print(num+1)
 
-class TestSubprocess(TestCase):
-    def workingCommand(self):
-        serverInterfaceName = 'wg-server'
-        peerKey = 'B5L3cSXODu237hSD6uIBlV5lFHJxUw0wMqMM/X53CwQ='
-        ipAddress = '10.10.0.10/32'
-        try:
-            result = subprocess.run(
-                [
-                    "/var/www/bakproject/scripts/enablepeer.sh", 
-                    serverInterfaceName, peerKey,ipAddress
-                ],
-                check=True,
+        return True
 
-            )
-        except subprocess.CalledProcessError as e:
-            print("Cannot add a new peer")
-            print("stderr:", e.stderr)
-            raise ZeroDivisionError
-        except PermissionError:
-            print("Permission denied")
-            raise ZeroDivisionError
-
-        raise NameError
