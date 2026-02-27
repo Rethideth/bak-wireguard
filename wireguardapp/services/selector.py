@@ -20,6 +20,8 @@ def getClientsServerInterface(clientKey : Key):
     clientpeer = Peer.objects.get(interface__interface_key = clientKey)
     return Interface.objects.get(interface_key = clientpeer.peer_key)
 
+def selectServerInterfaceFromId(interfaceId : int) -> Interface:
+    return Interface.objects.get(id = interfaceId)
 
 def getUserKeys(user : User):
     """
@@ -70,18 +72,16 @@ def getInterfacePeers(interface :Interface):
     """
     return Peer.objects.filter(interface = interface)
 
-def getKeyFromId(idKey :int) -> Key:
+def selectKeyFromId(keyId :int) -> Key | None:
     """
     Gets the instance of a key based on a given id if it exists.
 
-    :param idKey: The id of the key to return
-    :type idKey: int
+    :param keyId: The id of the key to return
+    :type keyId: int
 
-    :returns: Instance of a key based on the provided id.
-    :rtype: Key
-
-    :raises DoesNotExist: If the searched key does not exists.
+    :returns: Instance of a key based on the provided id or None.
+    :rtype: Key | None
     """
-    return Key.objects.get(
-        id=idKey,
-    )
+    return Key.objects.filter(
+        id=keyId,
+    ).first()

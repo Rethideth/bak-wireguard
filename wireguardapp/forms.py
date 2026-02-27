@@ -44,25 +44,31 @@ class ClientKeyForm(forms.Form):
 class ServerInterfaceForm(forms.Form):
     def checkInterface(value):
         try:
-            interface = ipaddress.ip_interface(value) 
+            network = ipaddress.ip_network(value) 
         except ValueError:
-            raise forms.ValidationError("Vložte správnou ip addresu se net maskou")
+            raise forms.ValidationError("Vložte správnou ip adresu sítě s net maskou.")
         
 
-        serverInterfaces = Interface.objects.filter(
-            interface_type=Interface.SERVER).values_list('ip_address',flat=True)
+        serverInterfaces = getAllServerInterfaces().values_list('ip_address',flat=True)
         for inf in serverInterfaces:
-            if ipaddress.IPv4Interface(inf).network.overlaps(interface.network):
+            taken = ipaddress.ip_interface(inf)
+            if taken.network.overlaps(network):
                 raise forms.ValidationError(f"Tato síť je už obsazena. (síť: {inf})")
 
-        return interface
+        return network
     
+    def checkPort(value):
+        serverPorts = getAllServerInterfaces().values_list('listen_port',flat=True)
+        for port in serverPorts:
+            if port == value:
+                raise forms.ValidationError(f"Tento port je už obsazený jiným serverem.")
+        
 
     name = forms.CharField(max_length=255)
-    ip_interface = forms.CharField(help_text='Například: 10.10.0.1/24',
+    ip_network = forms.CharField(help_text='Například: 10.10.0.0/24',
                                  validators=[checkInterface])
     endpoint = forms.CharField(max_length=64)
-    port = forms.IntegerField(max_value=65535,initial=51820)
+    port = forms.IntegerField(min_value=0,max_value=65535,initial=51820,validators=[checkPort])
 
 
 

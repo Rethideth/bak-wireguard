@@ -7,11 +7,22 @@ from django.conf import settings
 import logging
 import time
 import datetime
+import psutil
 
 logger = logging.getLogger('wg')
 
 INTERNET_INTERFACE = 'wlo1'
 
+EXCLUDED_PREFIXES = (
+    "lo",
+    "docker",
+    "br-",
+    "veth",
+    "virbr",
+    "wg",
+    "tun",
+    "tap",
+)
 
 def generateClientConfText(
         clientInterface : Interface,
@@ -71,7 +82,7 @@ PersistentKeepalive = {serverPeer.persistent_keepalive}
     return conf
     
 
-def generateServerConfText(serverInterface : Interface):
+def generateServerConfText(serverInterface : Interface, interfaceInternetName : str):
     """
     Creates the text for the server configuration file based on the interface given.
     Raises an exception if it is not given a server interface.
@@ -79,6 +90,10 @@ def generateServerConfText(serverInterface : Interface):
     
     :param serverInterface: The server interface to create the configuration file.
     :type serverInterface: 
+
+    :param interfaceInternetName: The name of a interface to forward wireguard data transfer to. It needs to have a internet access to function.
+        Usualy it will be 'eth0'.
+    :type interfaceInternetName: 
     
     :return: Text of the configuration file for the server.
     :rtype: str
@@ -121,12 +136,12 @@ PrivateKey = {decrypt_value(serverInterface.interface_key.private_key)}
 ListenPort = {serverInterface.listen_port}
 Address = {serverInterface.ip_address}
 SaveConfig = true
-PostUp = iptables -t nat -A POSTROUTING -o {INTERNET_INTERFACE} -j MASQUERADE
-PostUp = iptables -A FORWARD -i {serverInterface.name} -o {INTERNET_INTERFACE} -j ACCEPT
-PostUp = iptables -A FORWARD -o {serverInterface.name} -i {INTERNET_INTERFACE} -m state --state RELATED,ESTABLISHED -j ACCEPT
-PostDown = iptables -t nat -D POSTROUTING -o {INTERNET_INTERFACE} -j MASQUERADE
-PostDown = iptables -D FORWARD -i {serverInterface.name} -o {INTERNET_INTERFACE} -j ACCEPT 
-PostDown = iptables -D FORWARD -o {serverInterface.name} -i {INTERNET_INTERFACE} -m state --state RELATED,ESTABLISHED -j ACCEPT 
+PostUp = iptables -t nat -A POSTROUTING -o {interfaceInternetName} -j MASQUERADE
+PostUp = iptables -A FORWARD -i {serverInterface.name} -o {interfaceInternetName} -j ACCEPT
+PostUp = iptables -A FORWARD -o {serverInterface.name} -i {interfaceInternetName} -m state --state RELATED,ESTABLISHED -j ACCEPT
+PostDown = iptables -t nat -D POSTROUTING -o {interfaceInternetName} -j MASQUERADE
+PostDown = iptables -D FORWARD -i {serverInterface.name} -o {interfaceInternetName} -j ACCEPT 
+PostDown = iptables -D FORWARD -o {serverInterface.name} -i {interfaceInternetName} -m state --state RELATED,ESTABLISHED -j ACCEPT 
 """.strip()
     
     for peer in serverPeers:
@@ -250,7 +265,7 @@ def removeWGPeer(serverInterfaceName :str, peerKey : str):
 
 
 
-def startWGserver(serverInterface : Interface):
+def startWGserver(serverInterface : Interface, interfaceInternetName : str):
     """
     Starts the server interface using a privileged bash script wg-start.sh.
     The interface will have a generated config file based on the server interface and its own peers.
@@ -260,11 +275,17 @@ def startWGserver(serverInterface : Interface):
 
     :param serverInterface: The server interface to start.
     :type serverInterface: Interface
+
+    :param interfaceInternetName: The name of a interface to forward wireguard data transfer to. It needs to have a internet access to function.
+        Usualy it will be 'eth0'.
+    :type interfaceInternetName: 
     
     :raises CalledProcessError: If the script fail to execute fully
     :raises TypeError: If the provided `serverInterface` does not have a server type.
     """
-    conf, servername = generateServerConfText(serverInterface=serverInterface)
+    conf, servername = generateServerConfText(
+                serverInterface=serverInterface, 
+                interfaceInternetName=interfaceInternetName)
 
     with tempfile.NamedTemporaryFile(
         mode='w',
@@ -292,7 +313,7 @@ def startWGserver(serverInterface : Interface):
         logger.error(f"({datetime.datetime.now()}): wg-start.sh script has failed.")
         logger.error(f"STDOUT: {e.stdout}")
         logger.error(f"STDERR: {e.stderr}")
-        return 
+        return e.stderr
     
     logger.info(f"({datetime.datetime.now()}): Wireguard server has been started.")
 
@@ -326,7 +347,7 @@ def stopWGserver(serverInterface : Interface):
         logger.error(f"({datetime.datetime.now()}): wg-stop.sh script has failed.")
         logger.error(f"STDOUT: {e.stdout}")
         logger.error(f"STDERR: {e.stderr}")
-        return 
+        return e.stderr
     
     logger.info(f"({datetime.datetime.now()}): Wireguard server has been stopped.")
 
@@ -434,3 +455,37 @@ def getWGPeersState(serverInterface :Interface):
 
     except Exception:
         return []
+    
+
+def selectAllNetworkInterfaces() -> list[str]:
+    """
+    Gets all available network interfaces of this device. Uses `/sys/class/net` directory to get names of all interfaces.
+    Used to select the interface to forward the VPN network transfer into.
+
+    :returns: List of interfaces names e.g. ['eth0', 'wlo0', 'lo']
+    :rtype: list[str]
+    """
+    
+    interfaces = []
+    stats = psutil.net_if_stats()
+    addrs = psutil.net_if_addrs()
+
+    for iface, iface_stats in stats.items():
+        # Skip excluded prefixes
+        if iface.startswith(EXCLUDED_PREFIXES):
+            continue
+
+        # Must be UP
+        if not iface_stats.isup:
+            continue
+
+        # Must have an IPv4 address
+        has_ipv4 = any(addr.family.name == "AF_INET"
+                       for addr in addrs.get(iface, []))
+
+        if not has_ipv4:
+            continue
+
+        interfaces.append(iface)
+
+    return interfaces

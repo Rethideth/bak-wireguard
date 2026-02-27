@@ -179,6 +179,7 @@ in virtual enviroment
   pip install mysqlclient
   pip install cryptography
   pip install python-dotenv
+  pip install psutil
 ```
 
 ### Apache

@@ -1,8 +1,8 @@
 from wireguardapp.models import Interface, Peer, PeerSnapshot, Key
 from django.contrib.auth.models import User
-from .dbcommands import createServerInterface,createNewKey,getorcreateServerInterface
-from .wireguard import startWGserver,stopWGserver,isWGserverUp,getWGPeersState
-from .selector import getInterfacePeers,getOrderedPeerSnapshots,getServerPeerSnapshots,getAllServerInterfaces
+from .dbcommands import createServerInterface,createNewKey,selectFirstServerInterface,saveServer,deleteServer
+from .wireguard import startWGserver,stopWGserver,isWGserverUp,getWGPeersState,selectAllNetworkInterfaces
+from .selector import getInterfacePeers,getOrderedPeerSnapshots,getServerPeerSnapshots,getAllServerInterfaces,selectServerInterfaceFromId
 from django.db import transaction
 from django.db.models import OuterRef, Subquery
 from django.db.models import F, Window
@@ -14,14 +14,19 @@ import logging
 
 logger = logging.getLogger('test')
 
+
+
 def getServerInterface() -> Interface:
-    return getorcreateServerInterface()
+    return selectFirstServerInterface()
+
+def getServerInterfaceFromId(interfaceId : int):
+    return selectServerInterfaceFromId(interfaceId)
 
 def getServerInterfaces():
     """Returns all server interfaces. See `selector.getAllServerInterface` for more."""
     return getAllServerInterfaces()
 
-def createNewServer(name : str, ipinterface :str, endpoint:str):
+def createNewServer(name : str, ipNetwork : str, endpoint : str, port : str):
     """
     Creates a new server for wireguard.
     Will create a new key and a interface and then save them, if there weren't any errors.
@@ -31,15 +36,15 @@ def createNewServer(name : str, ipinterface :str, endpoint:str):
     :param name: The name for the server key.
     :type name: str
 
-    :param ipinterface: The private network ip address for the server interface.
-        Specifies the ip address and the network of the interface. 
-        E.g 10.10.0.2/24 -> ip address of the interface will be 10.10.0.2
-        and the network of the interface is 10.10.0.0/24
-    :type ipinterface: str
+    :param ipNetwork: The network of the new server interface. Has a form like `10.10.1.0/24` network address/mask
+        Will select first available ip address interface from the network.
+    :type ipNetwork: str
 
     :param endpoint: The public address of the wireguard VPN server. Port will be only 51820.
     :type endpoint: str
 
+    :param port: Port of the wireguard server interface.
+    :type port: str
 
     :return: None if executed without errors, string for a message what kind of error happened to send back to the web page form.
     :rtype: None | str
@@ -48,22 +53,33 @@ def createNewServer(name : str, ipinterface :str, endpoint:str):
         key = createNewKey(None,name)
         interface = createServerInterface(
             key = key,
-            ipinterface = ipinterface,
-            endpoint = endpoint)
+            ipNetwork = ipNetwork,
+            endpoint = endpoint,
+            port = port)
     except ValueError:
-        return "Ip adresa interface není validní."
+        return "Hodnoty nového server interface nejsou validní."
     except:
         return "Selhalo vytváření nového interface serveru."
     
-    with transaction.atomic():
-        key.save()
-        interface.save()
+    saveServer(key,interface)
 
     return 
 
-def startServer(serverInterface : Interface):
+def removeServer(serverInterface : Interface):
+    """
+    Removes the server by the given interface.
+    It will try to stop the server wireguard interface first, then deletes the server key.
+    The deleted key will cascade to its interface.
+
+    :param serverInterface: The server interface to be deleted
+    :type serverInterface: Interface
+    """
+    stopServer(serverInterface)
+    deleteServer(serverInterface.interface_key)
+
+def startServer(serverInterface : Interface, interfaceInternetName : str):
     """ Tries to start the wireguard server interface service. See `wireguard.startWGserver` for more."""
-    return startWGserver(serverInterface)
+    return startWGserver(serverInterface, interfaceInternetName)
 
 def stopServer(serverInterface : Interface):
     """ Tries to stop the wireguard server interface service. See `wireguard.stopWGserver` for more."""
@@ -132,3 +148,7 @@ def getWGPeerConnectionState(serverInterface : Interface):
     This function accesses the wireguard service for the `getWGPeersState` function.
     """
     return getWGPeersState(serverInterface)
+
+def getNetworkInterfaces():
+    """Gets the list of all available network interfaces. See `selectAllNetworkInterfaces` for more."""
+    return selectAllNetworkInterfaces()

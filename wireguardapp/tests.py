@@ -39,4 +39,19 @@ class TestSyntax(TestCase):
         print(num+1)
 
         return True
+    
+    def testnetstat(self):
+        args = ["netstat", "-i"]
+        result = subprocess.run(
+            args=args,
+            capture_output=True,
+            text=True)
+        
+        lines = result.stdout.strip().split('\n')
+
+        for i in range(2,len(lines),1):
+            line = lines[i].split(' ')
+            print(line[0])
+
+        return False
 

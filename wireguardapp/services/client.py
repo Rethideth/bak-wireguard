@@ -1,13 +1,18 @@
 from wireguardapp.models import Interface, Peer,PeerSnapshot, Key
 from .wireguard import addWGPeer,removeWGPeer,generateClientConfText
 from .dbcommands import createNewKey,createClientInterface,createClientServerPeers,saveClient,deleteClient
-from .selector import getClientsServerInterface
+from .selector import getClientsServerInterface,selectKeyFromId
 from django.db import transaction
 from django.contrib.auth.models import User
+
 import logging
 import ipaddress
 
 logger = logging.getLogger('test')
+
+def getKeyById(keyId :int)-> Key:
+    """"""
+    return selectKeyFromId(keyId=keyId)
 
 
 def createNewClient(user : User, name : str, serverInterface : Interface):
@@ -90,7 +95,6 @@ def removeClient(user : User, key : Key):
         return 'Nepodařilo se odstranit klientův peer ze serveru. Server není online.'
         
     return 
-
 
 
 def generateClientConf(key : Key, onlyVpn : bool = False) -> str:

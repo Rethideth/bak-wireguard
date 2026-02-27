@@ -10,20 +10,14 @@ from django.db import transaction
 KEEPALIVE = 25
 PORT =      51820  
 
-def getorcreateServerInterface() -> Interface:
+def selectFirstServerInterface() -> Interface:
     """
     Returns the server interface.
 
     :returns: Returns the server interface
     :rtype: Interface
     """
-    try:
-        interface = Interface.objects.get(interface_type = Interface.SERVER)
-    except: 
-        newkey = createNewKey(None, 'server key')
-        interface = createServerInterface(newkey,'10.10.0.1/24','127.0.0.1')
-        newkey.save()
-        interface.save()
+    interface = Interface.objects.filter(interface_type = Interface.SERVER).first()
     return interface
 
 def allocateIpaddress(serverInterface:Interface):
@@ -125,9 +119,9 @@ def makeServerNewName() -> str:
 
     num = max(nums,default=-1)
 
-    return f'wg-server{num+1}'
+    return f'wg{num+1}'
 
-def createServerInterface(key : Key, ipinterface : str, endpoint : str):
+def createServerInterface(key : Key, ipNetwork : str, endpoint : str, port : str):
     """
     Creates a Interface object for a server interface.
     Execute when there is no server interface yet.
@@ -136,30 +130,35 @@ def createServerInterface(key : Key, ipinterface : str, endpoint : str):
     :param key: Key for this interface
     :type key: Key
 
-    :param ipinterface: Ip interface with its own bit mask (e.g '10.0.0.2/24'). 
-        will later on allocate ip addresses based on this network
-        except selected ip address in the given address (e.g '10.0.0.2/32')
-    :type ipinterface: str
+    :param ipNetwork: The network of the new server interface. Has a form `10.10.1.0/24`
+        Will select first available ip address interface from the network.
+    :type ipNetwork: str
 
     :param endpoint: Server will use this endpoint to generate wireguard client configuration files.
     :type endpoint: str
 
+    :param port: Port of the server interface between 0 and 65535.
+    :type port: str
+
     :return: Returns the created and unsaved interfaces
     :rtype: Interface
 
-    :raises ValueError: if the ipinterface is not a ip address with a bit mask.
+    :raises ValueError: if .
     """
     # not correct format -> error
-    ipaddress.ip_interface(ipinterface)
+    network = ipaddress.ip_network(ipNetwork)
+    address = next( network.hosts())
+    interface = ipaddress.ip_interface(f"{address}/{network.prefixlen}")
 
     name = makeServerNewName()
+
     interface = Interface(
         name = name,
         interface_key = key,
-        ip_address = ipinterface,
+        ip_address = interface,
         interface_type = Interface.SERVER,
         server_endpoint = endpoint,
-        listen_port = PORT  
+        listen_port = port  
     )
 
     return interface
@@ -217,6 +216,13 @@ def saveClient(clientKey : Key, clientInterface : Interface, clientPeer : Peer, 
         Interface.save(clientInterface)
         Peer.save(clientPeer)
         Peer.save(serverPeer)
+    return
+
+
+def saveServer(serverKey : Key, serverInterface : Interface):
+    with transaction.atomic():
+        Key.save(serverKey)
+        Interface.save(serverInterface)
 
 def deleteClient(clientKey : Key):
     """
@@ -240,3 +246,6 @@ def saveKeyName(key : Key, name : str):
     """
     key.name = name
     key.save(update_fields=['name'])
+
+def deleteServer(serverKey: Key):
+    serverKey.delete()

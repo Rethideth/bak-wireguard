@@ -6,101 +6,147 @@
 
 
 <div class="container mt-4">
-<h1 class="mb-4">Rozhraní serveru</h1>
-    {% if not interface %}
-        <p>Zatím nejsou žádné rozhraní serveru</p>
-    {% else %}
-    <div class="card mb-3">
-        <!-- if there would be more server interfaces if the project changes-->
-        <div class="card-header">
-                <input
-                type="text"
-                value="{{interface.interface_key.name}}"
-                data-id="{{ interface.interface_key.id }}"
-                class="form-control key-name-input"
-                >
+<h1 class="mb-4">Rozhraní serverů</h1>
+
+    <nav>
+        <div class="nav nav-tabs" id="nav-tab" role="tablist">
+            {% for inf in interfaces %}
+                    <button 
+                        class="nav-link {% if forloop.first %} active {% endif %}" 
+                        id="nav-{{inf.interface.name}}-tab" 
+                        data-bs-toggle="tab" 
+                        data-bs-target="#nav-{{inf.interface.name}}" 
+                        type="button" 
+                        role="tab" 
+                        aria-controls="nav-{{inf.interface.name}}" 
+                        aria-selected="{% if forloop.first %}true {% else %} false {% endif %}">
+                        {{inf.interface.name}}
+                    </button>       
+            {% endfor %}
         </div>
-        <div class="card-body">
-            <div class="container mb-4">
-                
+    </nav>
+    <div class="tab-content" id="nav-tabContent">
+        {% for inf in interfaces %}
+            <div    class="tab-pane fade {% if forloop.first %} show active {% endif %}" 
+                    id="nav-{{inf.interface.name}}" 
+                    role="tabpanel" 
+                    aria-labelledby="nav-{{inf.interface.name}}-tab" 
+                    tabindex="0">
+<!--///////////////////////////////////////////////Server Interface Dashboard Card///////////////////////////////////////////////////////-->
                     
-                <table class="table" style="overflow-x: auto;max-width: 600px;">
-                <thead>
-                </thead>
-                <tbody>
-                    <tr>
-                    <th>Jméno serveru: </th>
-                    <td>{{interface.name}}</td>
-                    </tr>
-                    <tr>
-                    <th>Veřejný klíč serveru: </th>
-                    <td>{{interface.interface_key.public_key}}</td>
-                    </tr>
-                    <tr>
-                    <th>Ip adresa wireguard rozhraní </th>
-                    <td>{{interface.ip_address}}</td>
-                    </tr>
-                    <tr>
-                    <th>Endpoint serveru </th>
-                    <td>{{interface.server_endpoint}}</td>
-                    </tr>
-                    <tr>
-                    <th>Port wireguard rozhraní </th>
-                    <td>{{interface.listen_port}}</td>
-                    </tr>
-                </tbody>
-                </table>
+                <div class="card mb-3">
+                    <div class="card-header">
+                            <input
+                            type="text"
+                            value="{{inf.interface.interface_key.name}}"
+                            data-id="{{ inf.interface.interface_key.id }}"
+                            class="form-control key-name-input"
+                            >
+                    </div>
+                    <div class="card-body">
+                        <div class="container mb-4">  
+                            <table class="table" style="overflow-x: auto;max-width: 600px;">
+                            <thead>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                <th>Jméno serveru: </th>
+                                <td>{{inf.interface.name}}</td>
+                                </tr>
+                                <tr>
+                                <th>Veřejný klíč serveru: </th>
+                                <td>{{inf.interface.interface_key.public_key}}</td>
+                                </tr>
+                                <tr>
+                                <th>Ip adresa wireguard rozhraní </th>
+                                <td>{{inf.interface.ip_address}}</td>
+                                </tr>
+                                <tr>
+                                <th>Endpoint serveru </th>
+                                <td>{{inf.interface.server_endpoint}}</td>
+                                </tr>
+                                <tr>
+                                <th>Port wireguard rozhraní </th>
+                                <td>{{inf.interface.listen_port}}</td>
+                                </tr>
+                            </tbody>
+                            </table>
+                            
+                        </div>
+
+                        <label for="network">
+                            Interface pro přesměrování přenosu: 
+                        </label>
+                        <select name="networks form-control" id="network-{{inf.interface.id}}">
+                            {% for network in networks %}
+                                <option value="{{network}}">{{network}}</option>
+                            {% endfor%}
+                        </select>
+
+
+                        <div style="overflow-y: auto;max-height: 300px;" >
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                    <th scope="col">Uživatel</th>
+                                    <th scope="col">Veřejný klíč</th>
+                                    <th scope="col">Jméno klíče</th>
+                                    <th scope="col">Smazat klíč?</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for peer in inf.peers %}
+                                    <tr class="tablerow">
+                                    <th>{{peer.peer_key.user}}</th>
+                                    <td>{{peer.peer_key.public_key}}</td>
+                                    <td>{{peer.peer_key.name}}</td>
+                                    <td>
+                                        <button 
+                                            class="btn btn-secondary delete-button"
+                                            name="button-deletekey"
+                                            type="submit" 
+                                            data-id="{{peer.peer_key.id}}"
+                                            onclick="return confirm('Opravdy chcete odstranit tento klíč?');">
+                                            Odstranit klíč
+                                        </button>
+                                    </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                            <button 
+                                class="btn wg-toggle {% if inf.is_up %}btn-success{% else %}btn-danger{% endif %}"
+                                data-id="{{inf.interface.id}}">
+                            
+                            <span id="btn-text-{{inf.interface.id}}">
+                                {% if inf.is_up %}Interface UP{% else %}Interface DOWN{% endif %}
+                            </span>
+
+                            <span id="btn-spinner-{{inf.interface.id}}"
+                                class="spinner-border spinner-border-sm ms-2 d-none"
+                                role="status">
+                            </span>
+                            </button>
+                        
+                            <form method="post" style="display:inline;" action="{% url 'deleteinterface' %}">
+                                <input type="hidden" name="id" value="{{ inf.interface.id }}">
+                                {% csrf_token %}
+                                <button class="btn btn-primary danger" onclick="return confirm('Are you sure?')" type="submit" >Smazat server interface</button>
+                            </form>
+                   
+                    </div>
+                </div>
+<!--/////////////////////////////////////////////// End Server Interface Dashboard Card///////////////////////////////////////////////////////-->
                 
             </div>
-
-
-            <div style="overflow-y: auto;max-height: 300px;" >
-                <table class="table " >
-                    <thead>
-                        <tr>
-                        <th scope="col">Uživatel</th>
-                        <th scope="col">Veřejný klíč</th>
-                        <th scope="col">Jméno klíče</th>
-                        <th scope="col">Smazat klíč?</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for peer in peers %}
-                        <tr class="tablerow">
-                        <th>{{peer.peer_key.user}}</th>
-                        <td>{{peer.peer_key.public_key}}</td>
-                        <td>{{peer.peer_key.name}}</td>
-                        <td>
-                            <button 
-                                class="btn btn-secondary delete-button"
-                                name="button-deletekey"
-                                type="submit" 
-                                data-id="{{peer.peer_key.id}}"
-                                onclick="return confirm('Opravdy chcete odstranit tento klíč?');">
-                                Odstranit klíč
-                            </button>
-                        </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-
-            <button id="wg-toggle"
-                class="btn {% if is_up %}btn-success{% else %}btn-danger{% endif %}">
-            
-            <span id="btn-text">
-                {% if is_up %}Interface UP{% else %}Interface DOWN{% endif %}
-            </span>
-
-            <span id="btn-spinner"
-                class="spinner-border spinner-border-sm ms-2 d-none"
-                role="status">
-            </span>
-        </button>
-        </div>
+        {% endfor%}
     </div>
-    {% endif%}
+
+ 
+    
+    
 </div>
 
 <form method="post" action="{% url 'newinterface' %}">
@@ -165,40 +211,45 @@
         });
     });
 
-    const btn = document.getElementById("wg-toggle");
-    const btnText = document.getElementById("btn-text");
-    const spinner = document.getElementById("btn-spinner");
-    document.getElementById("wg-toggle").addEventListener("click", function() {
+    document.querySelectorAll(".wg-toggle").forEach(button => {
+        
+        button.addEventListener('click', function() {
+            const id = this.dataset.id;
+            const btnText = document.getElementById("btn-text-"+id);
+            const spinner = document.getElementById("btn-spinner-"+id);
+            const inf = document.getElementById("network-"+id)
+            net = inf.value
 
-        btn.disabled = true;
-        spinner.classList.remove("d-none");
+            button.disabled = true;
+            spinner.classList.remove("d-none");
 
-        ajaxWithCSRF("{% url 'toggleserver' %}",{}, function(response)
-        {
-            if (response.success)
+            ajaxWithCSRF("{% url 'toggleserver' %}",{'id':id,'interface':net }, function(response)
             {
-                if (response.is_up) {
-                    btn.classList.remove("btn-danger");
-                    btn.classList.add("btn-success");
-                    btnText.textContent = "Interface UP";
-                } else {
-                    btn.classList.remove("btn-success");
-                    btn.classList.add("btn-danger");
-                    btnText.textContent = "Interface DOWN";
+                if (response.success)
+                {
+                    if (response.is_up) {
+                        button.classList.remove("btn-danger");
+                        button.classList.add("btn-success");
+                        btnText.textContent = "Interface UP";
+                    } else {
+                        button.classList.remove("btn-success");
+                        button.classList.add("btn-danger");
+                        btnText.textContent = "Interface DOWN";
+                    }
                 }
-            }
-            else
-            {
-                alert("Došlo k chybě při zapínání/vypinání serveru: " +response.error );
-            }
-
-            spinner.classList.add("d-none");
-            btn.disabled = false;
+                else
+                {
+                    alert("Došlo k chybě při zapínání/vypinání serveru: " +response.error );
+                }
+                spinner.classList.add("d-none");
+                button.disabled = false;
+            });
             
         });
 
     });
 
+    
     document.querySelectorAll(".key-name-input").forEach(input => {
         let originalValue = input.value;
 
