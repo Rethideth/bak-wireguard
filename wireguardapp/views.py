@@ -7,7 +7,7 @@ from wireguardapp.models import Interface, Peer, PeerSnapshot, Key
 
 
 from .services.client import createNewClient
-from .services.server import createNewServer,checkServer,getServerInterfacePeers,getLastDayDiffSnapshot, getServerInterface
+from .services.server import createNewServer,checkServer,getServerInterfacePeers,getLastDayDiffSnapshot, getServerInterface,getAllServerInterfaces
 
 from django.core.exceptions import PermissionDenied
 
@@ -47,27 +47,39 @@ def register(request : HttpRequest):
 @login_required
 def mykeys(request : HttpRequest):
     keys = Key.objects.filter(user=request.user)
-    return render(request, 'wireguardapp/mykeys.html', {'keys':keys})
+    form = ClientKeyForm()
+    return render(request, 'wireguardapp/mykeys.html', {'keys':keys, "form":form})
 
 
 
 @login_required
 def newkey(request : HttpRequest):
     if request.method == "POST":
-        result = createNewClient(
-            user = request.user,
-            name = None,
-        )
-        if result:
-            messages.error(request = request, message = result)
+        form = ClientKeyForm(request.POST)
+        if form.is_valid():
+            data = form.cleaned_data
+            result = createNewClient(
+                user = request.user,
+                name = data['name'],
+                serverInterface=data['interface']
+            )
+            if result:
+                messages.error(request = request, message = result)
+        else:
+            messages.error(request=request,message=form.errors.as_text())
 
     return redirect("mykeys")
 
 def newinterface(request : HttpRequest):
     if request.method == "POST":
-        pass
+        form = ServerInterfaceForm(request.POST)
+        if form.is_valid():
+            pass
+    else:
+        form = ServerInterfaceForm()
 
-    return redirect("serverinterfaces")
+
+    return render(request, "wireguardapp/newinterface.html", {"form" : form})
 
 
 def dbdown(request : HttpRequest):

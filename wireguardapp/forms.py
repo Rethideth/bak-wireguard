@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
 
 from wireguardapp.models import Interface, Peer, PeerSnapshot, Key
+from wireguardapp.services.selector import getAllServerInterfaces
 
 from datetime import datetime
 import ipaddress
@@ -33,6 +34,10 @@ class CustomUserCreationForm(UserCreationForm):
 
 class ClientKeyForm(forms.Form):
     name = forms.CharField(max_length=255)
+    interface = forms.ModelChoiceField(
+        queryset=getAllServerInterfaces(),
+        required=True
+    )
 
 
 

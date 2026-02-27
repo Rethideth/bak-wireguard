@@ -4,6 +4,22 @@ from django.contrib.auth.models import User
 from django.db.models import OuterRef, Subquery
 from django.db.models import F, Window
 from django.db.models.functions import RowNumber
+from django.shortcuts import get_object_or_404
+
+def getAllServerInterfaces():
+    """
+    Returns all wireguard server interfaces that exist in database.
+
+    :returns: Returns interfaces with interface type server
+    :rtype: QuerySet[Interface] 
+    """
+    return Interface.objects.filter(interface_type = Interface.SERVER)
+
+
+def getClientsServerInterface(clientKey : Key):
+    clientpeer = Peer.objects.get(interface__interface_key = clientKey)
+    return Interface.objects.get(interface_key = clientpeer.peer_key)
+
 
 def getUserKeys(user : User):
     """
@@ -53,3 +69,19 @@ def getInterfacePeers(interface :Interface):
     :rtype: QuerySet[Peer]
     """
     return Peer.objects.filter(interface = interface)
+
+def getKeyFromId(idKey :int) -> Key:
+    """
+    Gets the instance of a key based on a given id if it exists.
+
+    :param idKey: The id of the key to return
+    :type idKey: int
+
+    :returns: Instance of a key based on the provided id.
+    :rtype: Key
+
+    :raises DoesNotExist: If the searched key does not exists.
+    """
+    return Key.objects.get(
+        id=idKey,
+    )

@@ -44,14 +44,8 @@
         {% empty %}
             <p>Zatím nemáte žádne kliče</p>
     {% endfor %}
-
-    {% if not user.is_superuser %}
-    <!-- New Key-->
-    <form method="post" action="{% url 'newkey' %}">
-        {% csrf_token %}
-        <button class="btn btn-primary new-button" type="submit" >Vytvořit nový klíč</button>
-    </form>
-    {% endif%}
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newkeyModal">Nový klíč</button>
+    
 </div>
 
 {% if messages %}
@@ -61,6 +55,8 @@
     </div>
   {% endfor %}
 {% endif %}
+
+
 
 
 <!-- Bootstrap Modal -->
@@ -91,6 +87,28 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-primary" id="copyButton">Kopírovat do schránky</button>
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zavřít</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bootstrap Modal -->
+<div class="modal fade" id="newkeyModal" tabindex="-1" aria-labelledby="newkeyModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="newkeyModalLabel">Nový klíč</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="modalBody">
+        <!-- Content -->
+        <!-- New Key-->
+        <form method="post" action="{% url 'newkey' %}">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button class="btn btn-primary new-button" type="submit" >Vytvořit nový klíč</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zavřít</button>
+        </form>
       </div>
     </div>
   </div>

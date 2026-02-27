@@ -15,23 +15,43 @@
         <div class="card-header">
                 <input
                 type="text"
-                value="{{ interface.name }}"
-                class="form-control"
-                readonly
+                value="{{interface.interface_key.name}}"
+                data-id="{{ interface.interface_key.id }}"
+                class="form-control key-name-input"
                 >
         </div>
         <div class="card-body">
-            <label for="public_key" class="form-label">Veřejný klíč: {{interface.interface_key.name}}</label>
-            <input id="public_key" class="form-control mb-4" type="text" value="{{ interface.interface_key.public_key }}" readonly>
-
-            <label for="ipaddress" class="form-label">Ip adresa wireguard rozhraní</label>
-            <input id="ipaddress" class="form-control mb-2" type="text" value="{{interface.ip_address}}" readonly>
-
-            <label for="endpoint" class="form-label">Endpoint serveru</label>
-            <input id="endpoint" class="form-control mb-2" type="text" value="{{interface.server_endpoint}}" readonly>
-            
-            <label for="listenport" class="form-label">Port wireguard rozhraní</label>
-            <input id="listenport" class="form-control mb-2" type="text" value="{{interface.listen_port}}" readonly>
+            <div class="container mb-4">
+                
+                    
+                <table class="table" style="overflow-x: auto;max-width: 600px;">
+                <thead>
+                </thead>
+                <tbody>
+                    <tr>
+                    <th>Jméno serveru: </th>
+                    <td>{{interface.name}}</td>
+                    </tr>
+                    <tr>
+                    <th>Veřejný klíč serveru: </th>
+                    <td>{{interface.interface_key.public_key}}</td>
+                    </tr>
+                    <tr>
+                    <th>Ip adresa wireguard rozhraní </th>
+                    <td>{{interface.ip_address}}</td>
+                    </tr>
+                    <tr>
+                    <th>Endpoint serveru </th>
+                    <td>{{interface.server_endpoint}}</td>
+                    </tr>
+                    <tr>
+                    <th>Port wireguard rozhraní </th>
+                    <td>{{interface.listen_port}}</td>
+                    </tr>
+                </tbody>
+                </table>
+                
+            </div>
 
 
             <div style="overflow-y: auto;max-height: 300px;" >
@@ -82,6 +102,11 @@
     </div>
     {% endif%}
 </div>
+
+<form method="post" action="{% url 'newinterface' %}">
+    {% csrf_token %}
+    <button class="btn btn-primary new-button" type="submit" >Vytvořit nový serverový interface</button>
+</form>
 
 
 
@@ -172,6 +197,33 @@
             
         });
 
+    });
+
+    document.querySelectorAll(".key-name-input").forEach(input => {
+        let originalValue = input.value;
+
+        input.addEventListener("blur", () => {
+
+            if (input.value === originalValue) return;
+
+            ajaxWithCSRF("{% url 'updatekeyname' %}", {"key_id":input.dataset.id, "name":input.value}, function(response){
+                if (response.success)
+                {
+                    originalValue = input.value
+                }
+                else
+                {
+                    input.value = originalValue
+                }
+            });
+        });
+
+        input.addEventListener("keydown", e => {
+            if (e.key === "Enter") 
+            {
+                input.blur();
+            }
+        });
     });
 
 

@@ -2,7 +2,7 @@ from wireguardapp.models import Interface, Peer, PeerSnapshot, Key
 from django.contrib.auth.models import User
 from .dbcommands import createServerInterface,createNewKey,getorcreateServerInterface
 from .wireguard import startWGserver,stopWGserver,isWGserverUp,getWGPeersState
-from .selector import getInterfacePeers,getOrderedPeerSnapshots,getServerPeerSnapshots
+from .selector import getInterfacePeers,getOrderedPeerSnapshots,getServerPeerSnapshots,getAllServerInterfaces
 from django.db import transaction
 from django.db.models import OuterRef, Subquery
 from django.db.models import F, Window
@@ -16,6 +16,10 @@ logger = logging.getLogger('test')
 
 def getServerInterface() -> Interface:
     return getorcreateServerInterface()
+
+def getServerInterfaces():
+    """Returns all server interfaces. See `selector.getAllServerInterface` for more."""
+    return getAllServerInterfaces()
 
 def createNewServer(name : str, ipinterface :str, endpoint:str):
     """
@@ -79,10 +83,6 @@ def getServerInterfacePeers(serverInterface : Interface):
     """
     serverPeers = getInterfacePeers(interface = serverInterface)
     return serverPeers
-
-def getServerPeersSnapshots(serverInterface : Interface):
-    """ Gets all server peer snapshots ordered by peer (ascending) and collected_at date (descending). """
-    return getServerPeerSnapshots()
 
 def getLastDayDiffSnapshot(serverInterface : Interface) -> list[dict]:
     """

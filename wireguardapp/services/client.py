@@ -1,7 +1,7 @@
 from wireguardapp.models import Interface, Peer,PeerSnapshot, Key
 from .wireguard import addWGPeer,removeWGPeer,generateClientConfText
-from .dbcommands import createNewKey,createClientInterface,createClientServerPeers
-from .server import getServerInterface
+from .dbcommands import createNewKey,createClientInterface,createClientServerPeers,saveClient,deleteClient
+from .selector import getClientsServerInterface
 from django.db import transaction
 from django.contrib.auth.models import User
 import logging
@@ -10,7 +10,7 @@ import ipaddress
 logger = logging.getLogger('test')
 
 
-def createNewClient(user : User, name : str, serverInterface : Interface = getServerInterface()):
+def createNewClient(user : User, name : str, serverInterface : Interface):
     """
     Creates a new client for the wireguard server. 
     Client need a Key, its Interface and Peer for client and server interface for connection.
@@ -46,26 +46,24 @@ def createNewClient(user : User, name : str, serverInterface : Interface = getSe
     except:
         return "Nastala chyba při vytváření klienta."
 
-    try:
-        with transaction.atomic():
-            # set temporary interface for wireguard
-            result = addWGPeer(
-                    serverInterface.name, 
-                    interface.interface_key.public_key,
-                    ipAddress=interface.ip_address)
-            
-            Key.save(key)
-            Interface.save(interface)
-            Peer.save(clientPeer)
-            Peer.save(serverPeer)
+    saveClient(
+        clientKey=key,
+        clientInterface=interface,
+        clientPeer=clientPeer,
+        serverPeer=serverPeer)
     
 
+    try:  # set temporary interface for wireguard  
+        result = addWGPeer(
+                serverInterface.name, 
+                interface.interface_key.public_key,
+                ipAddress=interface.ip_address)
     except RuntimeError as e:
         return 'Nepodařilo se přidat klientův peer do serveru.'
-        
+    
     return 
 
-def deleteClient(user : User, key : Key):
+def removeClient(user : User, key : Key):
     """
     Deletes a client with its own key. The deleted key will cascade to its own interface and peer.
     Removes the connection from Wireguard.
@@ -78,15 +76,16 @@ def deleteClient(user : User, key : Key):
         RunTimeError if removing a wireguard peer failed using a privileged script. Usually server interface is down.
     :rtype: str | None
     """
-    serverInterface = getServerInterface()
+    serverInterface = getClientsServerInterface(key)
+
+    deleteClient(clientKey=key)
 
     try:
-        with transaction.atomic():
-            result = removeWGPeer(
-                serverInterfaceName =   serverInterface.name,
-                peerKey =               key.public_key
-            )
-            key.delete()
+        result = removeWGPeer(
+            serverInterfaceName =   serverInterface.name,
+            peerKey =               key.public_key
+        )
+            
     except RuntimeError as e:
         return 'Nepodařilo se odstranit klientův peer ze serveru. Server není online.'
         

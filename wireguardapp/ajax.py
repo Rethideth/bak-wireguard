@@ -4,11 +4,11 @@ from django.contrib.auth import login
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from wireguardapp.models import Interface, Peer, PeerSnapshot, Key
-from django.http import JsonResponse
+from django.http import JsonResponse,HttpRequest
 import json
 
 
-from .services.client import deleteClient,generateClientConf
+from .services.client import removeClient,generateClientConf
 from .services.server import checkServer,startServer,stopServer,getWGPeerConnectionState,getServerInterface
 
 @require_POST
@@ -35,14 +35,16 @@ def getconfajax(request):
 
 @require_POST
 @login_required
-def updatekeyname(request):
+def updatekeyname(request:HttpRequest):
     data = json.loads(request.body)
 
     key = get_object_or_404(
         Key,
         id=data["key_id"],
-        user=request.user
     )
+
+    if not(key.user == request.user or request.user.is_superuser):
+        return JsonResponse({"success":False})
 
     key.name = data["name"]
     key.save(update_fields=["name"])
@@ -63,9 +65,9 @@ def deletekey(request):
         if not user.is_superuser:
             return JsonResponse({"success": False, "body" : "Musíte být vlastníkem klíče nebo superuser."})
     
-    result = deleteClient(user,key)
+    result = removeClient(user,key)
     if result:
-        return JsonResponse({"success": False, "body" : "Server v tuto chvíli není online."})
+        return JsonResponse({"success": True, "body" : "Server v tuto chvíli není online."})
     
     return JsonResponse({"success": True, "body" : "Klíč byl odstraněn"})
 
