@@ -7,7 +7,7 @@ from django.http import JsonResponse,HttpRequest
 import json
 
 from .services.client import removeClient,generateClientConf,getKeyById
-from .services.server import checkServer,startServer,stopServer,getWGPeerConnectionState,getServerInterface,getServerInterfaceFromId
+from .services.server import checkServer,startServer,stopServer,getWGPeerConnectionState,getFirstServerInterface,getServerInterfaceFromId
 
 @require_POST
 @login_required
@@ -91,5 +91,7 @@ def toggleServer(request):
 @require_POST
 @login_required
 def getpeerstate(request):
-    serverInterface = getServerInterface()
+    data = json.loads(request.body)
+
+    serverInterface = getServerInterfaceFromId(data['id'])
     return JsonResponse({"peers":getWGPeerConnectionState(serverInterface=serverInterface)})

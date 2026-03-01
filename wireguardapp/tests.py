@@ -1,6 +1,6 @@
 from unittest import TestCase
 from django.contrib.auth import get_user_model
-from wireguardapp.services.dbcommands import createNewKey
+from wireguardapp.services.createmodel import createNewKey
 from .models import Interface,Peer, Key
 import ipaddress
 import os
@@ -27,7 +27,6 @@ class TestSyntax(TestCase):
     def testKey(self):
         key = createNewKey(None, "baf")
         print(key)
-        key.save()
         return True
     
     def testname(self):

@@ -1,8 +1,9 @@
 from wireguardapp.models import Interface, Peer, PeerSnapshot, Key
 from django.contrib.auth.models import User
-from .dbcommands import createServerInterface,createNewKey,selectFirstServerInterface,saveServer,deleteServer
+from .createmodel import createServerInterface,createNewKey
+from wireguardapp.database.savemodel import saveServer,deleteServer
 from .wireguard import startWGserver,stopWGserver,isWGserverUp,getWGPeersState,selectAllNetworkInterfaces
-from .selector import getInterfacePeers,getOrderedPeerSnapshots,getServerPeerSnapshots,getAllServerInterfaces,selectServerInterfaceFromId
+from wireguardapp.database.selector import selectInterfacePeers,selectOrderedPeerSnapshots,selectAllServerInterfaces,selectInterfaceFromId,selectFirstServerInterface
 from django.db import transaction
 from django.db.models import OuterRef, Subquery
 from django.db.models import F, Window
@@ -16,15 +17,15 @@ logger = logging.getLogger('test')
 
 
 
-def getServerInterface() -> Interface:
+def getFirstServerInterface() -> Interface:
     return selectFirstServerInterface()
 
 def getServerInterfaceFromId(interfaceId : int):
-    return selectServerInterfaceFromId(interfaceId)
+    return selectInterfaceFromId(interfaceId)
 
 def getServerInterfaces():
     """Returns all server interfaces. See `selector.getAllServerInterface` for more."""
-    return getAllServerInterfaces()
+    return selectAllServerInterfaces()
 
 def createNewServer(name : str, ipNetwork : str, endpoint : str, port : str):
     """
@@ -94,10 +95,13 @@ def getServerInterfacePeers(serverInterface : Interface):
     """
     Gets the peers of the `serverInterface`.
 
+    :param serverInterface: The interface to return its own peer objects.
+    :type serverInterface: Interface
+
     :return: The peers of the given interface.
     :rtype: QuerySet[Peer]
     """
-    serverPeers = getInterfacePeers(interface = serverInterface)
+    serverPeers = selectInterfacePeers(interface = serverInterface)
     return serverPeers
 
 def getLastDayDiffSnapshot(serverInterface : Interface) -> list[dict]:
@@ -119,7 +123,7 @@ def getLastDayDiffSnapshot(serverInterface : Interface) -> list[dict]:
         ]
 
     """
-    ranked = getOrderedPeerSnapshots(serverInterface).filter(row_number__lte=2)
+    ranked = selectOrderedPeerSnapshots(serverInterface).filter(row_number__lte=2)
 
     grouped = defaultdict(list)
 
@@ -143,7 +147,7 @@ def getLastDayDiffSnapshot(serverInterface : Interface) -> list[dict]:
 
 def getWGPeerConnectionState(serverInterface : Interface):
     """
-    Wrapper of the `getWGPeerState` function
+    Wrapper of the `getWGPeerState` function.
 
     This function accesses the wireguard service for the `getWGPeersState` function.
     """
@@ -152,3 +156,42 @@ def getWGPeerConnectionState(serverInterface : Interface):
 def getNetworkInterfaces():
     """Gets the list of all available network interfaces. See `selectAllNetworkInterfaces` for more."""
     return selectAllNetworkInterfaces()
+
+
+def getInterfacePeersTotalBytes(serverInterface : Interface):
+    """
+    Gets all peers of the given interface and their total recieved/sent bytes.
+    
+    :return: Returns a list of data in a dictionary about the peer, its endpoint, recieved/sent bytes total.
+    :rtype: list[dict]
+
+    ::
+
+        [
+            {
+                "peer": Peer,       # Peer object of the Snapshot
+                "endpoint": str,    # Endpoint of the Peer
+                "rx_total": int,    # Total recieved bytes through this interface for this peer
+                "tx_total": int,    # Total sent bytes through this interface for this peer
+            },
+        ]
+
+    """
+    peers = getServerInterfacePeers(serverInterface)
+    ranked = selectOrderedPeerSnapshots(serverInterface=serverInterface)
+
+    endpoints = defaultdict(set)
+
+    for snapshot in ranked:
+        endpoints[snapshot.peer].add(snapshot.endpoint)
+
+    table = []
+
+    for peer in peers:
+        table.append({
+                "peer": peer,
+                "endpoint": endpoints[peer],
+                "rx_total": peer.total_rx_bytes,
+                "tx_total": peer.total_tx_bytes,
+            })
+    return table

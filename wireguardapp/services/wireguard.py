@@ -8,10 +8,10 @@ import logging
 import time
 import datetime
 import psutil
+from wireguardapp.database.selector import selectInterfacePeers
 
 logger = logging.getLogger('wg')
 
-INTERNET_INTERFACE = 'wlo1'
 
 EXCLUDED_PREFIXES = (
     "lo",
@@ -128,7 +128,7 @@ def generateServerConfText(serverInterface : Interface, interfaceInternetName : 
 
     if serverInterface.interface_type != Interface.SERVER:
         raise TypeError
-    serverPeers = Peer.objects.filter(peer_key = serverInterface.interface_key)
+    serverPeers = selectInterfacePeers(serverInterface)
 
     conf = f"""
 [Interface]

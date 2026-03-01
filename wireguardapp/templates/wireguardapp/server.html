@@ -77,14 +77,36 @@
                         <label for="network">
                             Interface pro přesměrování přenosu: 
                         </label>
-                        <select name="networks form-control" id="network-{{inf.interface.id}}">
+                        <select name="networks" id="network-{{inf.interface.id}}" class="mb-2">
                             {% for network in networks %}
                                 <option value="{{network}}">{{network}}</option>
                             {% endfor%}
                         </select>
 
+                        </br>
 
-                        <div style="overflow-y: auto;max-height: 300px;" >
+                        <button 
+                                class="btn wg-toggle {% if inf.is_up %}btn-success{% else %}btn-danger{% endif %}"
+                                data-id="{{inf.interface.id}}">
+                            
+                            <span id="btn-text-{{inf.interface.id}}">
+                                {% if inf.is_up %}Interface UP{% else %}Interface DOWN{% endif %}
+                            </span>
+
+                            <span id="btn-spinner-{{inf.interface.id}}"
+                                class="spinner-border spinner-border-sm ms-2 d-none"
+                                role="status">
+                            </span>
+                            </button>
+                        
+                            <form method="post" style="display:inline;" action="{% url 'deleteinterface' %}">
+                                <input type="hidden" name="id" value="{{ inf.interface.id }}">
+                                {% csrf_token %}
+                                <button class="btn btn-primary danger" onclick="return confirm('Are you sure?')" type="submit" >Smazat server interface</button>
+                            </form>
+
+
+                        <div style="overflow-y: auto;max-height: 300px; mt-2" >
                             <table class="table">
                                 <thead>
                                     <tr>
@@ -116,25 +138,7 @@
                             </table>
                         </div>
                         
-                            <button 
-                                class="btn wg-toggle {% if inf.is_up %}btn-success{% else %}btn-danger{% endif %}"
-                                data-id="{{inf.interface.id}}">
                             
-                            <span id="btn-text-{{inf.interface.id}}">
-                                {% if inf.is_up %}Interface UP{% else %}Interface DOWN{% endif %}
-                            </span>
-
-                            <span id="btn-spinner-{{inf.interface.id}}"
-                                class="spinner-border spinner-border-sm ms-2 d-none"
-                                role="status">
-                            </span>
-                            </button>
-                        
-                            <form method="post" style="display:inline;" action="{% url 'deleteinterface' %}">
-                                <input type="hidden" name="id" value="{{ inf.interface.id }}">
-                                {% csrf_token %}
-                                <button class="btn btn-primary danger" onclick="return confirm('Are you sure?')" type="submit" >Smazat server interface</button>
-                            </form>
                    
                     </div>
                 </div>

@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
 
 from wireguardapp.models import Interface, Peer, PeerSnapshot, Key
-from wireguardapp.services.selector import getAllServerInterfaces
+from wireguardapp.services.server import selectAllServerInterfaces
 
 from datetime import datetime
 import ipaddress
@@ -35,7 +35,7 @@ class CustomUserCreationForm(UserCreationForm):
 class ClientKeyForm(forms.Form):
     name = forms.CharField(max_length=255)
     interface = forms.ModelChoiceField(
-        queryset=getAllServerInterfaces(),
+        queryset=selectAllServerInterfaces(),
         required=True
     )
 
@@ -49,7 +49,7 @@ class ServerInterfaceForm(forms.Form):
             raise forms.ValidationError("Vložte správnou ip adresu sítě s net maskou.")
         
 
-        serverInterfaces = getAllServerInterfaces().values_list('ip_address',flat=True)
+        serverInterfaces = selectAllServerInterfaces().values_list('ip_address',flat=True)
         for inf in serverInterfaces:
             taken = ipaddress.ip_interface(inf)
             if taken.network.overlaps(network):
@@ -58,7 +58,7 @@ class ServerInterfaceForm(forms.Form):
         return network
     
     def checkPort(value):
-        serverPorts = getAllServerInterfaces().values_list('listen_port',flat=True)
+        serverPorts = selectAllServerInterfaces().values_list('listen_port',flat=True)
         for port in serverPorts:
             if port == value:
                 raise forms.ValidationError(f"Tento port je už obsazený jiným serverem.")

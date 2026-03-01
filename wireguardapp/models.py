@@ -66,6 +66,7 @@ class Interface(models.Model):
         max_length=32,
         null=True
     )
+    session_number = models.PositiveIntegerField(default=1)
 
     def __str__(self):
         return self.name
@@ -92,7 +93,10 @@ class Peer(models.Model):
     created_at = models.DateTimeField(
         auto_now_add=True
     )
-
+    total_rx_bytes = models.BigIntegerField(default=0)
+    total_tx_bytes = models.BigIntegerField(default=0)
+    last_rx_bytes = models.BigIntegerField(default=0)
+    last_tx_bytes = models.BigIntegerField(default=0)
 
     def __str__(self):
         return f"{self.interface.name} → {self.peer_key}"
@@ -119,7 +123,8 @@ class PeerSnapshot(models.Model):
         auto_now_add=True,
         db_index=True
     )
-
+    session = models.PositiveIntegerField(
+        null=True, blank=False)
 
     def __str__(self):
         return f"{self.peer} @ {self.collected_at}"

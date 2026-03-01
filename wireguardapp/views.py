@@ -6,8 +6,8 @@ from django.contrib.auth.decorators import login_required
 from wireguardapp.models import Interface, Peer, PeerSnapshot, Key
 
 
-from .services.client import createNewClient
-from .services.server import createNewServer,checkServer,getServerInterfacePeers,getLastDayDiffSnapshot, getServerInterface,getAllServerInterfaces,getServerInterfaceFromId,removeServer,getNetworkInterfaces
+from .services.client import createNewClient, generateClientConf,getKeyById,getClientsServerInterface
+from .services.server import createNewServer,checkServer,getServerInterfacePeers,selectAllServerInterfaces,getServerInterfaceFromId,removeServer,getNetworkInterfaces,getInterfacePeersTotalBytes
 
 from django.core.exceptions import PermissionDenied
 
@@ -15,7 +15,7 @@ from .forms import CustomUserCreationForm, ClientKeyForm,ServerInterfaceForm
 
 from datetime import datetime
 from django.utils import timezone
-from django.http import HttpRequest
+from django.http import HttpRequest,HttpResponse
 import logging
 from django.conf import settings
 
@@ -47,7 +47,10 @@ def register(request : HttpRequest):
 def mykeys(request : HttpRequest):
     keys = Key.objects.filter(user=request.user)
     form = ClientKeyForm()
-    return render(request, 'wireguardapp/mykeys.html', {'keys':keys, "form":form})
+    grouped = list(dict())
+    for key in keys:
+        grouped.append({"key":key, 'interface' : getClientsServerInterface(key)})
+    return render(request, 'wireguardapp/mykeys.html', {'keys':grouped, "form":form})
 
 
 
@@ -75,7 +78,7 @@ def serverinterfaces(request : HttpRequest):
         raise PermissionDenied
 
     interfaceInfo = list(dict())
-    interfaces = getAllServerInterfaces()
+    interfaces = selectAllServerInterfaces()
 
     for interface in interfaces:
         interfaceInfo.append({
@@ -141,13 +144,30 @@ def viewlogs(request : HttpRequest):
     if not request.user.is_superuser:
         raise PermissionDenied
     
-    interface = getServerInterface()
-    grouped = getLastDayDiffSnapshot(interface)
+    interfacesLogs = list(dict())
+    interfaces = selectAllServerInterfaces()
+    
+    for interface in interfaces:
+        interfacesLogs.append({"interface": interface, "peer_total": getInterfacePeersTotalBytes(interface)})
 
-    return render(request, 'wireguardapp/logs.html' , {"interface":interface, "last_day_snapshots" : grouped, 'model' : PeerSnapshot})
-
+    return render(request, 'wireguardapp/logs.html' , {"interfacesLogs":interfacesLogs, 'model' : PeerSnapshot})
 
 
 
 def test(request : HttpRequest):
     return render(request, 'wireguardapp/test.html' )
+
+@login_required
+def downlandConf(request : HttpRequest):
+    id = request.GET.get('id')
+    full = request.GET.get('full')
+    key = getKeyById(id)
+    if full == 'y':
+        content = generateClientConf(key,False)
+    else:
+        content = generateClientConf(key,True)
+    response = HttpResponse(content, content_type='text/plain')
+    response['Content-Disposition'] = 'attachment; filename="wg.conf"'
+
+    return response
+    

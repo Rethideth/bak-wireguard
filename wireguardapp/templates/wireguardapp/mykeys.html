@@ -7,37 +7,37 @@
 
 <div class="container mt-4">
 <h1 class="mb-4">Seznam Klíčů</h1>
-    {% for key in keys %}
+    {% for item in keys %}
     <div class="card mb-3">
         <div class="card-header">
                 <input
                 type="text"
-                value="{{ key.name }}"
-                data-id="{{ key.id }}"
+                value="{{ item.key.name }}"
+                data-id="{{ item.key.id }}"
                 class="form-control key-name-input"
                 >
         </div>
         <div class="card-body">
             <p class="card-text mb-2">Veřejný klíč</p>
-            <input id="public_key" class="form-control mb-2" type="text" value="{{ key.public_key }}" readonly>
+            <input id="public_key" class="form-control mb-2" type="text" value="{{ item.key.public_key }}" readonly>
+            <p>Interface serveru: {{item.interface.interface_key.name}}</p>
             <!-- Create config text -->
             <button 
             class="btn btn-secondary conf-button " 
             type="submit"
-            data-id="{{key.id}}">
+            data-id="{{item.key.id}}">
                 Vytvořit konfiguraci
             </button>
             <!-- Delete key -->
-            {% if not user.is_superuser  %}
+            
             <button 
                 class="btn btn-secondary delete-button"
                 name="button-deletekey"
                 type="submit" 
-                data-id="{{key.id}}"
+                data-id="{{item.key.id}}"
                 onclick="return confirm('Opravdy chcete odstranit tento klíč?');">
                 Odstranit klíč
             </button>
-            {% endif %}
         
         </div>
     </div>
@@ -85,6 +85,12 @@
         </div>
       </div>
       <div class="modal-footer">
+        <!-- Configuration actions -->
+        <form action="{% url 'downlandconf' %}" method="get">
+            <input type="hidden" class="conf-downland-id" id="conf-downland-id" name="id" value="">
+            <input type="hidden" class="conf-full-id" id="conf-full-id" name="full" value="">
+            <button class="btn btn-primary" type="submit">Stáhnout soubor</button>
+        </form>
         <button type="button" class="btn btn-primary" id="copyButton">Kopírovat do schránky</button>
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zavřít</button>
       </div>
@@ -160,13 +166,26 @@
                 const configText2 = document.getElementById('configtext2');
                 configText1.textContent = response.body1 || 'Žádná konfigurace nebyla vrácena.';
                 configText2.textContent = response.body2 || 'Žádná konfigurace nebyla vrácena.';
-
+                // set which config to send by key id
+                const downlandId = document.getElementById('conf-downland-id')
+                downlandId.value = id
 
                 // Show modal
                 const modal = new bootstrap.Modal(document.getElementById('configModal'));
                 modal.show();
             });
         });
+    });
+
+    // Handle Full/Split tunnel config by nav tabs
+    const choice = document.getElementById('conf-full-id')
+    document.getElementById('nav-full-tab').addEventListener('click', function() {
+        
+        choice.value = 'y'
+    });
+    document.getElementById('nav-split-tab').addEventListener('click', function() {
+        
+        choice.value = 'n'
     });
 
     // Handle delete buttons

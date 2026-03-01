@@ -1,7 +1,8 @@
 from wireguardapp.models import Interface, Peer,PeerSnapshot, Key
 from .wireguard import addWGPeer,removeWGPeer,generateClientConfText
-from .dbcommands import createNewKey,createClientInterface,createClientServerPeers,saveClient,deleteClient
-from .selector import getClientsServerInterface,selectKeyFromId
+from .createmodel import createNewKey,createClientInterface,createClientServerPeers
+from wireguardapp.database.savemodel import saveClient,deleteClient
+from wireguardapp.database.selector import selectClientsServerInterface,selectKeyFromId,selectInterfacesFromName,selectInterfaceFromKey,selectClientInterfacePeer
 from django.db import transaction
 from django.contrib.auth.models import User
 
@@ -11,9 +12,20 @@ import ipaddress
 logger = logging.getLogger('test')
 
 def getKeyById(keyId :int)-> Key:
-    """"""
+    """
+    Tries to get Key object instance from its id if it exists. 
+
+    :param keyId: The id of the searched Key object
+    :type keyId: int
+
+    :return: Key object instance with the same provided id.
+    :rtype: Key
+    """
     return selectKeyFromId(keyId=keyId)
 
+def getClientsServerInterface(clientKey : Key) ->Interface:
+    """Wrapper of `selectClientsServerInterface`. See it for more information"""
+    return selectClientsServerInterface(clientKey=clientKey)
 
 def createNewClient(user : User, name : str, serverInterface : Interface):
     """
@@ -36,8 +48,7 @@ def createNewClient(user : User, name : str, serverInterface : Interface):
         RunTimeError if adding a wireguard peer failed using a privileged script. Usually server interface is down.
     :rtype: str | None
     """
-    same = Interface.objects.filter(name = name)
-    if same:
+    if selectInterfacesFromName(name):
         return False
     
     try:
@@ -81,7 +92,7 @@ def removeClient(user : User, key : Key):
         RunTimeError if removing a wireguard peer failed using a privileged script. Usually server interface is down.
     :rtype: str | None
     """
-    serverInterface = getClientsServerInterface(key)
+    serverInterface = selectClientsServerInterface(key)
 
     deleteClient(clientKey=key)
 
@@ -114,12 +125,12 @@ def generateClientConf(key : Key, onlyVpn : bool = False) -> str:
     :return: Configuration text for wireguard ready for copying or an error message for server interface.
     :rtype: str
     """
-    clientInterface = Interface.objects.get(interface_key = key)
+    clientInterface = selectInterfaceFromKey(key)
     if (clientInterface.interface_type == Interface.SERVER):
         return "Pro server nemůže být vrácená konfigurace."
     
-    serverPeer = Peer.objects.get(interface = clientInterface)
-    serverInterface = Interface.objects.get(interface_key__public_key = serverPeer.peer_key.public_key)
+    serverPeer = selectClientInterfacePeer(clientInterface)
+    serverInterface =  selectInterfaceFromKey(serverPeer.peer_key)
 
     if (onlyVpn):
         return generateClientConfText( 

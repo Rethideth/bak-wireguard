@@ -5,10 +5,10 @@ from django.contrib.auth import views as auth_views
 
 urlpatterns = [
     path('', views.home, name = 'home'),
-    path('login/', auth_views.LoginView.as_view(), name= 'login'),
-    path('logout/', auth_views.LogoutView.as_view(), name = 'logout'),
+    path('login/', auth_views.LoginView.as_view(), name='login'),
+    path('logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('register/', views.register, name='register'),
-    path('mykeys/', views.mykeys, name = 'mykeys'),
+    path('mykeys/', views.mykeys, name='mykeys'),
     path('confajax/', ajax.getconfajax, name = 'confajax'),
     path('key/new', views.newkey, name = 'newkey'),
     path('key/delete/',ajax.deletekey,name='deletekey'),
@@ -20,6 +20,7 @@ urlpatterns = [
     path('server/state',ajax.getpeerstate,name='peerstate'),
     path('server/new', views.newinterface,name='newinterface'),
     path('server/delete', views.deleteinterface,name='deleteinterface'),
+    path('downland/conf',views.downlandConf, name='downlandconf'),
     path('test/',views.test)
 ]
     
