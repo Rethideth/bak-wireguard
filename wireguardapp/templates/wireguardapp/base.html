@@ -32,18 +32,23 @@
                     <a class="nav-link" href="{% url 'register' %}">Registrovat se</a>
                 </li>
                 {% endif %}
-                {% if user.is_authenticated and not user.is_superuser %}
+                {% if user.is_authenticated %}
                 <li class="nav-item">
                     <a class="nav-link" href="{% url 'mykeys' %}">Moje klíče</a>
                 </li>
                 {% endif %}
-                {% if user.is_authenticated and user.is_superuser %}
+                {% if user.is_authenticated %}
+                {% if user.is_superuser or user.is_staff %}
                 <li class="nav-item">
                     <a class="nav-link" href="{% url 'logs' %}">Log</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{% url 'server' %}">Server</a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'listusers' %}">Uživatele</a>
+                </li>
+                {% endif %}
                 {% endif %}
                 </ul>
             </div>

@@ -16,11 +16,16 @@ urlpatterns = [
     path('logs/', views.viewlogs, name = 'logs'),
     path('dbdown/', views.dbdown, name='dbdown'),
     path('server/', views.serverinterfaces, name='server'),
-    path('server/toggle', ajax.toggleServer,name='toggleserver'),
-    path('server/state',ajax.getpeerstate,name='peerstate'),
-    path('server/new', views.newinterface,name='newinterface'),
-    path('server/delete', views.deleteinterface,name='deleteinterface'),
-    path('downland/conf',views.downlandConf, name='downlandconf'),
+    path('server/toggle/', ajax.toggleServer,name='toggleserver'),
+    path('server/state/',ajax.getpeerstate,name='peerstate'),
+    path('server/new/', views.newinterface,name='newinterface'),
+    path('server/delete/', views.deleteinterface,name='deleteinterface'),
+    path('downland/conf/',views.downlandConf, name='downlandconf'),
+    path('users/', views.listusers, name='listusers'),
+    path('users/verification/',ajax.verifyUser, name='verify'),
+    path('users/new/', views.newuser, name='newuser'),
+    path('users/delete/', views.deleteuser, name='deleteuser'),
+    path('server/alter/<int:id>/',views.alterserver,name='alterserver'),
     path('test/',views.test)
 ]
     

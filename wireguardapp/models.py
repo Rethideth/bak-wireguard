@@ -1,7 +1,19 @@
 from django.db import models
 from django.contrib.auth.models import User
+
 # Create your models here.
 
+class Profile(models.Model):
+    user = models.OneToOneField(
+        to=User,
+        on_delete=models.CASCADE
+    )
+    verified = models.BooleanField(default=False)
+    key_limit = models.PositiveIntegerField(default=5)
+    key_count = models.PositiveIntegerField(default=0)
+
+    def __str__(self):
+        return f"{self.user}"
 
 class Key(models.Model):
     user = models.ForeignKey(
@@ -19,8 +31,8 @@ class Key(models.Model):
         null=False,
         unique=True
     )
-    private_key = models.TextField(
-    )
+    private_key = models.TextField()
+
     def __str__(self):
         return f"{self.user}:{self.name}"
     
@@ -44,14 +56,9 @@ class Interface(models.Model):
         null=True,
         blank=True
     )
-    fwmark = models.CharField(
-        max_length=16,
-        null=True,
-        blank=True
-    )
     ip_address = models.CharField(
         max_length=32,
-        null=True
+        null=False
     )
     created_at = models.DateTimeField(
         auto_now_add=True
@@ -69,20 +76,20 @@ class Interface(models.Model):
     session_number = models.PositiveIntegerField(default=1)
 
     def __str__(self):
-        return self.name
+        return f"{self.name}-{self.interface_key.name}"
 
 
 class Peer(models.Model):
     interface = models.ForeignKey(
         Interface,
         on_delete=models.CASCADE,
-        related_name="peers",
+        related_name="owned_interface",
         verbose_name="Interface included with this peer"
     )
-    peer_key = models.ForeignKey(
-        Key,
+    peer_interface = models.ForeignKey(
+        Interface,
         on_delete=models.CASCADE,
-        related_name='peerkey',
+        related_name="peer",
         verbose_name="Connected to"
         
     )
@@ -99,14 +106,13 @@ class Peer(models.Model):
     last_tx_bytes = models.BigIntegerField(default=0)
 
     def __str__(self):
-        return f"{self.interface.name} → {self.peer_key}"
+        return f"{self.interface.name} → {self.peer_interface.interface_key}"
 
 
 class PeerSnapshot(models.Model):
     peer = models.ForeignKey(
         Peer,
         on_delete=models.CASCADE,
-        related_name="snapshots"
     )
     endpoint = models.CharField(
         max_length=64,
@@ -131,37 +137,3 @@ class PeerSnapshot(models.Model):
 
 
 
-
-class PeerEvent(models.Model):
-    EVENT_TYPES = [
-        ("handshake", "Handshake"),
-        ("handshake_failed", "Handshake Failed"),
-        ("interface_up", "Interface Up"),
-        ("interface_down", "Interface Down"),
-        ("unknown", "Unknown"),
-    ]
-
-    peer = models.ForeignKey(
-        Peer,
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name="events"
-    )
-    interface = models.ForeignKey(
-        Interface,
-        on_delete=models.CASCADE,
-        related_name="events"
-    )
-    event_type = models.CharField(
-        max_length=32,
-        choices=EVENT_TYPES
-    )
-    message = models.TextField()
-    event_time = models.DateTimeField(
-        db_index=True
-    )
-
-    def __str__(self):
-        return f"{self.event_type} @ {self.event_time}"
-    

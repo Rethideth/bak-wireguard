@@ -1,4 +1,4 @@
-from wireguardapp.models import Interface, Peer, PeerSnapshot, Key
+from wireguardapp.models import Interface, Peer, PeerSnapshot, Key,Profile
 from django.contrib.auth.models import User
 from .wireguard import generateKeyPair
 from .crypto import encrypt_value,decrypt_value
@@ -156,33 +156,34 @@ def createServerInterface(key : Key, ipNetwork : str, endpoint : str, port : str
     return interface
 
 
-def createClientServerPeers(serverInterface : Interface, clientInterface : Interface):
+def createServerPeer(serverInterface : Interface, clientInterface : Interface) -> Peer:
     """
-    Creates a Peer objects for the wireguard interfaces. 
-    For the server and client interface, create a peer object based on a wireguard configuration.
-    Their functionality is based on their interface type.
+    Creates a Peer object for the wireguard interfaces. 
 
-    :param serverInterface: Interface to add a peer object for client. Wont have keepalive.
+    The peer will be owned by the server interface and is connected to the client interface
+
+    :param serverInterface: Interface to add the client to.
     :type serverInterface: Interface
     
-    :param clientInterface: Interface to connect to server. Interface will have a one peer object connected to server.
+    :param clientInterface: Interface that is connected to the server
     :type clientInterface: Interface
 
-    :return: Returns client and server peer objects
-    :rtype: tuple[Peer,Peer]
+    :return: Returns the server peer 
+    :rtype: Peer
     """
 
-    clientPeer = Peer(
-        interface = clientInterface,
-        peer_key = serverInterface.interface_key,
-        persistent_keepalive = KEEPALIVE
-    )
     serverPeer = Peer(
         interface = serverInterface,
-        peer_key = clientInterface.interface_key,
+        peer_interface = clientInterface,
+        persistent_keepalive = KEEPALIVE
     )
-    return clientPeer,serverPeer
+    return serverPeer
     
-
+def createProfile(user: User):
+    profile = Profile(
+        user=user,
+        verified=False
+    )
+    return profile
 
 

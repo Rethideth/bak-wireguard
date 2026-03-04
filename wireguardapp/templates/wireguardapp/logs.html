@@ -18,7 +18,6 @@
 <h1>Log toku dat ve VPN serveru</h1>
 
 
-
 <nav>
   <div class="nav nav-tabs" id="nav-interface" role="tablist">
     {% for interfaceLogs in interfacesLogs %}
@@ -180,25 +179,33 @@
 
         ajaxWithCSRF("{% url 'peerstate' %}",{"id":id}, function(response)
         {
-            table.innerHTML = "";
+            if (response.success)
+            {
+                table.innerHTML = "";
 
-            response.peers.forEach(peer => {
-                const row = `
-                    <tr>
-                        <td>${peer.peer}</td>
-                        <td>${peer.endpoint}</td>
-                        <td>${peer.handshake > 0 ? "Connected" : "—"}</td>
-                        <td>${formatBytes(peer.rx)}</td>
-                        <td>${formatBytes(peer.tx)}</td>
-                        <td>
-                        ${peer.is_connected 
-                            ? '<span class="badge bg-success">Online</span>' 
-                            : '<span class="badge bg-secondary">Offline</span>'}
-                        </td>
-                    </tr>
-                `;
-                table.innerHTML += row;
-            });
+                response.peers.forEach(peer => {
+                    const row = `
+                        <tr>
+                            <td>${peer.peer}</td>
+                            <td>${peer.endpoint}</td>
+                            <td>${peer.handshake > 0 ? "Connected" : "—"}</td>
+                            <td>${formatBytes(peer.rx)}</td>
+                            <td>${formatBytes(peer.tx)}</td>
+                            <td>
+                            ${peer.is_connected 
+                                ? '<span class="badge bg-success">Online</span>' 
+                                : '<span class="badge bg-secondary">Offline</span>'}
+                            </td>
+                        </tr>
+                    `;
+                    table.innerHTML += row;
+                });    
+            }
+            else
+            {
+                table.innerHTML = response.error;
+            }
+            
     
         });
     }

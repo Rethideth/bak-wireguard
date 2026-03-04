@@ -6,38 +6,39 @@ from wireguardapp.models import Interface, Peer, PeerSnapshot, Key
 from django.http import JsonResponse,HttpRequest
 import json
 
-from .services.client import removeClient,generateClientConf,getKeyById
-from .services.server import checkServer,startServer,stopServer,getWGPeerConnectionState,getFirstServerInterface,getServerInterfaceFromId
+from .services.client import removeClient,generateClientConf,getKeyById,getUserProfile
+from .services.server import checkServer,startServer,stopServer,getWGPeerConnectionState,getServerInterfaceFromId,getUserFromId,switchverifyProfile
 
 @require_POST
 @login_required
-def getconfajax(request:HttpRequest):
+def getconfajax(request):
     data = json.loads(request.body)
+    user = request.user
 
     key = getKeyById(data['id'])
 
     if not key:
         return JsonResponse(
-        {"success": False,"body": "Key does not exist."},
+        {"success": False,"error": "Key does not exist."},
         status=404
         )
     
-    if key.user != request.user and not request.user.is_superuser:
+    if not ( key.user == user or user.is_superuser or user.is_staff):
         return JsonResponse(
-        {"success": False,"body": "You arent the owner of the key or superuser."},
+        {"success": False,"error": "You arent the owner of the key or superuser."},
         status=403
         )
     
 
-    confFull = generateClientConf(key)
-    confSplit = generateClientConf(key,True)
+    confFull = generateClientConf(user,key)
+    confSplit = generateClientConf(user,key,True)
 
-    return JsonResponse({"success": False,'body1': confFull, "body2":confSplit})
+    return JsonResponse({"success": True,'body1': confFull, "body2":confSplit})
 
 
 @require_POST
 @login_required
-def updatekeyname(request:HttpRequest):
+def updatekeyname(request):
     data = json.loads(request.body)
 
     key = getKeyById(data["key_id"])
@@ -58,12 +59,14 @@ def deletekey(request):
     key = getKeyById(data['id'])
     
     if key.user != user:
-        if not user.is_superuser:
+        if not user.is_superuser or not user.is_staff:
             return JsonResponse({"success": False, "body" : "Musíte být vlastníkem klíče nebo superuser."})
     
-    result = removeClient(user,key)
+    result = removeClient(key.user,key)
+
+
     if result:
-        return JsonResponse({"success": True, "body" : "Server v tuto chvíli není online."})
+        return JsonResponse({"success": False, "body" : result})
     
     return JsonResponse({"success": True, "body" : "Klíč byl odstraněn"})
 
@@ -71,7 +74,7 @@ def deletekey(request):
 @login_required
 def toggleServer(request):
     user = request.user
-    if not user.is_superuser:
+    if not user.is_superuser or not user.is_staff:
         return JsonResponse({"success" : False, "error" : "Nejste supersuper pro vypínání/zapínání serveru."})
     
     data = json.loads(request.body)
@@ -91,7 +94,23 @@ def toggleServer(request):
 @require_POST
 @login_required
 def getpeerstate(request):
+    user = request.user
+    if not user.is_superuser or not user.is_staff:
+        return JsonResponse({"success" : False, "error" : "Nejste supersuper pro získání logů."})
     data = json.loads(request.body)
 
     serverInterface = getServerInterfaceFromId(data['id'])
-    return JsonResponse({"peers":getWGPeerConnectionState(serverInterface=serverInterface)})
+    return JsonResponse({"success" : True, "peers":getWGPeerConnectionState(serverInterface=serverInterface)})
+
+def verifyUser(request):
+    user = request.user
+    if not user.is_superuser or not user.is_staff:
+        return JsonResponse({"success" : False, "error" : "Nejste supersuper pro získání logů."})
+    data = json.loads(request.body)
+
+    profile = switchverifyProfile(data['id'])
+
+    return JsonResponse({"success":True, "verified": profile.verified })
+
+
+

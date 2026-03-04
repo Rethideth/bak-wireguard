@@ -1,15 +1,16 @@
-from wireguardapp.models import Interface, Peer,PeerSnapshot, Key
+from wireguardapp.models import Interface, Peer,PeerSnapshot, Key,Profile
 from .wireguard import addWGPeer,removeWGPeer,generateClientConfText
-from .createmodel import createNewKey,createClientInterface,createClientServerPeers
-from wireguardapp.database.savemodel import saveClient,deleteClient
-from wireguardapp.database.selector import selectClientsServerInterface,selectKeyFromId,selectInterfacesFromName,selectInterfaceFromKey,selectClientInterfacePeer
+from .createmodel import createNewKey,createClientInterface,createServerPeer,createProfile
+from wireguardapp.database.savemodel import saveClient,deleteClient,saveUser,updateProfile
+from wireguardapp.database.selector import selectClientsServerInterface,selectKeyFromId,selectInterfacesFromName,selectInterfaceFromKey,selectUserProfile,selectClientInterfacePeer,selectUserKeys
+from wireguardapp.forms import CustomUserCreationForm
 from django.db import transaction
 from django.contrib.auth.models import User
 
 import logging
 import ipaddress
 
-logger = logging.getLogger('test')
+logger = logging.getLogger('wg')
 
 def getKeyById(keyId :int)-> Key:
     """
@@ -43,18 +44,25 @@ def createNewClient(user : User, name : str, serverInterface : Interface):
         Will use the interface with server type. Use getServerInterface() to get existing server Interface.
     :type serverInterface: Interface
     :return: An error message if something went wrong in a form of string. None if no error happened.
+    
         TypeError if the serverInterface parameter does not have a interface_type = 'server'.
+
         ValueError if the serverInterface ip network does not have unoccupied ip addresses.
+
         RunTimeError if adding a wireguard peer failed using a privileged script. Usually server interface is down.
     :rtype: str | None
     """
-    if selectInterfacesFromName(name):
-        return False
+    profile = getUserProfile(user=user) 
+    if not profile.verified:
+        return 'Nejste ověření pro vytváření klíčů, kontaktujte správce pro ověření.'
+    if profile.key_limit <= profile.key_count:
+        return 'Dosáhli jste maximum počet klíču, co můžete mít.'
     
+
     try:
         key = createNewKey(user, name=name)
         interface = createClientInterface(user,key, serverInterface)
-        clientPeer, serverPeer = createClientServerPeers(serverInterface,interface)
+        serverPeer = createServerPeer(serverInterface,interface)
     except TypeError as e:
         return 'Interface pro alokaci ip adresy není typu server.'
     except ValueError as e:
@@ -65,9 +73,11 @@ def createNewClient(user : User, name : str, serverInterface : Interface):
     saveClient(
         clientKey=key,
         clientInterface=interface,
-        clientPeer=clientPeer,
         serverPeer=serverPeer)
     
+    updateProfile(
+        profile=profile,
+        keyCount=profile.key_count+1)
 
     try:  # set temporary interface for wireguard  
         result = addWGPeer(
@@ -75,7 +85,9 @@ def createNewClient(user : User, name : str, serverInterface : Interface):
                 interface.interface_key.public_key,
                 ipAddress=interface.ip_address)
     except RuntimeError as e:
-        return 'Nepodařilo se přidat klientův peer do serveru.'
+        pass
+    
+
     
     return 
 
@@ -92,9 +104,17 @@ def removeClient(user : User, key : Key):
         RunTimeError if removing a wireguard peer failed using a privileged script. Usually server interface is down.
     :rtype: str | None
     """
+    profile = getUserProfile(user=user) 
+    if not profile.verified:
+        return 'Nejste ověřeni, kontaktujte správce pro ověření'
     serverInterface = selectClientsServerInterface(key)
 
     deleteClient(clientKey=key)
+
+
+    updateProfile(
+        profile=profile,
+        keyCount=profile.key_count-1)
 
     try:
         result = removeWGPeer(
@@ -103,12 +123,14 @@ def removeClient(user : User, key : Key):
         )
             
     except RuntimeError as e:
-        return 'Nepodařilo se odstranit klientův peer ze serveru. Server není online.'
+        pass
+
+
         
     return 
 
 
-def generateClientConf(key : Key, onlyVpn : bool = False) -> str:
+def generateClientConf(user:User,key : Key, onlyVpn : bool = False) -> str:
     """
     Return a string text for a wireguard configuration file for clients. 
     Has a full or split tunnel for configuration.
@@ -119,29 +141,67 @@ def generateClientConf(key : Key, onlyVpn : bool = False) -> str:
         Key must have a client interface.
     :type key: Key
     :param onlyVpn: Select if the connection will be 
-        full tunel (All network communication will go through VPN) 
-        or split tunel (Network communication will go only through VPN if to communicate with the private network of the VPN)
+
+        Full tunel (False) - All network communication will go through VPN 
+
+        Split tunel (True) - Network communication will go only through VPN to communicate with the private network of the VPN
     :type onlyVpn: bool
     :return: Configuration text for wireguard ready for copying or an error message for server interface.
     :rtype: str
     """
+    profile = getUserProfile(user=user) 
+    if not profile.verified:
+        return 'Nejste ověřeni, kontaktujte správce pro ověření'
+    
     clientInterface = selectInterfaceFromKey(key)
     if (clientInterface.interface_type == Interface.SERVER):
         return "Pro server nemůže být vrácená konfigurace."
     
     serverPeer = selectClientInterfacePeer(clientInterface)
-    serverInterface =  selectInterfaceFromKey(serverPeer.peer_key)
 
     if (onlyVpn):
         return generateClientConfText( 
         clientInterface = clientInterface,
         serverPeer = serverPeer,
-        endpoint = serverInterface.server_endpoint,
-        listenPort = serverInterface.listen_port,
-        allowedIPs = ipaddress.IPv4Interface(serverInterface.ip_address).network)
+        endpoint = serverPeer.interface.server_endpoint,
+        listenPort = serverPeer.interface.listen_port,
+        allowedIPs = ipaddress.IPv4Interface(serverPeer.interface.ip_address).network)
     else:
         return generateClientConfText( 
             clientInterface = clientInterface,
             serverPeer = serverPeer,
-            endpoint = serverInterface.server_endpoint,
-            listenPort = serverInterface.listen_port)
+            endpoint = serverPeer.interface.server_endpoint,
+            listenPort = serverPeer.interface.listen_port)
+    
+
+def getUserProfile(user:User) -> Profile:
+    """
+    Gets the profile of a given user. The profile object contains additional information about user, mainly about wireguard.
+
+    :param user: The user to get its profile.
+    :param user: User
+
+    :return: Profile object of the provided user
+    :rtype: Profile
+    """
+    return selectUserProfile(user=user)
+
+def createNewUser(form:CustomUserCreationForm) ->User:
+    """
+    Creates a new User with its profile.
+
+    """
+    user = form.save(commit=False)
+    profile = createProfile(user=user)
+    saveUser(user=user,profile=profile)
+    form.save_m2m()
+    return user
+
+    
+def checkUserOfKey(user:User , key: Key) -> bool:
+    if (key.user == user or user.is_superuser or user.is_staff):
+        return True
+    return False
+
+def getUsersKeys(user:User):
+    return selectUserKeys(user=user)

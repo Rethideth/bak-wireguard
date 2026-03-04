@@ -153,10 +153,10 @@ LOGGING = {
             "class": "logging.FileHandler",
             "filename": LOG_DIR / "wg.log",
         },
-        "test": {
+        "weblog": {
             "level": "DEBUG",
             "class": "logging.FileHandler",
-            "filename": LOG_DIR / "test.log",
+            "filename": LOG_DIR / "web.log",
         }, 
     },
     "loggers": {
@@ -165,8 +165,8 @@ LOGGING = {
             "level": "DEBUG",
             "propagate": True,
         },
-        "test": {
-            "handlers": ["test"],
+        "web": {
+            "handlers": ["weblog"],
             "level": "DEBUG",
             "propagate": True,
         },

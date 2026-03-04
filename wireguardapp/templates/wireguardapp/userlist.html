@@ -1,0 +1,164 @@
+{% extends "wireguardapp/base.html" %}
+
+{% block title %}WG{% endblock %}
+
+{% block content %}
+
+<h1>List uživatelů</h1>
+
+{% if messages %}
+  {% for message in messages %}
+    <div class="alert alert-{{ message.tags }}">
+      {{ message }}
+    </div>
+  {% endfor %}
+{% endif %}
+
+<table class="table table-bordered table-striped align-middle">
+  <thead>
+    <tr>
+      <th scope="col">#</th>
+      <th scope="col">Jméno</th>
+      <th scope="col">Username</th>
+      <th scope="col">Email</th>
+      <th scope="col">Ověřený</th>
+      <th scope="col">Akce</th>
+    </tr>
+  </thead>
+  <tbody class= "table-group-divider ">
+    {% for userInfo in users %}
+        <tr>
+            <th scope="row">{{forloop.counter}}</th>
+            <td>{{userInfo.user.first_name}} {{userInfo.user.last_name}}</td>
+            <td>{{userInfo.user.username}}</td>
+            <td>{{userInfo.user.email}}</td>
+            <td> 
+                <span 
+                    class="badge user-badge {% if userInfo.profile.verified %} bg-success {% else %} bg-danger {% endif %}"
+                    id="badge-{{userInfo.user.id}}">
+                    {% if userInfo.profile.verified %} Ověřený {% else %} Neověřený {% endif %}
+                </span> 
+            </td>
+            <td>
+                <div class="d-flex flex-wrap">
+                    <div class="ms-1">
+                         <button 
+                            class="btn user-verify {% if userInfo.profile.verified %}btn-success{% else %}btn-danger{% endif %}"
+                            data-id="{{userInfo.user.id}}">
+                        <span id="btn-text-{{userInfo.user.id}}">
+                            {% if userInfo.profile.verified %}Zrušit ověření{% else %}Ověřit{% endif %}
+                        </span>
+                    </div>
+                   
+                    <div class="ms-1">
+                        <form method="post" action="{% url 'deleteuser' %}">
+                            {% csrf_token %}
+                            <input type="hidden" value="{{ userInfo.user.id }}" name="id">
+                            <button 
+                                class="btn btn-secondary" 
+                                type="submit" 
+                                onclick="return confirm('Opravdy chcete odstranit tohoto uživatele?');" 
+                                >Odstranit uživatele</button>
+                        </form>
+                    </div>
+                </div>
+                
+            </td>
+
+        </tr>
+       
+    {% endfor %}
+  </tbody>
+</table>
+
+<form method="post" action="{% url 'newuser' %}">
+    {% csrf_token %}
+    <button class="btn btn-primary" type="submit" >Vytvořit nového uživatele</button>
+</form>
+
+
+<script>
+
+    // CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                cookie = cookie.trim();
+                if (cookie.startsWith(name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    const csrftoken = getCookie('csrftoken');
+
+    // AJAX helper
+    function ajaxWithCSRF(url, data, successCallback) {
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken,
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(successCallback)
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    }
+
+    document.querySelectorAll(".user-verify").forEach(button => {
+        const id = button.dataset.id;
+        const badge = document.getElementById("badge-"+id)
+        const btnText = document.getElementById("btn-text-"+id);
+
+        button.addEventListener('click', function() {
+
+            button.disabled = true;
+
+            ajaxWithCSRF("{% url 'verify' %}",{'id':id}, function(response)
+            {
+                if (response.success)
+                {
+                    if (response.verified) {
+                        button.classList.remove("btn-danger");
+                        button.classList.add("btn-success");
+                        btnText.textContent = "Zrušit ověření";
+
+                        badge.classList.remove("bg-danger");
+                        badge.classList.add("bg-success");
+                        badge.textContent = "Ověřený"
+                    } else {
+                        button.classList.remove("btn-success");
+                        button.classList.add("btn-danger");
+                        btnText.textContent = "Ověřit";
+
+                        badge.classList.remove("bg-success");
+                        badge.classList.add("bg-danger");
+                        badge.textContent = "Neověřený"
+                    }
+                }
+                else
+                {
+                    alert("Došlo k chybě při verifikaci uživatele: " +response.error );
+                }
+                button.disabled = false;
+            });
+            
+        });
+
+    });
+
+
+
+</script>
+
+{% endblock %}
+
+

@@ -6,9 +6,9 @@ import tempfile
 from django.conf import settings
 import logging
 import time
-import datetime
 import psutil
-from wireguardapp.database.selector import selectInterfacePeers
+from wireguardapp.database.selector import selectInterfacePeers,selectVerifiedPeersFromServerInterface,selectAllServerInterfaces
+import datetime
 
 logger = logging.getLogger('wg')
 
@@ -35,7 +35,7 @@ def generateClientConfText(
     
     :param clientInterface: The interface the configuration file is created for.
     :type clientInterface: Interface
-    :param serverPeer: The peer with the client interface which connects to the server.
+    :param serverPeer: The Peer which connects this client to the server.
     :type serverPeer: Peer
     :param endpoint: The public address of the VPN server.
     :type endpoint: str
@@ -73,7 +73,7 @@ PrivateKey = {decrypt_value(clientInterface.interface_key.private_key)}
 Address = {clientInterface.ip_address}
 
 [Peer]
-PublicKey = {serverPeer.peer_key.public_key}
+PublicKey = {serverPeer.interface.interface_key.public_key}
 Endpoint = {endpoint}:{listenPort}
 AllowedIPs = {allowedIPs}
 PersistentKeepalive = {serverPeer.persistent_keepalive}
@@ -128,7 +128,7 @@ def generateServerConfText(serverInterface : Interface, interfaceInternetName : 
 
     if serverInterface.interface_type != Interface.SERVER:
         raise TypeError
-    serverPeers = selectInterfacePeers(serverInterface)
+    serverPeers = selectVerifiedPeersFromServerInterface(serverInterface)
 
     conf = f"""
 [Interface]
@@ -148,8 +148,8 @@ PostDown = iptables -D FORWARD -o {serverInterface.name} -i {interfaceInternetNa
         conf = conf + '\n\n'
         conf = conf + f"""
 [Peer]
-PublicKey = {peer.interface.interface_key.public_key}
-AllowedIPs = {peer.interface.ip_address}
+PublicKey = {peer.peer_interface.interface_key.public_key}
+AllowedIPs = {peer.peer_interface.ip_address}
 """.strip()
 
     return conf, serverInterface.name
@@ -187,7 +187,7 @@ def addWGPeer(serverInterfaceName : str,peerKey : str, ipAddress : str):
     Result is logged into logs/wg.log.
     To execute the script properly, the script must be owned
     by root and www-data have sudo privileges on the script from visudo.
-    If failed, try to look 'visudo /etc/sudoers.d/wireguard'
+    If failed, try to look 'visudo /etc/sudoers.d/wireguard'.
     
     :param serverInterfaceName: The name of the server interface to add the peer.
     :type serverInterfaceName: str
@@ -310,12 +310,12 @@ def startWGserver(serverInterface : Interface, interfaceInternetName : str):
             capture_output=True,
         )
     except subprocess.CalledProcessError as e:
-        logger.error(f"({datetime.datetime.now()}): wg-start.sh script has failed.")
+        logger.error(f"({datetime.datetime.now()}):{serverInterface.name}-{serverInterface.interface_key.name} wg-start.sh script has failed.")
         logger.error(f"STDOUT: {e.stdout}")
         logger.error(f"STDERR: {e.stderr}")
         return e.stderr
     
-    logger.info(f"({datetime.datetime.now()}): Wireguard server has been started.")
+    logger.info(f"({datetime.datetime.now()}):{serverInterface.name}-{serverInterface.interface_key.name} Wireguard server has been started.")
 
     return 
 
@@ -344,12 +344,12 @@ def stopWGserver(serverInterface : Interface):
             capture_output=True,
         )
     except subprocess.CalledProcessError as e:
-        logger.error(f"({datetime.datetime.now()}): wg-stop.sh script has failed.")
+        logger.error(f"({datetime.datetime.now()}):{serverInterface.name}-{serverInterface.interface_key.name} wg-stop.sh script has failed.")
         logger.error(f"STDOUT: {e.stdout}")
         logger.error(f"STDERR: {e.stderr}")
         return e.stderr
     
-    logger.info(f"({datetime.datetime.now()}): Wireguard server has been stopped.")
+    logger.info(f"({datetime.datetime.now()}):{serverInterface.name}-{serverInterface.interface_key.name} Wireguard server has been stopped.")
 
     return 
 
@@ -440,7 +440,7 @@ def getWGPeersState(serverInterface :Interface):
                 latest_handshake > 0 and
                 (now - latest_handshake) < 120
             )
-            peer = Peer.objects.get(peer_key__public_key = public_key)
+            peer = Peer.objects.get(peer_interface__interface_key__public_key = public_key)
 
             peers.append({
                 "peer": peer.__str__(),
@@ -459,10 +459,11 @@ def getWGPeersState(serverInterface :Interface):
 
 def selectAllNetworkInterfaces() -> list[str]:
     """
-    Gets all available network interfaces of this device. Uses `/sys/class/net` directory to get names of all interfaces.
+    Gets all available network interfaces of this device. Uses `psutil` to get names of all interfaces.
     Used to select the interface to forward the VPN network transfer into.
+    Excludes loopback, wireguard, docker and other interfaces that highly likely do not have internet access. 
 
-    :returns: List of interfaces names e.g. ['eth0', 'wlo0', 'lo']
+    :returns: List of interfaces names e.g. ['eth0', 'wlo0']
     :rtype: list[str]
     """
     
@@ -489,3 +490,90 @@ def selectAllNetworkInterfaces() -> list[str]:
         interfaces.append(iface)
 
     return interfaces
+
+def saveWgDumpAll():
+    interfaces = selectAllServerInterfaces()
+
+    logger.info(f"Starting logging and aggregating state of wireguard peers")
+    for interface in interfaces:
+        saveWgDump(interface=interface)
+
+def getWgDump(interface : Interface):
+    """
+    Run 'wg show <server_interface> dump' and return lines
+    
+    :param interface: The server interface to get its dump (machine readable data of the interface).
+    :type interface: Interface
+
+    :return: Output of the dump command in list of string lines
+    :rtype: list[str]
+
+    :raises CalledProcessError: This error is raised if the name of the given inteface is not online.
+    """
+    result = subprocess.run(
+        ["wg", "show", interface.name , "dump"],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    return result.stdout.strip().splitlines()
+
+def saveWgDump(interface : Interface):
+    try:
+        lines = getWgDump(interface=interface)
+    except:
+        return
+    i = 0
+
+    # First line is interface info → skip it
+    for line in lines[1:]:
+        parts = line.split("\t")
+
+        public_key = parts[0]
+        endpoint = parts[2]
+        latest_handshake = int(parts[4])
+        rx_bytes = int(parts[5])
+        tx_bytes = int(parts[6])
+        keepalive = parts[7]
+
+        peer = Peer.objects.get(peer_interface__interface_key__public_key = public_key)
+        
+        # Insert snapshot
+        handshake_dt = None if latest_handshake == "0" else datetime.datetime.fromtimestamp(int(latest_handshake))
+        PeerSnapshot.objects.create(
+            peer=peer,
+            endpoint=None if endpoint == "(none)" else endpoint,
+            latest_handshake=handshake_dt,
+            rx_bytes=int(rx_bytes),
+            tx_bytes=int(tx_bytes),
+            session=interface.session_number
+        )
+        # Update peer state
+
+        currentRx = rx_bytes
+        currentTx = tx_bytes
+
+        # was interface reseted?
+        if (peer.last_rx_bytes > currentRx or
+            peer.last_tx_bytes > currentTx):
+            diffR = currentRx
+            diffT = currentTx
+        else:
+            diffR = currentRx - peer.last_rx_bytes
+            diffT = currentTx - peer.last_tx_bytes
+
+        peer.total_rx_bytes = diffR
+        peer.total_tx_bytes = diffT
+        peer.last_rx_bytes = currentRx
+        peer.last_tx_bytes = currentTx
+
+        peer.save(update_fields=
+                ['total_rx_bytes',
+                    'total_tx_bytes',
+                    'last_rx_bytes',
+                    'last_tx_bytes'])
+
+        i += 1
+        logger.info(f"WireGuard saved snapshot of [{interface.name}] session [{interface.session_number}] - {peer.peer_interface.interface_key}")
+
+

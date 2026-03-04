@@ -5,7 +5,7 @@
 {% block content %}
 
 
-<div class="container mt-4">
+
 <h1 class="mb-4">Rozhraní serverů</h1>
 
     <nav>
@@ -36,7 +36,9 @@
                     
                 <div class="card mb-3">
                     <div class="card-header">
+                            <label for="server-name-{{item.key.id}}" class="form-label">Jméno serveru</label>
                             <input
+                            id="server-name-{{item.key.id}}"
                             type="text"
                             value="{{inf.interface.interface_key.name}}"
                             data-id="{{ inf.interface.interface_key.id }}"
@@ -71,7 +73,6 @@
                                 </tr>
                             </tbody>
                             </table>
-                            
                         </div>
 
                         <label for="network">
@@ -85,7 +86,7 @@
 
                         </br>
 
-                        <button 
+                            <button 
                                 class="btn wg-toggle {% if inf.is_up %}btn-success{% else %}btn-danger{% endif %}"
                                 data-id="{{inf.interface.id}}">
                             
@@ -98,12 +99,19 @@
                                 role="status">
                             </span>
                             </button>
+
+                            
+                            <a class="btn btn-primary" href="{% url 'alterserver' id=inf.interface.id %}" role="button">Změnit nastavení serveru</a>
+
+
                         
                             <form method="post" style="display:inline;" action="{% url 'deleteinterface' %}">
                                 <input type="hidden" name="id" value="{{ inf.interface.id }}">
                                 {% csrf_token %}
                                 <button class="btn btn-primary danger" onclick="return confirm('Are you sure?')" type="submit" >Smazat server interface</button>
                             </form>
+
+
 
 
                         <div style="overflow-y: auto;max-height: 300px; mt-2" >
@@ -119,9 +127,9 @@
                                 <tbody>
                                     {% for peer in inf.peers %}
                                     <tr class="tablerow">
-                                    <th>{{peer.peer_key.user}}</th>
-                                    <td>{{peer.peer_key.public_key}}</td>
-                                    <td>{{peer.peer_key.name}}</td>
+                                    <th>{{peer.peer_interface.interface_key.user}}</th>
+                                    <td>{{peer.peer_interface.interface_key.public_key}}</td>
+                                    <td>{{peer.peer_interface.interface_key.name}}</td>
                                     <td>
                                         <button 
                                             class="btn btn-secondary delete-button"
@@ -149,9 +157,6 @@
     </div>
 
  
-    
-    
-</div>
 
 <form method="post" action="{% url 'newinterface' %}">
     {% csrf_token %}

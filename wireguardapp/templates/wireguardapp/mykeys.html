@@ -5,12 +5,22 @@
 {% block content %}
 
 
-<div class="container mt-4">
 <h1 class="mb-4">Seznam Klíčů</h1>
+
+{% if messages %}
+  {% for message in messages %}
+    <div class="alert alert-{{ message.tags }}">
+      {{ message }}
+    </div>
+  {% endfor %}
+{% endif %}
+
     {% for item in keys %}
     <div class="card mb-3">
         <div class="card-header">
+                <label for="key-name-{{item.key.id}}" class="form-label">Jméno klíče</label>
                 <input
+                id="key-name-{{item.key.id}}"
                 type="text"
                 value="{{ item.key.name }}"
                 data-id="{{ item.key.id }}"
@@ -20,7 +30,13 @@
         <div class="card-body">
             <p class="card-text mb-2">Veřejný klíč</p>
             <input id="public_key" class="form-control mb-2" type="text" value="{{ item.key.public_key }}" readonly>
-            <p>Interface serveru: {{item.interface.interface_key.name}}</p>
+            <p>Interface serveru: {{item.interfaceName}}
+            {% if item.interfaceUp %}
+            <span class="badge bg-success">Online</span>
+            {% else %}
+            <span class="badge bg-secondary">Offline</span>
+            {% endif %}
+            </p>
             <!-- Create config text -->
             <button 
             class="btn btn-secondary conf-button " 
@@ -46,15 +62,7 @@
     {% endfor %}
     <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newkeyModal">Nový klíč</button>
     
-</div>
 
-{% if messages %}
-  {% for message in messages %}
-    <div class="alert alert-{{ message.tags }}">
-      {{ message }}
-    </div>
-  {% endfor %}
-{% endif %}
 
 
 

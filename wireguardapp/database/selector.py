@@ -1,5 +1,5 @@
 from multiprocessing.managers import BaseManager
-from wireguardapp.models import Interface, Peer, PeerSnapshot, Key
+from wireguardapp.models import Interface, Peer, PeerSnapshot, Key,Profile
 from django.contrib.auth.models import User
 from django.db.models import OuterRef, Subquery
 from django.db.models import F, Window
@@ -35,8 +35,8 @@ def selectClientsServerInterface(clientKey : Key) -> Interface:
     :return: Interface of the server. The client based on its key is connected to this server interface.
     :rtype: Interface
     """
-    clientpeer = Peer.objects.get(interface__interface_key = clientKey)
-    return selectInterfaceFromKey(clientpeer.peer_key)
+    clientpeer = Peer.objects.get(peer_interface__interface_key = clientKey)
+    return clientpeer.interface
 
 def selectInterfaceFromId(interfaceId : int) -> Interface:
     """
@@ -93,12 +93,30 @@ def selectOrderedPeerSnapshots(serverInterface : Interface):
 
 def selectInterfacePeers(interface :Interface):
     """
-    Returns all interface peers. 
+    Returns all interface owned peers. 
 
     :return: List of interface peers.
     :rtype: QuerySet[Peer]
     """
     return Peer.objects.filter(interface = interface)
+
+
+def selectVerifiedPeersFromServerInterface(serverInterface :Interface):
+    """
+    Returns all cliets peers that connects to the provided `serverInterface`. 
+    Returns only peers with verified users.
+
+    :param serverInterface: The interface object to get all cliets peer.
+
+    :return: List of clients peer that connect to the server interface (not owned by this interface).
+    :rtype: QuerySet[Peer]
+    """
+    return Peer.objects.filter(
+        interface=serverInterface,
+        peer_interface__interface_key__user__profile__verified=True
+        )
+    
+
 
 def selectKeyFromId(keyId :int) -> Key | None:
     """
@@ -128,7 +146,7 @@ def selectInterfacesFromName(name : str):
 
 def selectClientInterfacePeer(interface :Interface) -> Peer | None:
     """
-    Gets a peer of the client interface, or just the first peer of the interface.
+    Gets a peer of the client interface.
 
     :param interface: The interface of the client
     :type interface: Interface
@@ -136,4 +154,19 @@ def selectClientInterfacePeer(interface :Interface) -> Peer | None:
     :return: Peer object of the client interface. The first and maybe only peer owned by the given interface.
     :rtype: Peer | None
     """
-    return Peer.objects.filter(interface = interface).first()
+    return Peer.objects.filter(peer_interface = interface).first()
+
+def selectUserProfile(user : User) -> Profile:
+    return Profile.objects.get(user = user)
+
+def selectAllNonAdminUsers():
+    return User.objects.exclude(is_superuser=True)
+
+def selectUserFromId(id : int) -> User | None:
+    return User.objects.filter(pk=id).first()
+
+def selectUserPeers(user : User):
+    return Peer.objects.filter(peer_interface__interface_key__user = user)
+
+def selectUserKeys(user:User):
+    return Key.objects.filter(user = user)

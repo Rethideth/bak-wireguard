@@ -1,0 +1,15 @@
+{% extends "wireguardapp/base.html" %}
+
+{% block title %}quack{% endblock %}
+
+{% block content %}
+
+<h1>Nový uživatel</h1>
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Vytvořit uživatele</button>
+</form>
+
+{% endblock %}

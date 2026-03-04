@@ -1,9 +1,9 @@
-from wireguardapp.models import Interface, Peer, PeerSnapshot, Key
+from wireguardapp.models import Interface, Peer, PeerSnapshot, Key,Profile
 from django.contrib.auth.models import User
 from .createmodel import createServerInterface,createNewKey
-from wireguardapp.database.savemodel import saveServer,deleteServer
-from .wireguard import startWGserver,stopWGserver,isWGserverUp,getWGPeersState,selectAllNetworkInterfaces
-from wireguardapp.database.selector import selectInterfacePeers,selectOrderedPeerSnapshots,selectAllServerInterfaces,selectInterfaceFromId,selectFirstServerInterface
+from wireguardapp.database.savemodel import saveServer,deleteServer,updateProfile,updateInterfaceSesssion,deleteUser
+from .wireguard import startWGserver,stopWGserver,isWGserverUp,getWGPeersState,selectAllNetworkInterfaces,addWGPeer,removeWGPeer,saveWgDump
+from wireguardapp.database.selector import selectInterfacePeers,selectOrderedPeerSnapshots,selectAllServerInterfaces,selectInterfaceFromId,selectFirstServerInterface,selectAllNonAdminUsers,selectUserFromId,selectUserProfile,selectUserPeers
 from django.db import transaction
 from django.db.models import OuterRef, Subquery
 from django.db.models import F, Window
@@ -13,14 +13,23 @@ import ipaddress
 
 import logging
 
-logger = logging.getLogger('test')
+logger = logging.getLogger('wg')
 
 
 
 def getFirstServerInterface() -> Interface:
     return selectFirstServerInterface()
 
-def getServerInterfaceFromId(interfaceId : int):
+def getServerInterfaceFromId(interfaceId : int) ->Interface:
+    """
+    Gets a server interface from its own id.
+
+    :param interfaceId: Id of the server interface
+    :type interfaceId: int
+
+    :return: The interface of the given id
+    :rtype: Interface
+    """
     return selectInterfaceFromId(interfaceId)
 
 def getServerInterfaces():
@@ -79,8 +88,14 @@ def removeServer(serverInterface : Interface):
     deleteServer(serverInterface.interface_key)
 
 def startServer(serverInterface : Interface, interfaceInternetName : str):
-    """ Tries to start the wireguard server interface service. See `wireguard.startWGserver` for more."""
-    return startWGserver(serverInterface, interfaceInternetName)
+    """ 
+    Tries to start the wireguard server interface service. See `wireguard.startWGserver` for more.
+    Also increments session number of the server interface.
+    """
+    updateInterfaceSesssion(serverInterface=serverInterface)
+    result = startWGserver(serverInterface, interfaceInternetName)
+    saveWgDump(serverInterface)
+    return result
 
 def stopServer(serverInterface : Interface):
     """ Tries to stop the wireguard server interface service. See `wireguard.stopWGserver` for more."""
@@ -108,6 +123,9 @@ def getLastDayDiffSnapshot(serverInterface : Interface) -> list[dict]:
     """
     Gets a Snapshot of each server Peer and their bytes recieved/sent difference of the latest snapshot and second latest snapshot.
     
+    :param serverInterface: The interface to get all of its peer snapshots
+    :type serverInterface: Interface
+
     :return: Returns a list of data in a dictionary about the peer, its endpoint, recieved/sent bytes difference.
     :rtype: list[dict]
 
@@ -195,3 +213,59 @@ def getInterfacePeersTotalBytes(serverInterface : Interface):
                 "tx_total": peer.total_tx_bytes,
             })
     return table
+
+def getAllClientUsers():
+    """
+    Gets all users that arent superuser of staff
+    """
+    return selectAllNonAdminUsers()
+
+def getUserFromId(id : int):
+    return selectUserFromId(id=id)
+
+def switchverifyProfile(userId : int) ->Profile:
+    target = getUserFromId(userId)
+    profile = selectUserProfile(target)
+
+    if profile.verified:
+        updateProfile(profile=profile,verifyState=False)
+        disconnectUserFromWg(target)
+    else:
+        updateProfile(profile=profile,verifyState=True)
+        connectUserToWg(target)
+
+    return selectUserProfile(target)
+
+
+def connectUserToWg(user : User):
+    userPeers = selectUserPeers(user)
+
+    for peer in userPeers:
+        try:
+            addWGPeer(
+                serverInterfaceName=peer.interface.name,
+                peerKey=peer.peer_interface.interface_key.public_key,
+                ipAddress=peer.peer_interface.ip_address)
+        except:
+            pass
+
+def disconnectUserFromWg(user: User):
+    userPeers = selectUserPeers(user)
+
+    for peer in userPeers:
+        try:
+            removeWGPeer(
+                serverInterfaceName=peer.interface.name,
+                peerKey=peer.peer_interface.interface_key.public_key)
+        except:
+            pass
+
+def removeUser(userId:int) ->str|None:
+    user = getUserFromId(userId)
+    if user is None:
+        return 'Uživatel nenalezen'
+    deleteUser(user=user)
+    return
+    
+def updateServer(interface:Interface, endpoint:str, port:int, ip_address:str):
+    pass

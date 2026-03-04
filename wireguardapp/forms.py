@@ -23,12 +23,14 @@ class CustomUserCreationForm(UserCreationForm):
     username = forms.CharField(
         widget=forms.TextInput(attrs={
             "autocomplete": "username"
-        })
+        }),
+        required=True
+
     )
 
     class Meta(UserCreationForm.Meta):
         model = User
-        fields = ("username", "email", "password1", "password2")
+        fields = ("username", "email", "first_name", "last_name","password1", "password2")
 
 
 
@@ -40,38 +42,55 @@ class ClientKeyForm(forms.Form):
     )
 
 
+class ServerInterfaceForm(forms.ModelForm):
 
-class ServerInterfaceForm(forms.Form):
-    def checkInterface(value):
+    class Meta:
+        model = Interface
+        fields = [
+            "name",
+            "ip_address",
+            "server_endpoint",
+            "listen_port",
+        ]
+
+    def clean_ip_address(self):
+        value = self.cleaned_data["ip_address"]
+
         try:
-            network = ipaddress.ip_network(value) 
+            network = ipaddress.ip_network(value)
         except ValueError:
-            raise forms.ValidationError("Vložte správnou ip adresu sítě s net maskou.")
-        
+            raise forms.ValidationError(
+                "Vložte správnou ip adresu s net maskou."
+            )
 
-        serverInterfaces = selectAllServerInterfaces().values_list('ip_address',flat=True)
-        for inf in serverInterfaces:
+        qs = selectAllServerInterfaces()
+
+        if self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+
+        for inf in qs.values_list("ip_address", flat=True):
             taken = ipaddress.ip_interface(inf)
             if taken.network.overlaps(network):
-                raise forms.ValidationError(f"Tato síť je už obsazena. (síť: {inf})")
+                raise forms.ValidationError(
+                    f"Tato síť je už obsazena. (síť: {inf})"
+                )
 
-        return network
-    
-    def checkPort(value):
-        serverPorts = selectAllServerInterfaces().values_list('listen_port',flat=True)
-        for port in serverPorts:
-            if port == value:
-                raise forms.ValidationError(f"Tento port je už obsazený jiným serverem.")
-        
+        return value
 
-    name = forms.CharField(max_length=255)
-    ip_network = forms.CharField(help_text='Například: 10.10.0.0/24',
-                                 validators=[checkInterface])
-    endpoint = forms.CharField(max_length=64)
-    port = forms.IntegerField(min_value=0,max_value=65535,initial=51820,validators=[checkPort])
+    def clean_listen_port(self):
+        value = self.cleaned_data["listen_port"]
 
+        qs = selectAllServerInterfaces()
 
+        if self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
 
+        if qs.filter(listen_port=value).exists():
+            raise forms.ValidationError(
+                "Tento port je už obsazený."
+            )
+
+        return value
 
 
 
