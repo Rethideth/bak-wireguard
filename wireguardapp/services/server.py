@@ -1,9 +1,9 @@
 from wireguardapp.models import Interface, Peer, PeerSnapshot, Key,Profile
 from django.contrib.auth.models import User
 from .createmodel import createServerInterface,createNewKey
-from wireguardapp.database.savemodel import saveServer,deleteServer,updateProfile,updateInterfaceSesssion,deleteUser
+from wireguardapp.database.savemodel import saveServer,deleteServer,updateProfile,updateInterfaceSesssion,deleteUser,updateInterfaceEndpoint,updateInterfacePort,updateInterfaceIpaddress,updateInterfaceNetwork
 from .wireguard import startWGserver,stopWGserver,isWGserverUp,getWGPeersState,selectAllNetworkInterfaces,addWGPeer,removeWGPeer,saveWgDump
-from wireguardapp.database.selector import selectInterfacePeers,selectOrderedPeerSnapshots,selectAllServerInterfaces,selectInterfaceFromId,selectFirstServerInterface,selectAllNonAdminUsers,selectUserFromId,selectUserProfile,selectUserPeers
+from wireguardapp.database.selector import selectInterfacePeers,selectOrderedPeerSnapshots,selectAllServerInterfaces,selectInterfaceFromId,selectFirstServerInterface,selectAllNonAdminUsers,selectUserFromId,selectUserProfile,selectUserPeers,selectInterfacesFromServerInterface
 from django.db import transaction
 from django.db.models import OuterRef, Subquery
 from django.db.models import F, Window
@@ -13,7 +13,7 @@ import ipaddress
 
 import logging
 
-logger = logging.getLogger('wg')
+logger = logging.getLogger('web')
 
 
 
@@ -36,7 +36,7 @@ def getServerInterfaces():
     """Returns all server interfaces. See `selector.getAllServerInterface` for more."""
     return selectAllServerInterfaces()
 
-def createNewServer(name : str, ipNetwork : str, endpoint : str, port : str):
+def createNewServer(name : str, ipNetwork : str, networkMask : str, endpoint : str, port : str):
     """
     Creates a new server for wireguard.
     Will create a new key and a interface and then save them, if there weren't any errors.
@@ -46,9 +46,12 @@ def createNewServer(name : str, ipNetwork : str, endpoint : str, port : str):
     :param name: The name for the server key.
     :type name: str
 
-    :param ipNetwork: The network of the new server interface. Has a form like `10.10.1.0/24` network address/mask
+    :param ipNetwork: The network of the new server interface. Has a form like `10.10.1.0` network address
         Will select first available ip address interface from the network.
     :type ipNetwork: str
+
+    :param networkMask: The netmask of the ip network.
+    :type networkMask: str
 
     :param endpoint: The public address of the wireguard VPN server. Port will be only 51820.
     :type endpoint: str
@@ -64,6 +67,7 @@ def createNewServer(name : str, ipNetwork : str, endpoint : str, port : str):
         interface = createServerInterface(
             key = key,
             ipNetwork = ipNetwork,
+            netMask = networkMask,
             endpoint = endpoint,
             port = port)
     except ValueError:
@@ -267,5 +271,45 @@ def removeUser(userId:int) ->str|None:
     deleteUser(user=user)
     return
     
-def updateServer(interface:Interface, endpoint:str, port:int, ip_address:str):
-    pass
+
+
+def updateServer(interface:Interface, changed = list):
+    try:
+        with transaction.atomic():
+            if 'ip_network' in changed or 'ip_network_mask' in changed:
+                updateServerPeersIpAddresses(serverInteface=interface)
+            if 'server_endpoint' in changed:
+                updateInterfaceEndpoint(interface=interface, endpoint=interface.server_endpoint)
+            if 'listen_port' in changed:
+                updateInterfacePort(interface=interface,port=interface.listen_port)
+    except ValueError as e:
+        return str(e)
+    except:
+        return 'Nastala chyba při aktualizaci serveru'
+
+
+
+def updateServerPeersIpAddresses(serverInteface:Interface):
+    network = ipaddress.ip_network(f"{serverInteface.ip_network}/{serverInteface.ip_network_mask}")
+    logger.info(f"network: {network}")
+
+    # if not enough addresses for clients
+    clients = selectInterfacesFromServerInterface(serverInterface=serverInteface)
+    count = network.num_addresses - 2
+    if count < clients.__len__() + 1:
+        raise ValueError("Velikost sítě není dostačujíčí pro všechny klienty")
+    
+    
+
+    updateInterfaceNetwork(serverInteface,serverInteface.ip_network,serverInteface.ip_network_mask)
+    hosts = network.hosts()
+    address = next( hosts )
+    updateInterfaceIpaddress(serverInteface, address)
+    for client in clients:
+        ip = next(hosts)
+        updateInterfaceIpaddress(client,ip)
+
+    
+
+
+

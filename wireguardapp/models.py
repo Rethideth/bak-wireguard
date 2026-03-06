@@ -56,6 +56,14 @@ class Interface(models.Model):
         null=True,
         blank=True
     )
+    ip_network = models.CharField(
+        max_length=32,
+        null=True
+    )
+    ip_network_mask = models.PositiveIntegerField(
+        null=False,
+    )
+    
     ip_address = models.CharField(
         max_length=32,
         null=False
@@ -67,7 +75,6 @@ class Interface(models.Model):
     interface_type = models.CharField(
         max_length=32,
         choices=TYPE_CONNECTION,
-        null=True
     )
     server_endpoint = models.CharField(
         max_length=32,

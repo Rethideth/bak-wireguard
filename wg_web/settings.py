@@ -27,7 +27,13 @@ SECRET_KEY = 'django-insecure-jwhlw=u&&0ehw3%js2f@-4d-@98u%q4hoh%7(#_!55ba0rk_d3
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['192.168.0.161','127.0.0.1', 'wgweb.localhost']
+ALLOWED_HOSTS = ['192.168.0.161',
+    '10.0.0.99',
+    '10.234.14.79',
+    '127.0.0.1',
+    '[2a00:1028:83a8:393e:f60b:7fa2:72a9:e8d1]',
+    '[2a00:1028:83a8:393e:2182:1b97:3792:3f18]',
+    'wgweb.localhost']
 
 load_dotenv(BASE_DIR/'.env')
 FERNET_KEY = os.getenv("FERNET_KEY")

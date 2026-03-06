@@ -2,6 +2,7 @@ from wireguardapp.models import Interface, Peer, PeerSnapshot, Key,Profile
 from django.contrib.auth.models import User
 from .wireguard import generateKeyPair
 from .crypto import encrypt_value,decrypt_value
+from wireguardapp.database.selector import selectInterfacesFromServerInterface
 import ipaddress
 import re
 from django.utils import timezone
@@ -17,12 +18,11 @@ def allocateIpaddress(serverInterface:Interface):
     Allocates an ip address based on a given server interface
     
     
-    :param serverInterface: interface of a server in a form for example 10.0.0.1/24.
+    :param serverInterface: The inteface to allocate an ip address from its network.
     :type serverInterface: Interface
 
-    :return: ip adrress with bit mask (e.g. 10.0.0.12/32)
+    :return: An ip adrress(e.g. 10.0.0.12)
     :rtype: str 
-
 
     :raise TypeError: Raised if the given interface type does not have interface_type = 'server'
     :raise ValueError: Raised if there are no available ip addresses from the server interface.
@@ -30,16 +30,17 @@ def allocateIpaddress(serverInterface:Interface):
     if (serverInterface.interface_type != Interface.SERVER):
         raise TypeError
     
-    interface = ipaddress.ip_interface(serverInterface.ip_address)
-    base = interface.network
+    interfaceNetwork = ipaddress.ip_network(f"{serverInterface.ip_network}/{serverInterface.ip_network_mask}")
+    base = interfaceNetwork
 
-    clientInterfaces = Interface.objects.filter(interface_type = Interface.CLIENT).values_list('ip_address',flat=True)
-    occupied = {ipaddress.IPv4Interface(i).ip for i in clientInterfaces}
-    occupied.add(interface.ip)
+    
+    clientInterfacesIps = selectInterfacesFromServerInterface(serverInterface=serverInterface)
+    occupied = {ipaddress.IPv4Address(i.ip_address) for i in clientInterfacesIps}
+    occupied.add(ipaddress.IPv4Address(serverInterface.ip_address))
 
     for ip in base.hosts():
         if ip not in occupied:
-            return f'{ip}/32'
+            return f'{ip}'
 
     raise ValueError
 
@@ -92,6 +93,7 @@ def createClientInterface(user : User,key : Key, serverInterface :Interface) -> 
         name = interfaceName,
         interface_key = key,
         ip_address = allocateIpaddress(serverInterface),
+        ip_network_mask = 32,
         interface_type = Interface.CLIENT
     )
 
@@ -113,7 +115,7 @@ def makeServerNewName() -> str:
 
     return f'wg{num+1}'
 
-def createServerInterface(key : Key, ipNetwork : str, endpoint : str, port : str):
+def createServerInterface(key : Key, ipNetwork : str, netMask : str, endpoint : str, port : str):
     """
     Creates a Interface object for a server interface.
     Execute when there is no server interface yet.
@@ -126,6 +128,9 @@ def createServerInterface(key : Key, ipNetwork : str, endpoint : str, port : str
         Will select first available ip address interface from the network.
     :type ipNetwork: str
 
+    :param netMask: The netmask of the network address.
+    :type netMask: str
+
     :param endpoint: Server will use this endpoint to generate wireguard client configuration files.
     :type endpoint: str
 
@@ -135,19 +140,20 @@ def createServerInterface(key : Key, ipNetwork : str, endpoint : str, port : str
     :return: Returns the created and unsaved interfaces
     :rtype: Interface
 
-    :raises ValueError: if .
+    :raises ValueError: if ip network is not in a correct format. 
     """
     # not correct format -> error
-    network = ipaddress.ip_network(ipNetwork)
+    network = ipaddress.ip_network(f"{ipNetwork}/{netMask}")
     address = next( network.hosts())
-    interface = ipaddress.ip_interface(f"{address}/{network.prefixlen}")
 
     name = makeServerNewName()
 
     interface = Interface(
         name = name,
         interface_key = key,
-        ip_address = interface,
+        ip_network = ipNetwork,
+        ip_network_mask = netMask,
+        ip_address = address,
         interface_type = Interface.SERVER,
         server_endpoint = endpoint,
         listen_port = port  

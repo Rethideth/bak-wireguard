@@ -41,7 +41,7 @@ def generateClientConfText(
     :type endpoint: str
     :param listenPort: The port of the VPN server.
     :type listenPort: str
-    :param allowedIPs: Network of addresses which will be forwarded to the VPN server.
+    :param allowedIPs: Network of addresses (address/netmask) which will be forwarded to the VPN server.
     :type allowedIPs: str
 
     :return: Text of the configuration file for the client.
@@ -70,7 +70,7 @@ def generateClientConfText(
     conf = f"""
 [Interface]
 PrivateKey = {decrypt_value(clientInterface.interface_key.private_key)}
-Address = {clientInterface.ip_address}
+Address = {clientInterface.ip_address}/{clientInterface.ip_network_mask}
 
 [Peer]
 PublicKey = {serverPeer.interface.interface_key.public_key}
@@ -134,7 +134,7 @@ def generateServerConfText(serverInterface : Interface, interfaceInternetName : 
 [Interface]
 PrivateKey = {decrypt_value(serverInterface.interface_key.private_key)}
 ListenPort = {serverInterface.listen_port}
-Address = {serverInterface.ip_address}
+Address = {serverInterface.ip_address}/{serverInterface.ip_network_mask}
 SaveConfig = true
 PostUp = iptables -t nat -A POSTROUTING -o {interfaceInternetName} -j MASQUERADE
 PostUp = iptables -A FORWARD -i {serverInterface.name} -o {interfaceInternetName} -j ACCEPT
@@ -149,7 +149,7 @@ PostDown = iptables -D FORWARD -o {serverInterface.name} -i {interfaceInternetNa
         conf = conf + f"""
 [Peer]
 PublicKey = {peer.peer_interface.interface_key.public_key}
-AllowedIPs = {peer.peer_interface.ip_address}
+AllowedIPs = {peer.peer_interface.ip_address}/{peer.peer_interface.ip_network_mask}
 """.strip()
 
     return conf, serverInterface.name

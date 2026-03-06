@@ -103,12 +103,12 @@ def selectInterfacePeers(interface :Interface):
 
 def selectVerifiedPeersFromServerInterface(serverInterface :Interface):
     """
-    Returns all cliets peers that connects to the provided `serverInterface`. 
+    Returns all clients peers that connects to the provided `serverInterface`. 
     Returns only peers with verified users.
 
     :param serverInterface: The interface object to get all cliets peer.
 
-    :return: List of clients peer that connect to the server interface (not owned by this interface).
+    :return: List of clients peer that connect to the server interface.
     :rtype: QuerySet[Peer]
     """
     return Peer.objects.filter(
@@ -116,11 +116,23 @@ def selectVerifiedPeersFromServerInterface(serverInterface :Interface):
         peer_interface__interface_key__user__profile__verified=True
         )
     
+def selectInterfacesFromServerInterface(serverInterface :Interface):
+    """
+    Returns all clients interfaces that connects to the provided `serverInterface`. 
+
+    :param serverInterface: The interface object to get all cliets peer.
+
+    :return: List of clients interfaces that connect to the server interface.
+    :rtype: QuerySet[Interface]
+    """
+    peers = Peer.objects.filter(interface = serverInterface).select_related("peer_interface")
+    return [peer.peer_interface for peer in peers]
+    
 
 
 def selectKeyFromId(keyId :int) -> Key | None:
     """
-    Gets the instance of a key based on a given id if it exists.
+    Returns the instance of a key based on a given id if it exists.
 
     :param keyId: The id of the key to return
     :type keyId: int
@@ -134,7 +146,7 @@ def selectKeyFromId(keyId :int) -> Key | None:
 
 def selectInterfacesFromName(name : str):
     """
-    Gets all interfaces with the provided name. 
+    Returns all interfaces with the provided name. 
 
     :param name: The searched name of interfaces
     :type name: str
@@ -146,7 +158,7 @@ def selectInterfacesFromName(name : str):
 
 def selectClientInterfacePeer(interface :Interface) -> Peer | None:
     """
-    Gets a peer of the client interface.
+    Returns a peer of the client interface.
 
     :param interface: The interface of the client
     :type interface: Interface
@@ -157,16 +169,58 @@ def selectClientInterfacePeer(interface :Interface) -> Peer | None:
     return Peer.objects.filter(peer_interface = interface).first()
 
 def selectUserProfile(user : User) -> Profile:
+    """
+    Returns the profile of the given user.
+
+    :param user: The user to return its own profile
+    :type user: User
+
+    :return: Profile instance of the given user
+    :rtype: Profile
+    """
     return Profile.objects.get(user = user)
 
 def selectAllNonAdminUsers():
+    """
+    Returns all users that arent superusers.
+
+    :return: All user that have the field `is_superuser` False
+    :rtype: QuerySet[User]
+    """
     return User.objects.exclude(is_superuser=True)
 
 def selectUserFromId(id : int) -> User | None:
+    """
+    Returns a user based on it own id/pk.
+
+    :param id: The id of the seached user.
+    :type id: int
+
+    :return: The user of the given id if it is exists.
+    :rtype: User | None
+    """
     return User.objects.filter(pk=id).first()
 
 def selectUserPeers(user : User):
+    """
+    Returns the peers that the given user (and its own keys) uses.
+
+    :param user: The user to return the peers that are connected to this user.
+    :type user: User 
+
+    :return: The peers that are connected to the user
+    :rtype: QuerySet[Peer]
+    """
     return Peer.objects.filter(peer_interface__interface_key__user = user)
 
 def selectUserKeys(user:User):
+    """
+    Returns all keys that the given user owns.
+    
+    :param user: The user to returns its own keys.
+    :type user: User
+
+    :return: All keys that the given user owns.
+    :rtype: QuerySet[Key]
+    """
     return Key.objects.filter(user = user)

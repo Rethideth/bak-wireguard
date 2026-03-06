@@ -64,7 +64,7 @@ def createNewClient(user : User, name : str, serverInterface : Interface):
         interface = createClientInterface(user,key, serverInterface)
         serverPeer = createServerPeer(serverInterface,interface)
     except TypeError as e:
-        return 'Interface pro alokaci ip adresy není typu server.'
+        return 'Interface pro alokaci ip adresy není typu server.' + str(e)
     except ValueError as e:
         return 'Volné ip adresy pro tento interface byly vyčerpány.'
     except:
@@ -165,7 +165,7 @@ def generateClientConf(user:User,key : Key, onlyVpn : bool = False) -> str:
         serverPeer = serverPeer,
         endpoint = serverPeer.interface.server_endpoint,
         listenPort = serverPeer.interface.listen_port,
-        allowedIPs = ipaddress.IPv4Interface(serverPeer.interface.ip_address).network)
+        allowedIPs = f"{serverPeer.interface.ip_network}/{serverPeer.interface.ip_network_mask}")
     else:
         return generateClientConfText( 
             clientInterface = clientInterface,

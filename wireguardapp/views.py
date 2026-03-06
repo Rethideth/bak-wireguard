@@ -96,19 +96,21 @@ def serverinterfaces(request : HttpRequest):
 def newinterface(request : HttpRequest):
     if not request.user.is_superuser or not request.user.is_staff:
         raise PermissionDenied
+    
     if request.method == "POST":
         form = ServerInterfaceForm(request.POST)
         if form.is_valid():
             data = form.cleaned_data
-            user = request.user
-            name = data['name']
+            name = data['server_name']
             ip_network = data['ip_network']
-            endpoint = data['endpoint']
-            port = data['port']
+            mask = data['ip_network_mask']
+            endpoint = data['server_endpoint']
+            port = data['listen_port']
 
             result = createNewServer(
                 name=name,
                 ipNetwork=ip_network,
+                networkMask=mask,
                 endpoint=endpoint,
                 port=port)
             if result:
@@ -229,18 +231,16 @@ def alterserver(request:HttpRequest, id:int):
     interface = getServerInterfaceFromId(id)
 
     if request.method == "POST":
-        form = ServerInterfaceForm(request.POST, instance=interface)
+        form = ServerInterfaceForm(request.POST,instance=interface)
         if form.is_valid():
-            data = form.cleaned_data
-            endpoint = data['server_endpoint']
-            port = data['listen_port']
-            ipAddress = data['ip_address']
-            result = updateServer(interface=interface,endpoint=endpoint,port=port,ip_address=ipAddress)
+            result = updateServer(interface=interface,changed=form.changed_data)
             if result:
                 pass
             else:
                 return redirect('server')
     else:
         form = ServerInterfaceForm(instance=interface)
+        form.server_name = interface.interface_key.name
+        
 
     return render(request, 'wireguardapp/alterserver.html',{'form':form})
