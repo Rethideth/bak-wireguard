@@ -356,7 +356,7 @@ def stopWGserver(serverInterface : Interface):
 
 def isWGserverUp(serverInterface : Interface) -> bool:
     """
-    Check if the Wireguard server interface is currently running.
+    Check if the Wireguard server interface is currently running using privileged bash script.
     Check by using 'wg show <interface_name>' command if it is running.
     If the command executes succesfully, it returns True.
     If the commnad fails to execute, it returns False
@@ -368,13 +368,20 @@ def isWGserverUp(serverInterface : Interface) -> bool:
     :rtype: bool
     """
 
+    cmd = [
+        "sudo",
+        settings.BASE_DIR / "scripts/wg-check.sh", 
+        serverInterface.name
+    ]
+
     try:
         result = subprocess.run(
-            ["wg", "show", serverInterface.name],
-            text=True
+            cmd,
+            text=True,
+            check=True
         )
-        return result.returncode == 0
-    except Exception:
+        return True
+    except subprocess.CalledProcessError:
         return False
     
 

@@ -102,6 +102,8 @@ def getpeerstate(request):
     serverInterface = getServerInterfaceFromId(data['id'])
     return JsonResponse({"success" : True, "peers":getWGPeerConnectionState(serverInterface=serverInterface)})
 
+@require_POST
+@login_required
 def verifyUser(request):
     user = request.user
     if not user.is_superuser or not user.is_staff:
