@@ -4,8 +4,8 @@ __pycache__/
 
 # Django
 db.sqlite3
-/static/
-/media/
+/static
+/media
 wireguardapp/__pycache__/
 
 # Virtual environment
