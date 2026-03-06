@@ -148,10 +148,10 @@ in -> sudo mysql:
 
 ```
 sudo mkdir /var/log/wgweb
-sudo chown www-data:www-data /var/log/wgweb
-sudo touch /var/log/wgweb/wg.log /var/log/wgweb/test.log
-sudo chown www-data:$USER /var/log/wgweb/wg.log /var/log/wgweb/test.log
-sudo chmod 660 /var/log/wgweb/wg.log /var/log/wgweb/test.log
+sudo chown www-data:$USER /var/log/wgweb
+sudo touch /var/log/wgweb/wg.log /var/log/wgweb/web.log
+sudo chown www-data:$USER /var/log/wgweb/wg.log /var/log/wgweb/web.log
+sudo chmod 660 /var/log/wgweb/wg.log /var/log/wgweb/web.log
  
 ```
 
