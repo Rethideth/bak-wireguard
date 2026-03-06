@@ -136,10 +136,10 @@ pip install mysqlclient
 
 in -> sudo mysql:
 ```
-	CREATE DATABASE wg_web;
-	CREATE USER ‘django’@’localhost’ IDENTIFIED BY ‘django'; 
-	GRANT ALL PRIVILEGES ON 'wg_web'.* TO ‘django’@’localhost';
-	FLUSH PRIVILEGES;
+CREATE DATABASE wg_web;
+CREATE USER ‘django’@’localhost’ IDENTIFIED BY ‘django'; 
+GRANT ALL PRIVILEGES ON 'wg_web'.* TO ‘django’@’localhost';
+FLUSH PRIVILEGES;
 ```
 
 ## Django
