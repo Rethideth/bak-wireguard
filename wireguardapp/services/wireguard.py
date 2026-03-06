@@ -421,10 +421,16 @@ def getWGPeersState(serverInterface :Interface):
         ]
     """
     now = int(time.time())
+    cmd = [
+        "sudo",
+        settings.BASE_DIR / "scripts/wg-inf-dump.sh", 
+        serverInterface.name
+    ]
+
 
     try:
         result = subprocess.run(
-            ["wg", "show", serverInterface.name, "dump"],
+            cmd,
             capture_output=True,
             text=True,
             check=True
@@ -517,8 +523,13 @@ def getWgDump(interface : Interface):
 
     :raises CalledProcessError: This error is raised if the name of the given inteface is not online.
     """
+    cmd = [
+        "sudo",
+        settings.BASE_DIR / "scripts/wg-inf-dump.sh", 
+        interface.name
+    ]
     result = subprocess.run(
-        ["wg", "show", interface.name , "dump"],
+        cmd,
         capture_output=True,
         text=True,
         check=True,
