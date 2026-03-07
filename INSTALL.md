@@ -48,7 +48,7 @@ pip install cryptography
 pip install python-dotenv
 pip install psutil
 ```
-### 2.3 encryption
+### 2.3 encryption and enviroment values
 Encryption for private key.
 Create an enviromental file for the project
 ```
@@ -60,6 +60,11 @@ Run this command and copy its output:
 ```python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"```
 Then write the generated key into the `.env` file. 
 `FERNET_KEY=<the generated key>` 
+
+Generate a secret key for django.
+```python3 -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"```
+Write output into `.env` file
+`SECRET_KEY=<the generated key>`
 
 ### 2.4 Logging 
 You must have correct permission or manage.py runserver wont work correctly. 
