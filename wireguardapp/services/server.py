@@ -220,11 +220,23 @@ def getInterfacePeersTotalBytes(serverInterface : Interface):
 
 def getAllClientUsers():
     """
-    Gets all users that arent superuser of staff
+    Gets all users that aren not superuser of staff.
+
+    :return: All users that have the field `is_superuser` False
+    :rtype: QuerySet[User]
     """
     return selectAllNonAdminUsers()
 
 def getUserFromId(id : int):
+    """
+    Gets an User object from its own id.
+
+    :param id: The id of the seached user
+    :type id: int
+
+    :return: User if it exists, None if not
+    :rtype: User | None 
+    """
     return selectUserFromId(id=id)
 
 def switchverifyProfile(userId : int) ->Profile:

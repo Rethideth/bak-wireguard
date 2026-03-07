@@ -357,7 +357,7 @@ def stopWGserver(serverInterface : Interface):
 def isWGserverUp(serverInterface : Interface) -> bool:
     """
     Check if the Wireguard server interface is currently running using privileged bash script.
-    Check by using 'wg show <interface_name>' command if it is running.
+    Check by using 'wg show <interface_name>' command through a privileged script if it is running.
     If the command executes succesfully, it returns True.
     If the commnad fails to execute, it returns False
 
@@ -389,7 +389,7 @@ def getWGPeersState(serverInterface :Interface):
     """
     Retrieve the current WireGuard peer state.
 
-    Uses the command ``wg show <interface_name> dump`` to read the
+    Uses the command ``wg show <interface_name> dump`` through a privileged script to read the
     current state of all peers attached to the server interface.
 
     A peer is considered connected if:
@@ -505,6 +505,9 @@ def selectAllNetworkInterfaces() -> list[str]:
     return interfaces
 
 def saveWgDumpAll():
+    """
+    Runs the `getWgDump` for every server interface in the database.
+    """
     interfaces = selectAllServerInterfaces()
 
     logger.info(f"Starting logging and aggregating state of wireguard peers")
@@ -513,7 +516,7 @@ def saveWgDumpAll():
 
 def getWgDump(interface : Interface):
     """
-    Run 'wg show <server_interface> dump' and return lines
+    Run 'wg show <server_interface> dump' through a privileged script and return lines
     
     :param interface: The server interface to get its dump (machine readable data of the interface).
     :type interface: Interface
@@ -537,6 +540,15 @@ def getWgDump(interface : Interface):
     return result.stdout.strip().splitlines()
 
 def saveWgDump(interface : Interface):
+    """
+    Saves the state on the given interface based on the command 'wg show <interface.name> dump'.
+    The information is saved in PeerSnapshot models and aggregated in peer object (total send/recieved bytes)
+
+    If the interface in not up, it skips saving data.
+
+    :param interface: The interface to save its own dump.
+    :type interface: Interface
+    """
     try:
         lines = getWgDump(interface=interface)
     except:
