@@ -227,3 +227,23 @@ Restart apache
 
 ## 4. Errors
 Apache errors are in `/var/log/apache2/error.log`
+
+## 5. Network
+Ports and firewall.
+In project directory in `wg_web/settings.py`, to the list `ALLOWED_HOSTS`, add an ip address or a domain that this server will run on. 
+
+Allow ports in your firewall (`ufw` in this case) for wireguard. Only allow those ports, that you be using.
+Before you enable your firewall, enable your ports first, especially `ssh` port if you are configuring a remote server.
+```
+sudo ufw allow ssh
+sudo ufw allow http
+sudo ufw allow https
+```
+Allow ports that will be using wireguard. Usually it is `51820`, but you can allow more ports for more wireguard interfaces
+```
+sudo ufw allow 51820
+```
+Enable firewall
+```
+sudo ufw enable
+```
