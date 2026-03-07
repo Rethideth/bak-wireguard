@@ -6,7 +6,7 @@ on ubuntu.
 sudo apt install python3-pip
 sudo apt install python3-venv
 sudo apt-get install python3-pip apache2 libapache2-mod-wsgi-py3
-sudo apt-get install libmariadb-dev
+sudo apt-get install libmariadb-devUpdate
 sudo apt-get install pkg-config python3-dev default-libmysqlclient-dev build-essential
 sudo apt install mariadb-server
 sudo apt install git
@@ -104,7 +104,7 @@ GRANT ALL PRIVILEGES ON wg_web.* TO 'django'@'localhost';
 FLUSH PRIVILEGES;
 ```
 ### 2.7 finish django
-Add static file into the project directory
+Add static directory into the project directory
 ```
 mkdir /var/www/wireguardweb/static
 ```
