@@ -29,6 +29,8 @@ Do not forget the dot at the end of the git clone command.
 cd /var/www/wireguardweb
 git clone https://github.com/Rethideth/bak-wireguard .
 ```
+If not working, try:
+`export GNUTLS_CPUID_OVERRIDE=0x1`
 
 ### 2.1 Virtual env
 Create a virtual python enviroment in the project directory:
