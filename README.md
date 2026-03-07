@@ -17,6 +17,6 @@ Logic of the website is in wireguardapp/services.
  - https://studygyaan.com/django/how-to-setup-django-applications-with-apache-and-mod-wsgi-on-ubuntu
  - https://docs.djangoproject.com/en/6.0/topics/auth/default/
  - https://documentation.ubuntu.com/server/how-to/wireguard-vpn/vpn-as-the-default-gateway/#using-the-vpn-as-the-default-gateway
-
+ - https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 

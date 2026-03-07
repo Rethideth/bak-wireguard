@@ -16,16 +16,22 @@ import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'. 
 BASE_DIR = Path(__file__).resolve().parent.parent
-
+load_dotenv(BASE_DIR/'.env')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-jwhlw=u&&0ehw3%js2f@-4d-@98u%q4hoh%7(#_!55ba0rk_d3'
+SECRET_KEY = os.getenv("SECRET_KEY")
+FERNET_KEY = os.getenv("FERNET_KEY")
+
+CSRF_COOKIE_SECURE=True
+SESSION_COOKIE_SECURE=True
+SECURE_SSL_REDIRECT=True
+# Only if web certificate in correct (not expired, self signed, invalid) 
+## SECURE_HSTS_SECONDS=True
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['192.168.0.161',
     '10.0.0.99',
@@ -35,8 +41,8 @@ ALLOWED_HOSTS = ['192.168.0.161',
     '[2a00:1028:83a8:393e:2182:1b97:3792:3f18]',
     'wgweb.localhost']
 
-load_dotenv(BASE_DIR/'.env')
-FERNET_KEY = os.getenv("FERNET_KEY")
+
+
 
 # Application definition
 
