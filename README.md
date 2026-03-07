@@ -12,6 +12,7 @@ Private key are encrypted by Fernet symmetric encryption cryptography.fernet.Fer
 
 Logic of the website is in wireguardapp/services.
 
+On windows, add DNS=1.1.1.1 to the client interface config, if not working.
 
 ## Sources
  - https://studygyaan.com/django/how-to-setup-django-applications-with-apache-and-mod-wsgi-on-ubuntu
