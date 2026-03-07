@@ -144,8 +144,8 @@ Write into the config file the code under. You may need to change the project di
         SSLCertificateKeyFile /etc/apache2/ssl/apache.key
 
         ServerAdmin admin@wgweb.localhost
-        ServerName wgweb.localhost
-        ServerAlias www.wgweb.localhost
+        # ServerName wgweb.localhost
+        # ServerAlias www.wgweb.localhost
         DocumentRoot /var/www/wireguardweb
 
         # Error logging
