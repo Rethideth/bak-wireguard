@@ -4,6 +4,7 @@ from datetime import datetime
 from wireguardapp.models import Interface, Peer, PeerSnapshot, Key
 from wireguardapp.services.wireguard import saveWgDumpAll
 import logging
+import datetime
 
 logger = logging.getLogger('wg')
 
@@ -13,6 +14,7 @@ class Command(BaseCommand):
     
     def handle(self, *args, **options):
         saveWgDumpAll()
+        logger.info(f"({datetime.datetime.now()}): WireGuard peer state aggregation completed")
         self.stdout.write(self.style.SUCCESS("WireGuard ingestion completed"))
 
     

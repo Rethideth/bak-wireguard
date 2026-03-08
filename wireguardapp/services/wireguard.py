@@ -592,8 +592,8 @@ def saveWgDump(interface : Interface):
             diffR = currentRx - peer.last_rx_bytes
             diffT = currentTx - peer.last_tx_bytes
 
-        peer.total_rx_bytes = diffR
-        peer.total_tx_bytes = diffT
+        peer.total_rx_bytes += diffR
+        peer.total_tx_bytes += diffT
         peer.last_rx_bytes = currentRx
         peer.last_tx_bytes = currentTx
 

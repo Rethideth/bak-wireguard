@@ -31,14 +31,12 @@ SECURE_SSL_REDIRECT=True
 ## SECURE_HSTS_SECONDS=True
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['192.168.0.161',
     '10.0.0.99',
     '10.234.14.79',
     '127.0.0.1',
-    '[2a00:1028:83a8:393e:f60b:7fa2:72a9:e8d1]',
-    '[2a00:1028:83a8:393e:2182:1b97:3792:3f18]',
     'wgweb.localhost']
 
 
