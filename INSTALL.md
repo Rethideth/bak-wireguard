@@ -254,3 +254,13 @@ Enable firewall
 ```
 sudo ufw enable
 ```
+## 6. Automatic logging
+Enable a cron job for executing django managment command for logging peer data.
+Edit cron jobs for the user `www-data`
+```
+sudo crontab -u www-data -e
+```
+Add a row:
+```
+0 * * * * cd /var/www/wireguardweb && /var/www/wireguardweb/venv/bin/python manage.py wgdump >> /var/log/wgweb/wg.log 2>&1
+```
