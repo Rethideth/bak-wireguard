@@ -1,13 +1,13 @@
 import subprocess
 from wireguardapp.models import Interface, Peer,  PeerSnapshot, Key
-from .crypto import decrypt_value
+from ..crypto import decrypt_value
 import subprocess
 import tempfile
 from django.conf import settings
 import logging
 import time
 import psutil
-from wireguardapp.database.selector import selectInterfacePeers,selectVerifiedPeersFromServerInterface,selectAllServerInterfaces
+from wireguardapp.database.selectors.selector import selectInterfacePeers,selectVerifiedPeersFromServerInterface,selectAllServerInterfaces
 import datetime
 
 logger = logging.getLogger('wg')
@@ -71,6 +71,7 @@ def generateClientConfText(
 [Interface]
 PrivateKey = {decrypt_value(clientInterface.interface_key.private_key)}
 Address = {clientInterface.ip_address}/{clientInterface.ip_network_mask}
+DNS = 1.1.1.1, 8.8.8.8
 
 [Peer]
 PublicKey = {serverPeer.interface.interface_key.public_key}
@@ -115,10 +116,12 @@ def generateServerConfText(serverInterface : Interface, interfaceInternetName : 
             iptables -A FORWARD -i <wireguard_interface> -o <internet_interface> -j ACCEPT; # enables forwarding of packets from and into wg-server
             iptables -A FORWARD -o <wireguard_interface> -i <internet_interface> -m state --state RELATED,ESTABLISHED -j ACCEPT; 
                                                                                             # enables responses 
+            iptables -A FORWARD -i <wireguard_interface> -o <wireguard_interface> -j ACCEPT;# enables for clients to communicate woth each other
     PostDown =                                                                              # removes network rules in interface stopping
             iptables -t nat -D POSTROUTING -o <internet_interface>  -j MASQUERADE; 
             iptables -D FORWARD -i <wireguard_interface> -o <internet_interface> -j ACCEPT; 
             iptables -D FORWARD -o <wireguard_interface> -i <internet_interface> -m state --state RELATED,ESTABLISHED -j ACCEPT; 
+            iptables -D FORWARD -i <wireguard_interface> -o <wireguard_interface> -j ACCEPT
 
         [Peer]
         PublicKey =                 # clients public key  
@@ -139,9 +142,11 @@ SaveConfig = true
 PostUp = iptables -t nat -A POSTROUTING -o {interfaceInternetName} -j MASQUERADE
 PostUp = iptables -A FORWARD -i {serverInterface.name} -o {interfaceInternetName} -j ACCEPT
 PostUp = iptables -A FORWARD -o {serverInterface.name} -i {interfaceInternetName} -m state --state RELATED,ESTABLISHED -j ACCEPT
+PostUp = iptables -A FORWARD -i {serverInterface.name} -o {serverInterface.name} -j ACCEPT
 PostDown = iptables -t nat -D POSTROUTING -o {interfaceInternetName} -j MASQUERADE
 PostDown = iptables -D FORWARD -i {serverInterface.name} -o {interfaceInternetName} -j ACCEPT 
 PostDown = iptables -D FORWARD -o {serverInterface.name} -i {interfaceInternetName} -m state --state RELATED,ESTABLISHED -j ACCEPT 
+PostDown = iptables -D FORWARD -i {serverInterface.name} -o {serverInterface.name} -j ACCEPT
 """.strip()
     
     for peer in serverPeers:

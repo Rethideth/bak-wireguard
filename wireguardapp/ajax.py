@@ -19,13 +19,13 @@ def getconfajax(request):
 
     if not key:
         return JsonResponse(
-        {"success": False,"error": "Key does not exist."},
+        {"success": False,"error": "Klíč neexistuje."},
         status=404
         )
     
     if not ( key.user == user or user.is_superuser or user.is_staff):
         return JsonResponse(
-        {"success": False,"error": "You arent the owner of the key or superuser."},
+        {"success": False,"error": "Nejste vlastníkem klíče nebo administrator."},
         status=403
         )
     
@@ -60,7 +60,7 @@ def deletekey(request):
     
     if key.user != user:
         if not user.is_superuser or not user.is_staff:
-            return JsonResponse({"success": False, "body" : "Musíte být vlastníkem klíče nebo superuser."})
+            return JsonResponse({"success": False, "body" : "Musíte být vlastníkem klíče nebo administrator."})
     
     result = removeClient(key.user,key)
 
@@ -75,7 +75,7 @@ def deletekey(request):
 def toggleServer(request):
     user = request.user
     if not user.is_superuser or not user.is_staff:
-        return JsonResponse({"success" : False, "error" : "Nejste supersuper pro vypínání/zapínání serveru."})
+        return JsonResponse({"success" : False, "error" : "Nejste administrator pro vypínání/zapínání serveru."})
     
     data = json.loads(request.body)
 
@@ -96,7 +96,7 @@ def toggleServer(request):
 def getpeerstate(request):
     user = request.user
     if not user.is_superuser or not user.is_staff:
-        return JsonResponse({"success" : False, "error" : "Nejste supersuper pro získání logů."})
+        return JsonResponse({"success" : False, "error" : "Nejste nejste administrator pro získání logů."})
     data = json.loads(request.body)
 
     serverInterface = getServerInterfaceFromId(data['id'])
@@ -107,7 +107,7 @@ def getpeerstate(request):
 def verifyUser(request):
     user = request.user
     if not user.is_superuser or not user.is_staff:
-        return JsonResponse({"success" : False, "error" : "Nejste supersuper pro získání logů."})
+        return JsonResponse({"success" : False, "error" : "Nejste administrator pro získání logů."})
     data = json.loads(request.body)
 
     profile = switchverifyProfile(data['id'])

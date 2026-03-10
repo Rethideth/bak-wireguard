@@ -1,8 +1,8 @@
 from wireguardapp.models import Interface, Peer, PeerSnapshot, Key,Profile
 from django.contrib.auth.models import User
-from .wireguard import generateKeyPair
+from .wireguard.wireguardcmd import generateKeyPair
 from .crypto import encrypt_value,decrypt_value
-from wireguardapp.database.selector import selectInterfacesFromServerInterface
+from wireguardapp.database.selectors.selector import selectInterfacesFromServerInterface
 import ipaddress
 import re
 from django.utils import timezone

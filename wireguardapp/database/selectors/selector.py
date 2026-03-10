@@ -25,43 +25,43 @@ def selectAllServerInterfaces():
     return Interface.objects.filter(interface_type = Interface.SERVER)
 
 
-def selectClientsServerInterface(clientKey : Key) -> Interface:
+def selectClientsServerInterface(clientKey : Key) -> Interface |None:
     """
-    Gets the server interface of the given client based on the provided key.
+    Gets the server interface of the given client based on the provided key if it exists.
 
     :param clientKey: The key of a client. 
     :type clientKey: Key
 
-    :return: Interface of the server. The client based on its key is connected to this server interface.
-    :rtype: Interface
+    :return: Interface of the server if it exists. The client based on its key is connected to this server interface.
+    :rtype: Interface | None
     """
-    clientpeer = Peer.objects.get(peer_interface__interface_key = clientKey)
+    clientpeer = Peer.objects.filter(peer_interface__interface_key = clientKey).first()
     return clientpeer.interface
 
-def selectInterfaceFromId(interfaceId : int) -> Interface:
+def selectInterfaceFromId(interfaceId : int) -> Interface | None:
     """
-    Gets the interface object from its own id.
+    Gets the interface object from its own id if it exists.
 
     :param interfaceId: The id of the interface. 
     :type interfaceId: int
 
-    :return: The interface object.
-    :rtype: Interface
+    :return: The interface object if it exists.
+    :rtype: Interface | None
 
     """
-    return Interface.objects.get(id = interfaceId)
+    return Interface.objects.filter(id = interfaceId).first()
 
-def selectInterfaceFromKey(interfaceKey : Key) -> Interface:
+def selectInterfaceFromKey(interfaceKey : Key) -> Interface | None:
     """
-    Gets the interface object from its own Key object.
+    Gets the interface object from its own Key object if it exists.
 
     :param interfaceId: The Key of the interface. 
     :type interfaceId: Key
 
-    :return: The interface object.
-    :rtype: Interface
+    :return: The interface object if it exists.
+    :rtype: Interface | None
     """
-    return Interface.objects.get(interface_key = interfaceKey)
+    return Interface.objects.filter(interface_key = interfaceKey).first()
 
 def selectUserKeys(user : User):
     """
@@ -168,9 +168,10 @@ def selectClientInterfacePeer(interface :Interface) -> Peer | None:
     """
     return Peer.objects.filter(peer_interface = interface).first()
 
-def selectUserProfile(user : User) -> Profile:
+def selectOrCreateUserProfile(user : User) -> Profile:
     """
     Returns the profile of the given user.
+    If it does not exist, creates its own profile.
 
     :param user: The user to return its own profile
     :type user: User
@@ -178,7 +179,8 @@ def selectUserProfile(user : User) -> Profile:
     :return: Profile instance of the given user
     :rtype: Profile
     """
-    return Profile.objects.get(user = user)
+    profile, exists = Profile.objects.get_or_create(user = user)
+    return profile
 
 def selectAllNonAdminUsers():
     """

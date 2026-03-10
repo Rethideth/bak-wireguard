@@ -4,164 +4,288 @@
 
 {% block content %}
 
+<script>
+    function formatBytes(bytes) {
+        if (bytes === 0) return "0 B";
+        const k = 1024;
+        const sizes = ["B", "KB", "MB", "GB"];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+    }
+</script>
 
+<h1 class="mb-4">Rozhraní serveru</h1>
 
-<h1 class="mb-4">Rozhraní serverů</h1>
+<div class="row">
 
-    <nav>
-        <div class="nav nav-tabs" id="nav-tab" role="tablist">
-            {% for inf in interfaces %}
-                    <button 
-                        class="nav-link {% if forloop.first %} active {% endif %}" 
-                        id="nav-{{inf.interface.name}}-tab" 
-                        data-bs-toggle="tab" 
-                        data-bs-target="#nav-{{inf.interface.name}}" 
-                        type="button" 
-                        role="tab" 
-                        aria-controls="nav-{{inf.interface.name}}" 
-                        aria-selected="{% if forloop.first %}true {% else %} false {% endif %}">
-                        {{inf.interface.name}}
-                    </button>       
-            {% endfor %}
+    <!-- LEFT COLUMN -->
+    <div class="col-lg-4">
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header">
+                <strong>Server informace</strong>
+            </div>
+
+            <div class="card-body">
+
+                <table class="table table-sm">
+                    <tbody>
+
+                        <tr>
+                            <th>Server</th>
+                            <td>{{interface.interface_key.name}}</td>
+                        </tr>
+
+                        <tr>
+                            <th>Rozhraní</th>
+                            <td>{{interface.name}}</td>
+                        </tr>
+
+                        <tr>
+                            <th>Public key</th>
+                            <td style="word-break: break-all; overflow-wrap: anywhere; white-space: normal;">
+                                {{interface.interface_key.public_key}}
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <th>WG IP</th>
+                            <td class="font-monospace">
+                                {{interface.ip_address}}
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <th>Endpoint</th>
+                            <td style="word-break: break-all; overflow-wrap: anywhere; white-space: normal;">
+                                {{interface.server_endpoint}}
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <th>Port</th>
+                            <td>{{interface.listen_port}}</td>
+                        </tr>
+
+                    </tbody>
+                </table>
+
+                <label class="form-label mt-3">
+                    Interface pro přesměrování přenosu
+                </label>
+
+                <select
+                    name="networks"
+                    id="network-{{interface.id}}"
+                    class="form-select mb-3">
+
+                    {% for network in networks %}
+                        <option value="{{network}}">{{network}}</option>
+                    {% endfor %}
+
+                </select>
+
+                <div class="d-grid gap-2">
+
+                    <button
+                        class="btn wg-toggle {% if isUp %}btn-success{% else %}btn-danger{% endif %}"
+                        data-id="{{interface.id}}">
+
+                        <span id="btn-text-{{interface.id}}">
+                            {% if isUp %}Interface UP{% else %}Interface DOWN{% endif %}
+                        </span>
+
+                        <span
+                            id="btn-spinner-{{interface.id}}"
+                            class="spinner-border spinner-border-sm ms-2 d-none">
+                        </span>
+
+                    </button>
+
+                    <a class="btn btn-outline-primary"
+                       href="{% url 'alterserver' id=interface.id %}">
+                        Změnit nastavení
+                    </a>
+
+                    <form method="post"
+                          action="{% url 'deleteinterface' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="id" value="{{interface.id}}">
+
+                        <button class="btn btn-outline-danger w-100"
+                                onclick="return confirm('Are you sure?')">
+                            Smazat server
+                        </button>
+                    </form>
+
+                </div>
+
+            </div>
         </div>
-    </nav>
-    <div class="tab-content" id="nav-tabContent">
-        {% for inf in interfaces %}
-            <div    class="tab-pane fade {% if forloop.first %} show active {% endif %}" 
-                    id="nav-{{inf.interface.name}}" 
-                    role="tabpanel" 
-                    aria-labelledby="nav-{{inf.interface.name}}-tab" 
-                    tabindex="0">
-<!--///////////////////////////////////////////////Server Interface Dashboard Card///////////////////////////////////////////////////////-->
-                    
-                <div class="card mb-3">
-                    <div class="card-header">
-                            <label for="server-name-{{item.key.id}}" class="form-label">Jméno serveru</label>
-                            <input
-                            id="server-name-{{item.key.id}}"
-                            type="text"
-                            value="{{inf.interface.interface_key.name}}"
-                            data-id="{{ inf.interface.interface_key.id }}"
-                            class="form-control key-name-input"
-                            >
-                    </div>
+
+    </div>
+
+
+    <!-- RIGHT COLUMN -->
+    <div class="col-lg-8">
+
+        <ul class="nav nav-tabs mb-3">
+
+            <li class="nav-item">
+                <button class="nav-link active"
+                        data-bs-toggle="tab"
+                        data-bs-target="#state">
+                    Stav serveru
+                </button>
+            </li>
+
+            <li class="nav-item">
+                <button class="nav-link"
+                        data-bs-toggle="tab"
+                        data-bs-target="#peers">
+                    Peers
+                </button>
+            </li>
+
+            <li class="nav-item">
+                <button class="nav-link"
+                        data-bs-toggle="tab"
+                        data-bs-target="#usage">
+                    Usage
+                </button>
+            </li>
+
+        </ul>
+
+
+        <div class="tab-content">
+
+            <!-- STATE TAB -->
+            <div class="tab-pane fade show active" id="state">
+
+                <div class="card">
                     <div class="card-body">
-                        <div class="container mb-4">  
-                            <table class="table" style="overflow-x: auto;max-width: 600px;">
-                            <thead>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                <th>Jméno serveru: </th>
-                                <td>{{inf.interface.name}}</td>
-                                </tr>
-                                <tr>
-                                <th>Veřejný klíč serveru: </th>
-                                <td>{{inf.interface.interface_key.public_key}}</td>
-                                </tr>
-                                <tr>
-                                <th>Ip adresa wireguard rozhraní </th>
-                                <td>{{inf.interface.ip_address}}</td>
-                                </tr>
-                                <tr>
-                                <th>Endpoint serveru </th>
-                                <td>{{inf.interface.server_endpoint}}</td>
-                                </tr>
-                                <tr>
-                                <th>Port wireguard rozhraní </th>
-                                <td>{{inf.interface.listen_port}}</td>
-                                </tr>
-                            </tbody>
-                            </table>
-                        </div>
-
-                        <label for="network">
-                            Interface pro přesměrování přenosu: 
-                        </label>
-                        <select name="networks" id="network-{{inf.interface.id}}" class="mb-2">
-                            {% for network in networks %}
-                                <option value="{{network}}">{{network}}</option>
-                            {% endfor%}
-                        </select>
-
-                        </br>
-
-                            <button 
-                                class="btn wg-toggle {% if inf.is_up %}btn-success{% else %}btn-danger{% endif %}"
-                                data-id="{{inf.interface.id}}">
-                            
-                            <span id="btn-text-{{inf.interface.id}}">
-                                {% if inf.is_up %}Interface UP{% else %}Interface DOWN{% endif %}
-                            </span>
-
-                            <span id="btn-spinner-{{inf.interface.id}}"
-                                class="spinner-border spinner-border-sm ms-2 d-none"
-                                role="status">
-                            </span>
-                            </button>
-
-                            
-                            <a class="btn btn-primary" href="{% url 'alterserver' id=inf.interface.id %}" role="button">Změnit nastavení serveru</a>
-
 
                         
-                            <form method="post" style="display:inline;" action="{% url 'deleteinterface' %}">
-                                <input type="hidden" name="id" value="{{ inf.interface.id }}">
-                                {% csrf_token %}
-                                <button class="btn btn-primary danger" onclick="return confirm('Are you sure?')" type="submit" >Smazat server interface</button>
-                            </form>
+                        <div class="row text-center">
+                            <div class="col">
+                                <h5 id="wg-state">Stav serveru</h5>
+                                {% if isUp %}
+                                    <span class="badge bg-success">Server běží</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Server vypnut</span>
+                                {% endif %}
+                            </div>
 
+                            <div class="col">
+                                <h5 id="peer-total">{{peers.count}}</h5>
+                                <small class="text-muted">Total Peers</small>
+                            </div>
 
+                            <div class="col">
+                                <h5 id="peer-online">0</h5>
+                                <small class="text-muted">Connected</small>
+                            </div>
 
-
-                        <div style="overflow-y: auto;max-height: 300px; mt-2" >
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                    <th scope="col">Uživatel</th>
-                                    <th scope="col">Veřejný klíč</th>
-                                    <th scope="col">Jméno klíče</th>
-                                    <th scope="col">Smazat klíč?</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for peer in inf.peers %}
-                                    <tr class="tablerow">
-                                    <th>{{peer.peer_interface.interface_key.user}}</th>
-                                    <td>{{peer.peer_interface.interface_key.public_key}}</td>
-                                    <td>{{peer.peer_interface.interface_key.name}}</td>
-                                    <td>
-                                        <button 
-                                            class="btn btn-secondary delete-button"
-                                            name="button-deletekey"
-                                            type="submit" 
-                                            data-id="{{peer.peer_interface.interface_key.id}}"
-                                            onclick="return confirm('Opravdy chcete odstranit tento klíč?');">
-                                            Odstranit klíč
-                                        </button>
-                                    </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
                         </div>
                         
-                            
-                   
+
                     </div>
                 </div>
-<!--/////////////////////////////////////////////// End Server Interface Dashboard Card///////////////////////////////////////////////////////-->
-                
+
             </div>
-        {% endfor%}
+
+
+            <!-- PEERS TAB -->
+            <div class="tab-pane fade" id="peers">
+
+                <div class="card">
+                    <div class="card-body">
+
+                        <table class="table">
+
+                            <thead>
+                                <tr>
+                                    <th>Uživatel</th>
+                                    <th>Veřejný klíč</th>
+                                    <th>Jméno</th>
+                                    <th>Zobrazit profil</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+
+                            {% for peer in peers %}
+                                <tr>
+                                    <td>{{peer.peer_interface.interface_key.user}}</td>
+
+                                    <td class="wg-wrap font-monospace">
+                                        {{peer.peer_interface.interface_key.public_key}}
+                                    </td>
+
+                                    <td>{{peer.peer_interface.interface_key.name}}</td>
+
+                                    <td>
+                                        <a class="btn btn-sm btn-primary"
+                                           href="{% url 'userprofile' id=peer.peer_interface.interface_key.user.id %}">
+                                            Profil
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+                </div>
+
+            </div>
+
+
+            <!-- USAGE TAB -->
+            <div class="tab-pane fade" id="usage">
+
+                <div class="card">
+                    <div class="card-body">
+
+                        <table class="table table-striped">
+
+                            <thead>
+                                <tr>
+                                    <th>Peer</th>
+                                    <th>Endpoint</th>
+                                    <th>Handshake</th>
+                                    <th>Upload</th>
+                                    <th>Download</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="usage-table"
+                                   data-id="{{interface.id}}">
+                            </tbody>
+
+                        </table>
+
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
     </div>
+
+</div>
+
+
+
 
  
 
-<form method="post" action="{% url 'newinterface' %}">
-    {% csrf_token %}
-    <button class="btn btn-primary new-button" type="submit" >Vytvořit nový serverový interface</button>
-</form>
+
 
 
 
@@ -197,28 +321,9 @@
         .then(successCallback)
         .catch(error => {
             console.error('Error:', error);
-            alert('Došlo k chybě při zasílání informací na server');
+            //alert('Došlo k chybě při zasílání informací na server');
         });
     }
-
-    // Handle delete buttons
-    document.querySelectorAll('.delete-button').forEach(button => {
-        button.addEventListener('click', function() {
-            const id = this.dataset.id;
-            row = this.closest('.tablerow');
-
-            ajaxWithCSRF("{% url 'deletekey' %}", { 'id': id }, function(response) {
-                if (response.success) 
-                {
-                    row.remove(); // remove row from html list
-                } 
-                else 
-                {
-                    alert("Nepodařilo se odstranit klíč.");
-                }
-            });
-        });
-    });
 
     document.querySelectorAll(".wg-toggle").forEach(button => {
         
@@ -258,33 +363,65 @@
 
     });
 
-    
-    document.querySelectorAll(".key-name-input").forEach(input => {
-        let originalValue = input.value;
+    table = document.getElementById("usage-table")
+    const id = table.dataset.id;
+    // Fetch immediately
+    fetchPeers(table,id);
 
-        input.addEventListener("blur", () => {
+    // Refresh every 5 seconds
+    setInterval(() => fetchPeers(table, id), 5000);
 
-            if (input.value === originalValue) return;
 
-            ajaxWithCSRF("{% url 'updatekeyname' %}", {"key_id":input.dataset.id, "name":input.value}, function(response){
-                if (response.success)
-                {
-                    originalValue = input.value
+    function fetchPeers(table, id) {
+
+    ajaxWithCSRF("{% url 'peerstate' %}", {"id":id}, function(response)
+    {
+        if (response.success)
+        {
+            table.innerHTML = "";
+
+            let totalPeers = response.peers.length;
+            let connectedPeers = 0;
+
+            response.peers.forEach(peer => {
+
+                if (peer.is_connected) {
+                    connectedPeers++;
                 }
-                else
-                {
-                    input.value = originalValue
-                }
+
+                const row = `
+                    <tr>
+                        <td>${peer.peer}</td>
+                        <td>${peer.endpoint}</td>
+                        <td>${peer.handshake > 0 ? "Connected" : "—"}</td>
+                        <td>${formatBytes(peer.rx)}</td>
+                        <td>${formatBytes(peer.tx)}</td>
+                        <td>
+                        ${peer.is_connected 
+                            ? '<span class="badge bg-success">Online</span>' 
+                            : '<span class="badge bg-secondary">Offline</span>'}
+                        </td>
+                    </tr>
+                `;
+
+                table.innerHTML += row;
             });
-        });
 
-        input.addEventListener("keydown", e => {
-            if (e.key === "Enter") 
-            {
-                input.blur();
-            }
-        });
+            // Update dashboard counters
+            //document.getElementById("peer-total").textContent = totalPeers;
+            document.getElementById("peer-online").textContent = connectedPeers;
+
+        }
+        else
+        {
+            table.innerHTML = response.error;
+        }
+
     });
+}
+
+    
+  
 
 
 </script>

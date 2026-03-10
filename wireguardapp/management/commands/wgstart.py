@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 import subprocess
 import tempfile
-from wireguardapp.services.wireguard import startWGserver
+from wireguardapp.services.wireguard.wireguardcmd import startWGserver
 from django.conf import settings
 import logging
 

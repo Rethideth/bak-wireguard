@@ -17,7 +17,26 @@
                 <li class="nav-item">
                     <a class="nav-link" href="{% url 'home' %}">Home</a>
                 </li>
+               
                 {% if user.is_authenticated %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'mykeys' %}">Moje klíče</a>
+                </li>
+                {% endif %}
+                {% if user.is_authenticated %}
+                {% if user.is_superuser or user.is_staff %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'logs' %}">Log</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'allservers' %}">Servery</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'listusers' %}">Uživatele</a>
+                </li>
+                {% endif %}
+                {% endif %}
+                 {% if user.is_authenticated %}
                 <li class="nav-item">
                     <form method="post" class="nav-link" action="{% url 'logout' %}">
                         {% csrf_token %}
@@ -32,25 +51,8 @@
                     <a class="nav-link" href="{% url 'register' %}">Registrovat se</a>
                 </li>
                 {% endif %}
-                {% if user.is_authenticated %}
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'mykeys' %}">Moje klíče</a>
-                </li>
-                {% endif %}
-                {% if user.is_authenticated %}
-                {% if user.is_superuser or user.is_staff %}
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'logs' %}">Log</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'server' %}">Server</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'listusers' %}">Uživatele</a>
-                </li>
-                {% endif %}
-                {% endif %}
                 </ul>
+                
             </div>
     </div>
     </nav>

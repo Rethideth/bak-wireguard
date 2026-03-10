@@ -51,15 +51,7 @@
                     </div>
                    
                     <div class="ms-1">
-                        <form method="post" action="{% url 'deleteuser' %}">
-                            {% csrf_token %}
-                            <input type="hidden" value="{{ userInfo.user.id }}" name="id">
-                            <button 
-                                class="btn btn-secondary" 
-                                type="submit" 
-                                onclick="return confirm('Opravdy chcete odstranit tohoto uživatele?');" 
-                                >Odstranit uživatele</button>
-                        </form>
+                        <a class="btn btn-primary" href="{% url  'userprofile' id=userInfo.user.id %}">Zobrazit profil</a>
                     </div>
                 </div>
                 

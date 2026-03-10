@@ -1,0 +1,106 @@
+{% extends "wireguardapp/base.html" %}
+
+{% block title %}quack{% endblock %}
+
+{% block content %}
+
+<h1>List serverů</h1>
+
+
+<div class="card mb-4 shadow-sm">
+    <div class="card-header">
+        <h5 class="mb-0">Servery</h5>
+    </div>
+
+
+<ul class="list-group list-group-flush">
+
+    {% for info in grouped %}
+    <li class="list-group-item server-row py-3">
+        <div class="row align-items-center">
+
+            <!-- Server name -->
+            <div class="col-md-3">
+                <div class="d-flex align-items-center">
+
+                    {% if info.isUp %}
+                    <span class="status-dot bg-success"></span>
+                    {% else %}
+                    <span class="status-dot bg-secondary"></span>
+                    {% endif %}
+
+                    <div>
+                        <div class="fw-semibold">
+                            {{info.interface.interface_key.name}}
+                        </div>
+                        <small class="text-muted">
+                            {{info.interface.name}}
+                        </small>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Server details -->
+            <div class="col-md-6 small">
+
+                <div class="row">
+                    <div class="col-4 text-muted">WG IP</div>
+                    <div class="col-8 font-monospace">
+                        {{info.interface.ip_address}}
+                    </div>
+
+                    <div class="col-4 text-muted">Endpoint</div>
+                    <div class="col-8 font-monospace">
+                        {{info.interface.server_endpoint}}
+                    </div>
+
+                    <div class="col-4 text-muted">Port</div>
+                    <div class="col-8 font-monospace">
+                        {{info.interface.listen_port}}
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Status + action -->
+            <div class="col-md-3 text-md-end mt-3 mt-md-0">
+
+                {% if info.isUp %}
+                <span class="badge bg-success-subtle text-success mb-2">
+                    Online
+                </span>
+                {% else %}
+                <span class="badge bg-secondary-subtle text-secondary mb-2">
+                    Offline
+                </span>
+                {% endif %}
+
+                <div>
+                    <a class="btn btn-primary"
+                       href="{% url 'server' id=info.interface.id %}">
+                       Dashboard
+                    </a>
+                </div>
+
+            </div>
+
+        </div>
+    </li>
+    {% endfor %}
+
+</ul>
+
+
+</div>
+
+
+
+<form method="post" action="{% url 'newinterface' %}">
+    {% csrf_token %}
+    <button class="btn btn-primary new-button" type="submit" >Vytvořit nový serverový interface</button>
+</form>
+
+
+
+{% endblock %}

@@ -2,7 +2,7 @@ from django.core.management.base import BaseCommand
 import subprocess
 from datetime import datetime
 from wireguardapp.models import Interface, Peer, PeerSnapshot, Key
-from wireguardapp.services.wireguard import saveWgDumpAll
+from wireguardapp.services.wireguard.wireguardcmd import saveWgDumpAll
 import logging
 import datetime
 

@@ -7,7 +7,7 @@ from wireguardapp.models import Interface, Peer, PeerSnapshot, Key
 
 
 from .services.client import createNewClient, generateClientConf,getKeyById,getClientsServerInterface,checkUserOfKey,getUserProfile,createNewUser,getUsersKeys
-from .services.server import createNewServer,checkServer,getServerInterfacePeers,selectAllServerInterfaces,getServerInterfaceFromId,removeServer,getNetworkInterfaces,getInterfacePeersTotalBytes,getAllClientUsers,removeUser,updateServer
+from .services.server import createNewServer,checkServer,getServerInterfacePeers,getServerInterfaces,getServerInterfaceFromId,removeServer,getNetworkInterfaces,getInterfacePeersTotalBytes,getAllClientUsers,removeUser,updateServer
 
 from django.core.exceptions import PermissionDenied
 
@@ -79,17 +79,31 @@ def serverinterfaces(request : HttpRequest):
         raise PermissionDenied
 
     interfaceInfo = list(dict())
-    interfaces = selectAllServerInterfaces()
+    interfaces = getServerInterfaces()
 
     for interface in interfaces:
         interfaceInfo.append({
             "interface": interface,
             "peers":getServerInterfacePeers(interface),
-            "is_up":checkServer(interface)})
+            "isUp":checkServer(interface)})
         
+
+    return render(request, 'wireguardapp/serverlist.html' , {"grouped":interfaceInfo})
+
+@login_required
+def serverinterface(request :HttpRequest, id:int):
+    if not request.user.is_superuser or not request.user.is_staff:
+        raise PermissionDenied
+    
+    interface = getServerInterfaceFromId(id)
+    peers = getServerInterfacePeers(interface)
+    isUp = checkServer(interface)
+
     networks = getNetworkInterfaces()
 
-    return render(request, 'wireguardapp/server.html' , {"interfaces":interfaceInfo, "networks":networks})
+    return render (request, 'wireguardapp/server.html', {"interface":interface,"peers" : peers, "isUp":isUp, "networks":networks})
+
+    
 
 
 @login_required
@@ -116,7 +130,7 @@ def newinterface(request : HttpRequest):
             if result:
                 messages.error(request=request,message=result)
             else:
-                return redirect('server')
+                return redirect('allserver')
             
     else:
         form = ServerInterfaceForm()
@@ -135,7 +149,7 @@ def deleteinterface(request :HttpRequest):
         else:
             messages.error(request=request,message="Vypněte server předtím, než ho odstraníte.")
     
-    return redirect('server')
+    return redirect('allserver')
         
 
 
@@ -148,7 +162,7 @@ def viewlogs(request : HttpRequest):
         raise PermissionDenied
     
     interfacesLogs = list(dict())
-    interfaces = selectAllServerInterfaces()
+    interfaces = getServerInterfaces()
     
     for interface in interfaces:
         interfacesLogs.append({"interface": interface, "peer_total": getInterfacePeersTotalBytes(interface)})
@@ -167,7 +181,7 @@ def downlandConf(request : HttpRequest):
     if not checkUserOfKey(user = user, key = key):
         raise PermissionDenied
     if not getUserProfile(user=user).verified:
-        messages.info(request=request, message="Nejste ověřeni")
+        messages.info(request=request, message="Nejste ověřeni.")
         return
 
     if full == 'y':
@@ -237,10 +251,14 @@ def alterserver(request:HttpRequest, id:int):
             if result:
                 pass
             else:
-                return redirect('server')
+                return redirect('server',id=interface.pk)
     else:
         form = ServerInterfaceForm(instance=interface)
         form.server_name = interface.interface_key.name
         
 
     return render(request, 'wireguardapp/alterserver.html',{'form':form})
+
+@login_required
+def userprofile(request:HttpRequest, id:int):
+    pass

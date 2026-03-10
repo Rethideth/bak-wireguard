@@ -1,9 +1,9 @@
 from wireguardapp.models import Interface, Peer, PeerSnapshot, Key,Profile
 from django.contrib.auth.models import User
 from .createmodel import createServerInterface,createNewKey
-from wireguardapp.database.savemodel import saveServer,deleteServer,updateProfile,updateInterfaceSesssion,deleteUser,updateInterfaceEndpoint,updateInterfacePort,updateInterfaceIpaddress,updateInterfaceNetwork
-from .wireguard import startWGserver,stopWGserver,isWGserverUp,getWGPeersState,selectAllNetworkInterfaces,addWGPeer,removeWGPeer,saveWgDump
-from wireguardapp.database.selector import selectInterfacePeers,selectOrderedPeerSnapshots,selectAllServerInterfaces,selectInterfaceFromId,selectFirstServerInterface,selectAllNonAdminUsers,selectUserFromId,selectUserProfile,selectUserPeers,selectInterfacesFromServerInterface
+from wireguardapp.database.savers.savemodel import saveServer,deleteServer,updateProfile,updateInterfaceSesssion,deleteUser,updateInterfaceEndpoint,updateInterfacePort,updateInterfaceIpaddress,updateInterfaceNetwork
+from .wireguard.wireguardcmd import startWGserver,stopWGserver,isWGserverUp,getWGPeersState,selectAllNetworkInterfaces,addWGPeer,removeWGPeer,saveWgDump
+from wireguardapp.database.selectors.selector import selectInterfacePeers,selectOrderedPeerSnapshots,selectAllServerInterfaces,selectInterfaceFromId,selectFirstServerInterface,selectAllNonAdminUsers,selectUserFromId,selectOrCreateUserProfile,selectUserPeers,selectInterfacesFromServerInterface
 from django.db import transaction
 from django.db.models import OuterRef, Subquery
 from django.db.models import F, Window
@@ -71,9 +71,9 @@ def createNewServer(name : str, ipNetwork : str, networkMask : str, endpoint : s
             endpoint = endpoint,
             port = port)
     except ValueError:
-        return "Hodnoty nového server interface nejsou validní."
+        return "Hodnoty nového server rozhraní nejsou validní."
     except:
-        return "Selhalo vytváření nového interface serveru."
+        return "Selhalo vytváření nového rozhraní serveru."
     
     saveServer(key,interface)
 
@@ -241,7 +241,7 @@ def getUserFromId(id : int):
 
 def switchverifyProfile(userId : int) ->Profile:
     target = getUserFromId(userId)
-    profile = selectUserProfile(target)
+    profile = selectOrCreateUserProfile(target)
 
     if profile.verified:
         updateProfile(profile=profile,verifyState=False)
@@ -250,7 +250,7 @@ def switchverifyProfile(userId : int) ->Profile:
         updateProfile(profile=profile,verifyState=True)
         connectUserToWg(target)
 
-    return selectUserProfile(target)
+    return selectOrCreateUserProfile(target)
 
 
 def connectUserToWg(user : User):

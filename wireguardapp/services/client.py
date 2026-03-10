@@ -1,8 +1,8 @@
 from wireguardapp.models import Interface, Peer,PeerSnapshot, Key,Profile
-from .wireguard import addWGPeer,removeWGPeer,generateClientConfText
+from .wireguard.wireguardcmd import addWGPeer,removeWGPeer,generateClientConfText
 from .createmodel import createNewKey,createClientInterface,createServerPeer,createProfile
-from wireguardapp.database.savemodel import saveClient,deleteClient,saveUser,updateProfile
-from wireguardapp.database.selector import selectClientsServerInterface,selectKeyFromId,selectInterfacesFromName,selectInterfaceFromKey,selectUserProfile,selectClientInterfacePeer,selectUserKeys
+from wireguardapp.database.savers.savemodel import saveClient,deleteClient,saveUser,updateProfile
+from wireguardapp.database.selectors.selector import selectClientsServerInterface,selectKeyFromId,selectInterfacesFromName,selectInterfaceFromKey,selectOrCreateUserProfile,selectClientInterfacePeer,selectUserKeys
 from wireguardapp.forms import CustomUserCreationForm
 from django.db import transaction
 from django.contrib.auth.models import User
@@ -53,8 +53,6 @@ def createNewClient(user : User, name : str, serverInterface : Interface):
     :rtype: str | None
     """
     profile = getUserProfile(user=user) 
-    if not profile.verified:
-        return 'Nejste ověření pro vytváření klíčů, kontaktujte správce pro ověření.'
     if profile.key_limit <= profile.key_count:
         return 'Dosáhli jste maximum počet klíču, co můžete mít.'
     
@@ -64,9 +62,9 @@ def createNewClient(user : User, name : str, serverInterface : Interface):
         interface = createClientInterface(user,key, serverInterface)
         serverPeer = createServerPeer(serverInterface,interface)
     except TypeError as e:
-        return 'Interface pro alokaci ip adresy není typu server.' + str(e)
+        return 'Rozhraní pro alokaci ip adresy není typu server.' + str(e)
     except ValueError as e:
-        return 'Volné ip adresy pro tento interface byly vyčerpány.'
+        return 'Volné ip adresy pro tento server byly vyčerpány.'
     except:
         return "Nastala chyba při vytváření klienta."
 
@@ -79,16 +77,15 @@ def createNewClient(user : User, name : str, serverInterface : Interface):
         profile=profile,
         keyCount=profile.key_count+1)
 
-    try:  # set temporary interface for wireguard  
-        result = addWGPeer(
-                serverInterface.name, 
-                interface.interface_key.public_key,
-                ipAddress=interface.ip_address)
-    except RuntimeError as e:
-        pass
-    
-
-    
+    if profile.verified:
+        try:  # set temporary interface for wireguard  
+            result = addWGPeer(
+                    serverInterface.name, 
+                    interface.interface_key.public_key,
+                    ipAddress=interface.ip_address)
+        except RuntimeError as e:
+            pass
+        
     return 
 
 def removeClient(user : User, key : Key):
@@ -184,9 +181,9 @@ def getUserProfile(user:User) -> Profile:
     :return: Profile object of the provided user
     :rtype: Profile
     """
-    return selectUserProfile(user=user)
+    return selectOrCreateUserProfile(user=user)
 
-def createNewUser(form:CustomUserCreationForm) ->User:
+def createNewUser(form:CustomUserCreationForm) -> User:
     """
     Creates a new User with its profile.
 
