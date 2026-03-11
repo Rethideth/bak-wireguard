@@ -1,4 +1,3 @@
-from django.shortcuts import get_object_or_404
 from django.views.decorators.http import require_POST
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -6,8 +5,9 @@ from wireguardapp.models import Interface, Peer, PeerSnapshot, Key
 from django.http import JsonResponse,HttpRequest
 import json
 
-from .services.client import removeClient,generateClientConf,getKeyById,getUserProfile
-from .services.server import checkServer,startServer,stopServer,getWGPeerConnectionState,getServerInterfaceFromId,getUserFromId,switchverifyProfile
+from .services.clientservice import ClientService
+from .services.serverservice import ServerService
+
 
 @require_POST
 @login_required
@@ -15,7 +15,7 @@ def getconfajax(request):
     data = json.loads(request.body)
     user = request.user
 
-    key = getKeyById(data['id'])
+    key = ClientService.get_key_by_id(data['id'])
 
     if not key:
         return JsonResponse(
@@ -30,8 +30,8 @@ def getconfajax(request):
         )
     
 
-    confFull = generateClientConf(user,key)
-    confSplit = generateClientConf(user,key,True)
+    confFull = ClientService.generate_client_conf(user,key)
+    confSplit = ClientService.generate_client_conf(user,key,True)
 
     return JsonResponse({"success": True,'body1': confFull, "body2":confSplit})
 
@@ -41,13 +41,12 @@ def getconfajax(request):
 def updatekeyname(request):
     data = json.loads(request.body)
 
-    key = getKeyById(data["key_id"])
+    key = ClientService.get_key_by_id(data["key_id"])
 
     if not(key.user == request.user or request.user.is_superuser):
         return JsonResponse({"success":False})
 
-    key.name = data["name"]
-    key.save(update_fields=["name"])
+    ClientService.change_key_name(key,data["name"])
 
     return JsonResponse({"success": True})
 
@@ -56,13 +55,13 @@ def updatekeyname(request):
 def deletekey(request):
     user = request.user
     data = json.loads(request.body)
-    key = getKeyById(data['id'])
+    key = ClientService.get_key_by_id(data['id'])
     
     if key.user != user:
         if not user.is_superuser or not user.is_staff:
             return JsonResponse({"success": False, "body" : "Musíte být vlastníkem klíče nebo administrator."})
     
-    result = removeClient(key.user,key)
+    result = ClientService.remove_client(key.user, key)
 
 
     if result:
@@ -79,17 +78,17 @@ def toggleServer(request):
     
     data = json.loads(request.body)
 
-    serverInterface = getServerInterfaceFromId(data['id'])
+    serverInterface = ServerService.get_server_interface_by_id(data['id'])
 
-    if checkServer(serverInterface):
-        result = stopServer(serverInterface)
+    if ServerService.check_server(serverInterface):
+        result = ServerService.stop_server(serverInterface)
     else:
-        result = startServer(serverInterface,data['interface'])
+        result = ServerService.start_server(serverInterface,data['interface'])
 
     if result:
         return JsonResponse({"success" : False, "error" : result})
     else:
-        return JsonResponse({"success" : True, "is_up": checkServer(serverInterface)})
+        return JsonResponse({"success" : True, "is_up": ServerService.check_server(serverInterface)})
 
 @require_POST
 @login_required
@@ -99,8 +98,8 @@ def getpeerstate(request):
         return JsonResponse({"success" : False, "error" : "Nejste nejste administrator pro získání logů."})
     data = json.loads(request.body)
 
-    serverInterface = getServerInterfaceFromId(data['id'])
-    return JsonResponse({"success" : True, "peers":getWGPeerConnectionState(serverInterface=serverInterface)})
+    serverInterface = ServerService.get_server_interface_by_id(data['id'])
+    return JsonResponse({"success" : True, "peers":ServerService.get_wg_peer_connection_state(serverInterface=serverInterface)})
 
 @require_POST
 @login_required
@@ -110,7 +109,7 @@ def verifyUser(request):
         return JsonResponse({"success" : False, "error" : "Nejste administrator pro získání logů."})
     data = json.loads(request.body)
 
-    profile = switchverifyProfile(data['id'])
+    profile = ServerService.switch_verify_profile(data['id'])
 
     return JsonResponse({"success":True, "verified": profile.verified })
 

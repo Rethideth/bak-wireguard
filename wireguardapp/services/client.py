@@ -1,8 +1,8 @@
 from wireguardapp.models import Interface, Peer,PeerSnapshot, Key,Profile
-from .wireguard.wireguardcmd import addWGPeer,removeWGPeer,generateClientConfText
+from .wireguardcmd import addWGPeer,removeWGPeer,generateClientConfText
 from .createmodel import createNewKey,createClientInterface,createServerPeer,createProfile
-from wireguardapp.database.savers.savemodel import saveClient,deleteClient,saveUser,updateProfile
-from wireguardapp.database.selectors.selector import selectClientsServerInterface,selectKeyFromId,selectInterfacesFromName,selectInterfaceFromKey,selectOrCreateUserProfile,selectClientInterfacePeer,selectUserKeys
+from wireguardapp.database.savemodel import saveClient,deleteClient,saveUser,updateProfile
+from wireguardapp.database.selector import selectClientsServerInterface,selectKeyFromId,selectInterfacesFromName,selectInterfaceFromKey,selectOrCreateUserProfile,selectClientInterfacePeer,selectUserKeys,selectUserFromId
 from wireguardapp.forms import CustomUserCreationForm
 from django.db import transaction
 from django.contrib.auth.models import User
@@ -202,3 +202,15 @@ def checkUserOfKey(user:User , key: Key) -> bool:
 
 def getUsersKeys(user:User):
     return selectUserKeys(user=user)
+
+def getUserFromId(id : int):
+    """
+    Gets an User object from its own id.
+
+    :param id: The id of the seached user
+    :type id: int
+
+    :return: User if it exists, None if not
+    :rtype: User | None 
+    """
+    return selectUserFromId(id=id)

@@ -92,7 +92,7 @@
                         data-id="{{interface.id}}">
 
                         <span id="btn-text-{{interface.id}}">
-                            {% if isUp %}Interface UP{% else %}Interface DOWN{% endif %}
+                            {% if isUp %}Vypnout server{% else %}Zapnout server{% endif %}
                         </span>
 
                         <span
@@ -103,7 +103,7 @@
                     </button>
 
                     <a class="btn btn-outline-primary"
-                       href="{% url 'alterserver' id=interface.id %}">
+                       href="{% url 'editinterface' id=interface.id %}">
                         Změnit nastavení
                     </a>
 
@@ -171,9 +171,9 @@
                             <div class="col">
                                 <h5 id="wg-state">Stav serveru</h5>
                                 {% if isUp %}
-                                    <span class="badge bg-success">Server běží</span>
+                                    <span class="badge bg-success" id="wg-state-value">Server běží</span>
                                 {% else %}
-                                    <span class="badge bg-secondary">Server vypnut</span>
+                                    <span class="badge bg-secondary" id="wg-state-value">Server vypnut</span>
                                 {% endif %}
                             </div>
 
@@ -207,8 +207,10 @@
                             <thead>
                                 <tr>
                                     <th>Uživatel</th>
-                                    <th>Veřejný klíč</th>
+                                    <th>Ip addresa</th>
                                     <th>Jméno</th>
+                                    <th>Download</th>
+                                    <th>Upload</th>
                                     <th>Zobrazit profil</th>
                                 </tr>
                             </thead>
@@ -220,14 +222,24 @@
                                     <td>{{peer.peer_interface.interface_key.user}}</td>
 
                                     <td class="wg-wrap font-monospace">
-                                        {{peer.peer_interface.interface_key.public_key}}
+                                        {{peer.peer_interface.ip_address}}
                                     </td>
 
                                     <td>{{peer.peer_interface.interface_key.name}}</td>
+                                    <td>
+                                        <script>
+                                            document.write(formatBytes({{peer.total_rx_bytes|default:0}}));
+                                        </script> 
+                                    </td>
+                                    <td>
+                                        <script>
+                                            document.write(formatBytes({{peer.total_tx_bytes|default:0}}));
+                                        </script> 
+                                    </td>
 
                                     <td>
                                         <a class="btn btn-sm btn-primary"
-                                           href="{% url 'userprofile' id=peer.peer_interface.interface_key.user.id %}">
+                                           href="{% url 'usersettings' id=peer.peer_interface.interface_key.user.id %}">
                                             Profil
                                         </a>
                                     </td>
@@ -331,8 +343,9 @@
             const id = this.dataset.id;
             const btnText = document.getElementById("btn-text-"+id);
             const spinner = document.getElementById("btn-spinner-"+id);
-            const inf = document.getElementById("network-"+id)
-            net = inf.value
+            const inf = document.getElementById("network-"+id);
+            const wgbadge = document.getElementById("wg-state-value");
+            net = inf.value;
 
             button.disabled = true;
             spinner.classList.remove("d-none");
@@ -344,11 +357,19 @@
                     if (response.is_up) {
                         button.classList.remove("btn-danger");
                         button.classList.add("btn-success");
-                        btnText.textContent = "Interface UP";
+                        btnText.textContent = "Vypnout server";
+
+                        wgbadge.classList.remove("bg-secondary");
+                        wgbadge.classList.add("bg-success");
+                        wgbadge.textContent = "Server běží";
                     } else {
                         button.classList.remove("btn-success");
                         button.classList.add("btn-danger");
-                        btnText.textContent = "Interface DOWN";
+                        btnText.textContent = "Zapnount server";
+
+                        wgbadge.classList.remove("bg-success");
+                        wgbadge.classList.add("bg-secondary");
+                        wgbadge.textContent = "Server vypnut";
                     }
                 }
                 else

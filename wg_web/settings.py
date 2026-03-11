@@ -83,6 +83,10 @@ TEMPLATES = [
     },
 ]
 
+TEMPLATES[0]["OPTIONS"]["context_processors"] += [
+    "wireguardapp.contextprocessors.servers",
+]
+
 WSGI_APPLICATION = 'wg_web.wsgi.application'
 
 

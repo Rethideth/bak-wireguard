@@ -1,9 +1,9 @@
 from wireguardapp.models import Interface, Peer, PeerSnapshot, Key,Profile
 from django.contrib.auth.models import User
 from .createmodel import createServerInterface,createNewKey
-from wireguardapp.database.savers.savemodel import saveServer,deleteServer,updateProfile,updateInterfaceSesssion,deleteUser,updateInterfaceEndpoint,updateInterfacePort,updateInterfaceIpaddress,updateInterfaceNetwork
-from .wireguard.wireguardcmd import startWGserver,stopWGserver,isWGserverUp,getWGPeersState,selectAllNetworkInterfaces,addWGPeer,removeWGPeer,saveWgDump
-from wireguardapp.database.selectors.selector import selectInterfacePeers,selectOrderedPeerSnapshots,selectAllServerInterfaces,selectInterfaceFromId,selectFirstServerInterface,selectAllNonAdminUsers,selectUserFromId,selectOrCreateUserProfile,selectUserPeers,selectInterfacesFromServerInterface
+from wireguardapp.database.savemodel import saveServer,deleteServer,updateProfile,updateInterfaceSesssion,deleteUser,updateInterfaceEndpoint,updateInterfacePort,updateInterfaceIpaddress,updateInterfaceNetwork
+from .wireguardcmd import startWGserver,stopWGserver,isWGserverUp,getWGPeersState,selectAllNetworkInterfaces,addWGPeer,removeWGPeer,saveWgDump
+from wireguardapp.database.selector import selectInterfacePeers,selectOrderedPeerSnapshots,selectAllServerInterfaces,selectInterfaceFromId,selectFirstServerInterface,selectAllNonAdminUsers,selectUserFromId,selectOrCreateUserProfile,selectUserPeers,selectInterfacesFromServerInterface
 from django.db import transaction
 from django.db.models import OuterRef, Subquery
 from django.db.models import F, Window
@@ -227,20 +227,9 @@ def getAllClientUsers():
     """
     return selectAllNonAdminUsers()
 
-def getUserFromId(id : int):
-    """
-    Gets an User object from its own id.
-
-    :param id: The id of the seached user
-    :type id: int
-
-    :return: User if it exists, None if not
-    :rtype: User | None 
-    """
-    return selectUserFromId(id=id)
 
 def switchverifyProfile(userId : int) ->Profile:
-    target = getUserFromId(userId)
+    target = selectUserFromId(userId)
     profile = selectOrCreateUserProfile(target)
 
     if profile.verified:
@@ -277,9 +266,10 @@ def disconnectUserFromWg(user: User):
             pass
 
 def removeUser(userId:int) ->str|None:
-    user = getUserFromId(userId)
+    user = selectUserFromId(userId)
     if user is None:
         return 'Uživatel nenalezen'
+    disconnectUserFromWg(user=user)
     deleteUser(user=user)
     return
     

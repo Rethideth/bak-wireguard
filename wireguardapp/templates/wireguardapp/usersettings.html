@@ -1,0 +1,190 @@
+{% extends "wireguardapp/base.html" %}
+
+{% block content %}
+
+<h2 class="mb-4">
+Uživatel {{ target_user.username }}
+</h2>
+
+<div class="row">
+
+    <!-- LEFT COLUMN -->
+    <div class="col-lg-4">
+
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header">
+                <strong>Profil uživatele</strong>
+            </div>
+
+            <div class="card-body">
+
+                <p>
+                <strong>Uživatelské jméno:</strong><br>
+                {{ target_user.username }}
+                </p>
+
+                <p>
+                <strong>Jméno a příjmení:</strong><br>
+                {{ target_user.first_name }} {{ target_user.last_name }}
+                </p>
+
+                <p>
+                <strong>Email:</strong><br>
+                {{ target_user.email }}
+                </p>
+
+                <p>
+                <strong>Status:</strong><br>
+
+                {% if profile.verified %}
+                <span class="badge bg-success">Ověřen</span>
+                {% else %}
+                <span class="badge bg-secondary">Neověřen</span>
+                {% endif %}
+
+                </p>
+        
+                <hr>
+
+                <strong>Použito klíčů</strong>
+
+                <div class="progress mt-2">
+
+                    <div class="progress-bar"
+                        role="progressbar"
+                        style="width: {% widthratio profile.key_count profile.key_limit 100 %}%">
+
+                    {{ profile.key_count }} / {{ profile.key_limit }}
+
+                    </div>
+
+                </div>
+                <hr>
+
+                <form method="post">
+                {% csrf_token %}
+
+                    <button type="submit"
+                            name="delete_user"
+                            class="btn btn-danger"
+                            onclick="return confirm('Opravdu chcete odstranit tohoto uživatele?');">
+                    Smazat uživatele
+                    </button>
+
+                </form>
+
+
+            </div>
+        </div>
+
+    </div>
+
+
+    <!-- RIGHT COLUMN -->
+    <div class="col-lg-8">
+
+        <!-- USER SETTINGS -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header">
+                <strong>Nastavení Uživatele</strong>
+            </div>
+
+            <div class="card-body">
+
+                <form method="post">
+                {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label class="form-label">Uživatelské jméno</label>
+                        {{ user_form.username }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Jméno</label>
+                        {{ user_form.first_name }} 
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Příjmení</label>
+                        {{ user_form.last_name }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        {{ user_form.email }}
+                    </div>
+
+                    {% if profile_form %}
+
+                        <hr>
+
+                        <h6 class="text-muted">Admin Nastavení</h6>
+
+                        <div class="form-check mb-3">
+                            {{ profile_form.verified }}
+                            <label class="form-check-label">
+                            Ověřený
+                            </label>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Max počet klíčů</label>
+                            {{ profile_form.key_limit }}
+                        </div>
+
+                    {% endif %}
+
+                    <button type="submit"
+                            name="update_profile"
+                            class="btn btn-primary">
+                    Uložit nastavení
+                    </button>
+
+                </form>
+
+            </div>
+        </div>
+
+
+        <!-- PASSWORD -->
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <strong>Změna hesla</strong>
+            </div>
+
+            <div class="card-body">
+
+                <form method="post">
+                {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label class="form-label">Původní heslo</label>
+                        {{ password_form.old_password }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Nové heslo</label>
+                        {{ password_form.new_password1 }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Potvrďte heslo</label>
+                        {{ password_form.new_password2 }}
+                    </div>
+
+                    <button type="submit"
+                            name="change_password"
+                            class="btn btn-danger">
+                    Změnit heslo
+                    </button>
+
+                </form>
+
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

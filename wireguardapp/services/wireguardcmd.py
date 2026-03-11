@@ -1,13 +1,13 @@
 import subprocess
 from wireguardapp.models import Interface, Peer,  PeerSnapshot, Key
-from ..crypto import decrypt_value
+from .crypto import decrypt_value
 import subprocess
 import tempfile
 from django.conf import settings
 import logging
 import time
 import psutil
-from wireguardapp.database.selectors.selector import selectInterfacePeers,selectVerifiedPeersFromServerInterface,selectAllServerInterfaces
+from wireguardapp.database.repository import InterfaceRepository,PeerRepository
 import datetime
 
 logger = logging.getLogger('wg')
@@ -131,7 +131,7 @@ def generateServerConfText(serverInterface : Interface, interfaceInternetName : 
 
     if serverInterface.interface_type != Interface.SERVER:
         raise TypeError
-    serverPeers = selectVerifiedPeersFromServerInterface(serverInterface)
+    serverPeers = PeerRepository.get_verified_peers_from_server(serverInterface)
 
     conf = f"""
 [Interface]
@@ -513,7 +513,7 @@ def saveWgDumpAll():
     """
     Runs the `getWgDump` for every server interface in the database.
     """
-    interfaces = selectAllServerInterfaces()
+    interfaces = InterfaceRepository.get_all_server_interfaces()
 
     logger.info(f"Starting logging and aggregating state of wireguard peers")
     for interface in interfaces:

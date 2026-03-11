@@ -7,18 +7,25 @@
 
 <h1 class="mb-4">Seznam Klíčů</h1>
 
-{% if messages %}
-  {% for message in messages %}
-    <div class="alert alert-{{ message.tags }}">
-      {{ message }}
+<div class="d-flex align-items-center mb-2">
+  <span class="me-3"><strong>Použito klíčů</strong></span>
+  <div class="progress" style="width: 200px; height: 20px;">
+    <div class="progress-bar d-flex justify-content-center align-items-center"
+         role="progressbar"
+         style="width: {% widthratio profile.key_count profile.key_limit 100 %}%;">
+      {{ profile.key_count }} / {{ profile.key_limit }}
     </div>
-  {% endfor %}
-{% endif %}
+  </div>
+</div>
+
+
+
+    
 
     {% for item in keys %}
     <div class="card mb-3">
         <div class="card-header">
-                <label for="key-name-{{item.key.id}}" class="form-label">Jméno klíče</label>
+                <label for="key-name-{{item.key.id}}" class="form-label">Jméno klíče:</label>
                 <input
                 id="key-name-{{item.key.id}}"
                 type="text"
@@ -51,7 +58,7 @@
                 name="button-deletekey"
                 type="submit" 
                 data-id="{{item.key.id}}"
-                onclick="return confirm('Opravdy chcete odstranit tento klíč?');">
+                onclick="return confirm('Opravdu chcete odstranit tento klíč?');">
                 Odstranit klíč
             </button>
         

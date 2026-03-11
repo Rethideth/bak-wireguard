@@ -1,7 +1,9 @@
 from wireguardapp.models import Interface, Peer, PeerSnapshot, Key, Profile
 from django.contrib.auth.models import User
-from django.utils import timezone
 from django.db import transaction
+from django.db.models import F, Window
+from django.db.models.functions import RowNumber
+
 
 def saveClient(clientKey : Key, clientInterface : Interface, serverPeer: Peer):
     """

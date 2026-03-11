@@ -1,15 +1,14 @@
 from wireguardapp.models import Interface, Peer, PeerSnapshot, Key,Profile
 from django.contrib.auth.models import User
-from .wireguard.wireguardcmd import generateKeyPair
+from .wireguardcmd import generateKeyPair
 from .crypto import encrypt_value,decrypt_value
-from wireguardapp.database.selectors.selector import selectInterfacesFromServerInterface
+from wireguardapp.database.selector import selectInterfacesFromServerInterface
 import ipaddress
 import re
 from django.utils import timezone
 from django.db import transaction
 
 KEEPALIVE = 25
-PORT =      51820  
 
 
 

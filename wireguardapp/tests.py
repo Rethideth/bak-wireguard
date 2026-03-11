@@ -1,6 +1,5 @@
 from unittest import TestCase
 from django.contrib.auth import get_user_model
-from wireguardapp.services.createmodel import createNewKey
 from .models import Interface,Peer, Key
 import ipaddress
 import os

@@ -6,13 +6,6 @@
 
 <h1>List uživatelů</h1>
 
-{% if messages %}
-  {% for message in messages %}
-    <div class="alert alert-{{ message.tags }}">
-      {{ message }}
-    </div>
-  {% endfor %}
-{% endif %}
 
 <table class="table table-bordered table-striped align-middle">
   <thead>
@@ -51,7 +44,7 @@
                     </div>
                    
                     <div class="ms-1">
-                        <a class="btn btn-primary" href="{% url  'userprofile' id=userInfo.user.id %}">Zobrazit profil</a>
+                        <a class="btn btn-primary" href="{% url  'usersettings' id=userInfo.user.id %}">Zobrazit profil</a>
                     </div>
                 </div>
                 

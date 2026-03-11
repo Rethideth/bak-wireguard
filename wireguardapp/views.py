@@ -1,21 +1,20 @@
 from django.shortcuts import render,redirect,get_object_or_404
 from django.views.decorators.http import require_POST
-from django.contrib.auth import login
+from django.contrib.auth import login, update_session_auth_hash
+from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from wireguardapp.models import Interface, Peer, PeerSnapshot, Key
+from wireguardapp.models import Interface, Peer, PeerSnapshot, Key,Profile
 
-
-from .services.client import createNewClient, generateClientConf,getKeyById,getClientsServerInterface,checkUserOfKey,getUserProfile,createNewUser,getUsersKeys
-from .services.server import createNewServer,checkServer,getServerInterfacePeers,getServerInterfaces,getServerInterfaceFromId,removeServer,getNetworkInterfaces,getInterfacePeersTotalBytes,getAllClientUsers,removeUser,updateServer
-
+from .services.clientservice import ClientService
+from .services.serverservice import ServerService
 from django.core.exceptions import PermissionDenied
 
-from .forms import CustomUserCreationForm, ClientKeyForm,ServerInterfaceForm
+from .forms import CustomUserCreationForm, ClientKeyForm,ServerInterfaceForm,UserUpdateForm,ProfileAdminForm
 
 from datetime import datetime
 from django.utils import timezone
-from django.http import HttpRequest,HttpResponse
+from django.http import HttpRequest,HttpResponse, HttpResponseNotFound
 import logging
 from django.conf import settings
 
@@ -35,7 +34,7 @@ def register(request : HttpRequest):
     if request.method == "POST":
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
-            user = createNewUser(form=form)
+            user = ClientService.create_user(form=form)
             login(request, user)  # auto-login after registration
             return redirect('/')
     else:
@@ -45,13 +44,14 @@ def register(request : HttpRequest):
 
 @login_required
 def mykeys(request : HttpRequest):
-    keys = getUsersKeys(request.user)
+    keys = ClientService.get_user_keys(request.user)
     form = ClientKeyForm()
     grouped = list(dict())
+    profile = ClientService.get_user_profile(request.user)
     for key in keys:
-        inf =getClientsServerInterface(key)
-        grouped.append({"key":key, 'interfaceName' : inf.interface_key.name, 'interfaceUp': checkServer(inf) })
-    return render(request, 'wireguardapp/mykeys.html', {'keys':grouped, "form":form})
+        inf = ClientService.get_clients_server_interface(key)
+        grouped.append({"key":key, 'interfaceName' : inf.interface_key.name, 'interfaceUp': ServerService.check_server(inf) })
+    return render(request, 'wireguardapp/mykeys.html', {'keys':grouped, "form":form, "profile" : profile})
 
 
 
@@ -61,11 +61,11 @@ def newkey(request : HttpRequest):
         form = ClientKeyForm(request.POST)
         if form.is_valid():
             data = form.cleaned_data
-            result = createNewClient(
-                user = request.user,
-                name = data['name'],
-                serverInterface=data['interface']
-            )
+            
+            result = ClientService.create_new_client(
+                user=request.user,
+                name=data['name'],
+                server_interface=data['interface'])
             if result:
                 messages.error(request = request, message = result)
         else:
@@ -79,13 +79,13 @@ def serverinterfaces(request : HttpRequest):
         raise PermissionDenied
 
     interfaceInfo = list(dict())
-    interfaces = getServerInterfaces()
+    interfaces = ServerService.get_all_server_interfaces()
 
     for interface in interfaces:
         interfaceInfo.append({
             "interface": interface,
-            "peers":getServerInterfacePeers(interface),
-            "isUp":checkServer(interface)})
+            "peers": ServerService.get_server_interface_peers(interface) ,
+            "isUp":ServerService.check_server(server_interface=interface)})
         
 
     return render(request, 'wireguardapp/serverlist.html' , {"grouped":interfaceInfo})
@@ -95,47 +95,62 @@ def serverinterface(request :HttpRequest, id:int):
     if not request.user.is_superuser or not request.user.is_staff:
         raise PermissionDenied
     
-    interface = getServerInterfaceFromId(id)
-    peers = getServerInterfacePeers(interface)
-    isUp = checkServer(interface)
+    interface = ServerService.get_server_interface_by_id(id)
+    peers = ServerService.get_server_interface_peers(interface)
+    isUp = ServerService.check_server(interface)
 
-    networks = getNetworkInterfaces()
+    networks = ServerService.get_network_interfaces()
 
     return render (request, 'wireguardapp/server.html', {"interface":interface,"peers" : peers, "isUp":isUp, "networks":networks})
 
-    
+def serverinterfaceform(request, id=None):
+    """
+    Handles create and update of a Server Interface.
+    If pk is provided, edits an existing interface.
+    """
 
+    if id:
+        interface = ServerService.get_server_interface_by_id(id)
+        if ServerService.check_server(interface):
+            messages.error(request=request, message="Nejdřív vypněte server než změníte nastavení rozhraní.")
+            return redirect('server', id=id)
+    else:
+        interface = None
 
-@login_required
-def newinterface(request : HttpRequest):
-    if not request.user.is_superuser or not request.user.is_staff:
-        raise PermissionDenied
-    
     if request.method == "POST":
-        form = ServerInterfaceForm(request.POST)
+        form = ServerInterfaceForm(request.POST, instance=interface)
         if form.is_valid():
-            data = form.cleaned_data
-            name = data['server_name']
-            ip_network = data['ip_network']
-            mask = data['ip_network_mask']
-            endpoint = data['server_endpoint']
-            port = data['listen_port']
-
-            result = createNewServer(
-                name=name,
-                ipNetwork=ip_network,
-                networkMask=mask,
-                endpoint=endpoint,
-                port=port)
-            if result:
-                messages.error(request=request,message=result)
+            if id:
+                result = ServerService.update_server(interface=interface,changed=form.changed_data)
+                if result:
+                    messages.error(request=request,message=result)
+                else:
+                    return redirect('server', id=id)
             else:
-                return redirect('allserver')
+                data = form.cleaned_data
+                name = data['server_name']
+                ip_network = data['ip_network']
+                mask = data['ip_network_mask']
+                endpoint = data['server_endpoint']
+                port = data['listen_port']
+
+                result = ServerService.create_new_server(
+                    name=name,
+                    ip_network=ip_network,
+                    network_mask=mask,
+                    endpoint=endpoint,
+                    port=port)
+                if result:
+                    messages.error(request=request,message=result)
+                else:
+                    return redirect("allservers") 
+        
             
     else:
-        form = ServerInterfaceForm()
+        form = ServerInterfaceForm(instance=interface)
 
-    return render(request, "wireguardapp/newinterface.html", {"form" : form})
+    return render(request, "wireguardapp/forminterface.html", {"form": form, "id": id})   
+
 
 @login_required
 def deleteinterface(request :HttpRequest):
@@ -143,9 +158,9 @@ def deleteinterface(request :HttpRequest):
         raise PermissionDenied
     if request.method == "POST":
         id = request.POST.get('id')
-        interface = getServerInterfaceFromId(id)
-        if not checkServer(interface):
-            removeServer(interface)
+        interface = ServerService.get_server_interface_by_id(id)
+        if not ServerService.check_server(interface):
+            ServerService.remove_server(interface)
         else:
             messages.error(request=request,message="Vypněte server předtím, než ho odstraníte.")
     
@@ -156,38 +171,24 @@ def deleteinterface(request :HttpRequest):
 def dbdown(request : HttpRequest):
     return render(request, 'wireguardapp/dbdown.html', status=503)
 
-@login_required
-def viewlogs(request : HttpRequest):
-    if not request.user.is_superuser or not request.user.is_staff:
-        raise PermissionDenied
-    
-    interfacesLogs = list(dict())
-    interfaces = getServerInterfaces()
-    
-    for interface in interfaces:
-        interfacesLogs.append({"interface": interface, "peer_total": getInterfacePeersTotalBytes(interface)})
-
-    return render(request, 'wireguardapp/logs.html' , {"interfacesLogs":interfacesLogs, 'model' : PeerSnapshot})
-
-
 
 @login_required
 def downlandConf(request : HttpRequest):
     id = request.GET.get('id')
     full = request.GET.get('full')
     user = request.user
-    key = getKeyById(id)
+    key = ClientService.get_key_by_id(id)
 
-    if not checkUserOfKey(user = user, key = key):
+    if not ClientService.check_user_of_key(user = user, key = key):
         raise PermissionDenied
-    if not getUserProfile(user=user).verified:
+    if not ClientService.get_user_profile(user=user).verified:
         messages.info(request=request, message="Nejste ověřeni.")
         return
 
     if full == 'y':
-        content = generateClientConf(user,key,False)
+        content = ClientService.generate_client_conf(user,key,False)
     else:
-        content = generateClientConf(user,key,True)
+        content = ClientService.generate_client_conf(user,key,True)
     response = HttpResponse(content, content_type="application/octet-stream")
     response['Content-Disposition'] = 'attachment; filename="wg.conf"'
     response["Content-Transfer-Encoding"] = "binary"
@@ -199,11 +200,11 @@ def listusers(request : HttpRequest):
     if not request.user.is_superuser or not request.user.is_staff:
         raise PermissionDenied
     
-    users = getAllClientUsers()
+    users = ServerService.get_all_client_users()
 
     grouped = list(dict())
     for user in users:
-        grouped.append({"user":user, "profile": getUserProfile(user=user)})
+        grouped.append({"user":user, "profile": ClientService.get_user_profile(user=user)})
 
     return render(request, 'wireguardapp/userlist.html', {"users":grouped})
     
@@ -215,7 +216,7 @@ def newuser(request :HttpRequest):
     if request.method == "POST":
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
-            createNewUser(form=form)
+            ClientService.create_user(form=form)
 
             return redirect('listusers')
 
@@ -224,41 +225,64 @@ def newuser(request :HttpRequest):
 
     return render(request, 'wireguardapp/newuser.html',{'form':form})
 
-@login_required
-def deleteuser(request :HttpRequest):
-    if not request.user.is_superuser or not request.user.is_staff:
-        raise PermissionDenied
-    
-    if request.method == "POST":
-        id = request.POST['id']
-        result = removeUser(id)
-        if result:
-            messages.error(request=request,message=result)
 
-    return redirect('listusers')
+
 
 @login_required
-def alterserver(request:HttpRequest, id:int):
-    if not request.user.is_superuser or not request.user.is_staff:
-        raise PermissionDenied
-    
-    interface = getServerInterfaceFromId(id)
+def usersettings(request:HttpRequest, id):
+
+    target_user = ClientService.get_user_from_id(id)
+    profile = ClientService.get_user_profile(target_user)
+
+    # security
+    if request.user != target_user and not request.user.is_staff:
+        return redirect("/")
 
     if request.method == "POST":
-        form = ServerInterfaceForm(request.POST,instance=interface)
-        if form.is_valid():
-            result = updateServer(interface=interface,changed=form.changed_data)
-            if result:
-                pass
-            else:
-                return redirect('server',id=interface.pk)
-    else:
-        form = ServerInterfaceForm(instance=interface)
-        form.server_name = interface.interface_key.name
+
+        user_form = UserUpdateForm(request.POST, instance=target_user)
+        password_form = PasswordChangeForm(target_user, request.POST)
+
+        profile_form = None
+        if request.user.is_staff:
+            profile_form = ProfileAdminForm(request.POST, instance=profile)
+
+        if "update_profile" in request.POST and user_form.is_valid():
+            user_form.save()
+
+            if request.user.is_staff and profile_form and profile_form.is_valid():
+                profile_form.save()
+
+            return redirect("usersettings", id=id)
+
+        if "change_password" in request.POST and password_form.is_valid():
+            user = password_form.save()
+
+            if request.user == target_user:
+                update_session_auth_hash(request, user)
+
+            return redirect("usersettings", id=id)
         
+        if "delete_user" in request.POST:
+            ServerService.remove_user(target_user.pk)
+            if request.user.is_superuser or request.user.is_staff:
+                return redirect("listusers")
+            else:
+                return redirect("/")
 
-    return render(request, 'wireguardapp/alterserver.html',{'form':form})
+    else:
 
-@login_required
-def userprofile(request:HttpRequest, id:int):
-    pass
+        user_form = UserUpdateForm(instance=target_user)
+        password_form = PasswordChangeForm(target_user)
+
+        profile_form = None
+        if request.user.is_staff:
+            profile_form = ProfileAdminForm(instance=profile)
+
+    return render(request, "wireguardapp/usersettings.html", {
+        "user_form": user_form,
+        "password_form": password_form,
+        "profile_form": profile_form,
+        "target_user": target_user,
+        "profile": profile
+    })
