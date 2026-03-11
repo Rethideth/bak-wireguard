@@ -1,7 +1,7 @@
 from django.shortcuts import render,redirect,get_object_or_404
 from django.views.decorators.http import require_POST
 from django.contrib.auth import login, update_session_auth_hash
-from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.auth.forms import PasswordChangeForm,SetPasswordForm
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from wireguardapp.models import Interface, Peer, PeerSnapshot, Key,Profile
@@ -226,10 +226,8 @@ def newuser(request :HttpRequest):
     return render(request, 'wireguardapp/newuser.html',{'form':form})
 
 
-
-
 @login_required
-def usersettings(request:HttpRequest, id):
+def usersettings(request: HttpRequest, id):
 
     target_user = ClientService.get_user_from_id(id)
     profile = ClientService.get_user_profile(target_user)
@@ -238,32 +236,40 @@ def usersettings(request:HttpRequest, id):
     if request.user != target_user and not request.user.is_staff:
         return redirect("/")
 
+    password_form = None
+    profile_form = None
+    user_form = None
+
     if request.method == "POST":
 
+        # Initialize all forms correctly
         user_form = UserUpdateForm(request.POST, instance=target_user)
-        password_form = PasswordChangeForm(target_user, request.POST)
-
-        profile_form = None
         if request.user.is_staff:
+            password_form = SetPasswordForm(target_user, request.POST)
             profile_form = ProfileAdminForm(request.POST, instance=profile)
+        else:
+            password_form = PasswordChangeForm(target_user, request.POST)
 
-        if "update_profile" in request.POST and user_form.is_valid():
-            user_form.save()
+        # Detect which form was submitted
+        if "update_profile" in request.POST:
+            if user_form.is_valid():
+                user_form.save()
+                if request.user.is_staff and profile_form.is_valid():
+                    profile_form.save()
+                messages.success(request, "Profil uložen.")
+                return redirect("usersettings", id=id)
+            # If invalid, we stay on page and errors will render
 
-            if request.user.is_staff and profile_form and profile_form.is_valid():
-                profile_form.save()
+        elif "change_password" in request.POST:
+            if password_form.is_valid():
+                user = password_form.save()
+                if request.user == target_user:
+                    update_session_auth_hash(request, user)
+                messages.success(request, "Heslo změněno.")
+                return redirect("usersettings", id=id)
+            # else: errors will show
 
-            return redirect("usersettings", id=id)
-
-        if "change_password" in request.POST and password_form.is_valid():
-            user = password_form.save()
-
-            if request.user == target_user:
-                update_session_auth_hash(request, user)
-
-            return redirect("usersettings", id=id)
-        
-        if "delete_user" in request.POST:
+        elif "delete_user" in request.POST:
             ServerService.remove_user(target_user.pk)
             if request.user.is_superuser or request.user.is_staff:
                 return redirect("listusers")
@@ -271,11 +277,9 @@ def usersettings(request:HttpRequest, id):
                 return redirect("/")
 
     else:
-
+        # GET request, instantiate empty forms
         user_form = UserUpdateForm(instance=target_user)
-        password_form = PasswordChangeForm(target_user)
-
-        profile_form = None
+        password_form = SetPasswordForm(target_user) if request.user.is_staff else PasswordChangeForm(target_user)
         if request.user.is_staff:
             profile_form = ProfileAdminForm(instance=profile)
 

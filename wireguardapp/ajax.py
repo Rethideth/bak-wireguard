@@ -99,7 +99,7 @@ def getpeerstate(request):
     data = json.loads(request.body)
 
     serverInterface = ServerService.get_server_interface_by_id(data['id'])
-    return JsonResponse({"success" : True, "peers":ServerService.get_wg_peer_connection_state(serverInterface=serverInterface)})
+    return JsonResponse({"success" : True, "peers":ServerService.get_wg_peer_connection_state(server_interface=serverInterface)})
 
 @require_POST
 @login_required

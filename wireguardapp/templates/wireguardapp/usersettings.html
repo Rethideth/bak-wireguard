@@ -96,21 +96,33 @@ Uživatel {{ target_user.username }}
 
                     <div class="mb-3">
                         <label class="form-label">Uživatelské jméno</label>
+                        {% if user_form.username.errors %}
+                            <div class="text-danger">{{ user_form.username.errors }}</div>
+                        {% endif %}
                         {{ user_form.username }}
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label">Jméno</label>
+                        {% if user_form.first_name.errors %}
+                            <div class="text-danger">{{ user_form.first_name.errors }}</div>
+                        {% endif %}
                         {{ user_form.first_name }} 
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label">Příjmení</label>
+                        {% if user_form.last_name.errors %}
+                            <div class="text-danger">{{ user_form.last_name.errors }}</div>
+                        {% endif %}
                         {{ user_form.last_name }}
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label">Email</label>
+                        {% if user_form.last_name.errors %}
+                            <div class="text-danger">{{ user_form.last_name.errors }}</div>
+                        {% endif %}
                         {{ user_form.email }}
                     </div>
 
@@ -156,21 +168,50 @@ Uživatel {{ target_user.username }}
 
                 <form method="post">
                 {% csrf_token %}
+                    {% if request.user.is_staff %}
 
-                    <div class="mb-3">
-                        <label class="form-label">Původní heslo</label>
-                        {{ password_form.old_password }}
-                    </div>
+                        <div class="mb-3">
+                            <label class="form-label">Nové heslo</label>
+                            {% if password_form.new_password1.errors %}
+                                <div class="text-danger">{{ password_form.new_password1.errors }}</div>
+                            {% endif %}
+                            {{ password_form.new_password1 }}
+                        </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Nové heslo</label>
-                        {{ password_form.new_password1 }}
-                    </div>
+                        <div class="mb-3">
+                            <label class="form-label">Potvrďte heslo</label>
+                            {% if password_form.new_password2.errors %}
+                                <div class="text-danger">{{ password_form.new_password2.errors }}</div>
+                            {% endif %}
+                            {{ password_form.new_password2 }}
+                        </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Potvrďte heslo</label>
-                        {{ password_form.new_password2 }}
-                    </div>
+                    {% else %}
+
+                        <div class="mb-3">
+                            <label class="form-label">Původní heslo</label>
+                            {% if password_form.old_password.errors %}
+                                <div class="text-danger">{{ password_form.old_password.errors }}</div>
+                            {% endif %}
+                            {{ password_form.old_password }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Nové heslo</label>
+                            {% if password_form.new_password1.errors %}
+                                <div class="text-danger">{{ password_form.new_password1.errors }}</div>
+                            {% endif %}
+                            {{ password_form.new_password1 }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Potvrďte heslo</label>
+                            {% if password_form.new_password2.errors %}
+                                <div class="text-danger">{{ password_form.new_password2.errors }}</div>
+                            {% endif %}
+                            {{ password_form.new_password2 }}
+                        </div>
+                    {% endif %}
 
                     <button type="submit"
                             name="change_password"
