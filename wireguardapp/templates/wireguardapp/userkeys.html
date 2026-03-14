@@ -1,0 +1,63 @@
+{% extends "wireguardapp/base.html" %}
+
+{% block title %}WG{% endblock %}
+
+{% block content %}
+
+<script>
+    function formatBytes(bytes) {
+        if (bytes === 0) return "0 B";
+        const k = 1024;
+        const sizes = ["B", "KB", "MB", "GB"];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+    }
+</script>
+
+<h2>Klíče uživatele: {{user}}</h2>
+<table class="table table-bordered table-striped align-middle">
+  <thead>
+    <tr>
+      <th scope="col">#</th>
+      <th scope="col">Jméno klíče</th>
+      <th scope="col">Ip adresa</th>
+      <th scope="col">Rozhraní serveru</th>
+      <th scope="col" style="width: 25%;">Koncové adresy</th>
+      <th scope="col">Celkem Downland</th>
+      <th scope="col">Celkem Upload</th>
+    </tr>
+  </thead>
+  <tbody class= "table-group-divider ">
+    {% for info in infos %}
+        <tr>
+            <th scope="row">{{forloop.counter}}</th>
+            <td>{{info.key.name}}</td>
+            <td>{{info.interface.ip_address}}</td>
+            <td>{{info.server}}</td>
+            <td>
+                {% for endpoint in info.endpoints %}
+                    [<span class="font-monospace">{{endpoint}}</span>]
+                    {% if not forloop.last%} 
+                        ,
+                    {% endif%}
+                {% endfor%}
+            </td>
+            <td>
+                <script>
+                    document.write(formatBytes({{peer.total_rx_bytes|default:0}}));
+                </script>
+            </td>
+            <td>
+                <script>
+                    document.write(formatBytes({{peer.total_tx_bytes|default:0}}));
+                </script>
+            </td>
+           
+
+        </tr>
+       
+    {% endfor %}
+  </tbody>
+</table>
+
+{% endblock %}

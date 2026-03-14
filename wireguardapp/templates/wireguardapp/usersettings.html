@@ -48,7 +48,7 @@ Uživatel {{ target_user.username }}
 
                 <strong>Použito klíčů</strong>
 
-                <div class="progress mt-2">
+                <div class="progress mt-2 mb-2">
 
                     <div class="progress-bar"
                         role="progressbar"
@@ -59,6 +59,7 @@ Uživatel {{ target_user.username }}
                     </div>
 
                 </div>
+                <a class="btn btn-primary" href="{% url  'userkeys' id=target_user.id %}">Zobrazit klíče</a>
                 <hr>
 
                 <form method="post">

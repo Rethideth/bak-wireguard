@@ -89,6 +89,11 @@ class InterfaceRepository:
         interface.save(update_fields=['ip_network', 'ip_network_mask'])
 
     @staticmethod
+    def update_client_to_client(interface:Interface, client_to_client : bool):
+        interface.client_to_client = client_to_client
+        interface.save(update_fields=['client_to_client'])
+
+    @staticmethod
     def increment_session(interface: Interface):
         interface.session_number += 1
         interface.save(update_fields=['session_number'])
@@ -120,6 +125,10 @@ class PeerRepository:
     @staticmethod
     def get_by_user(user: User):
         return Peer.objects.filter(peer_interface__interface_key__user=user)
+    
+    @staticmethod
+    def get_peer_from_key(key : Key) -> Peer | None:
+        return Peer.objects.filter(peer_interface__interface_key = key).first()
 
     @staticmethod
     def get_server_interface_of_client(client_key: Key) -> Interface | None:
@@ -127,7 +136,7 @@ class PeerRepository:
         return client_peer.interface if client_peer else None
 
     @staticmethod
-    def get_ordered_snapshots(server_interface: Interface):
+    def get_ordered_snapshots_from_interface(server_interface: Interface):
         return PeerSnapshot.objects.annotate(
             row_number=Window(
                 expression=RowNumber(),
@@ -135,6 +144,15 @@ class PeerRepository:
                 order_by=F('collected_at').desc()
             )
         ).filter(peer__interface=server_interface)
+    
+    @staticmethod
+    def get_ordered_snapshots_from_peer(peer : Peer):
+        return PeerSnapshot.objects.annotate(
+            row_number=Window(
+                expression=RowNumber(),
+                order_by=F('collected_at').desc()
+            )
+        ).filter(peer=peer)
 
     
 

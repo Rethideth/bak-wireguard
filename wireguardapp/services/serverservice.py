@@ -54,10 +54,10 @@ class ServerService:
     # Server Creation / Removal
     # -------------------
     @staticmethod
-    def create_new_server(name: str, ip_network: str, network_mask: str, endpoint: str, port: str) -> str | None:
+    def create_new_server(name: str, ip_network: str, network_mask: str, endpoint: str, port: str, client_to_client : bool) -> str | None:
         try:
             key = ModelFactory.create_key(user=None, name=name)
-            interface = ModelFactory.create_server_interface(key, ip_network, network_mask, endpoint, port)
+            interface = ModelFactory.create_server_interface(key, ip_network, network_mask, endpoint, port,client_to_client)
         except ValueError:
             return "Hodnoty nového server rozhraní nejsou validní."
         except Exception:
@@ -84,7 +84,7 @@ class ServerService:
     @staticmethod
     def get_interface_peers_total_bytes(server_interface: Interface) -> list[dict]:
         peers = ServerService.get_server_interface_peers(server_interface)
-        ranked = PeerRepository.get_ordered_snapshots(server_interface)
+        ranked = PeerRepository.get_ordered_snapshots_from_interface(server_interface)
         endpoints = defaultdict(set)
         for snapshot in ranked:
             endpoints[snapshot.peer].add(snapshot.endpoint)
@@ -172,6 +172,8 @@ class ServerService:
                     InterfaceRepository.update_endpoint(interface,interface.server_endpoint)
                 if "listen_port" in changed:
                     InterfaceRepository.update_port(interface, interface.listen_port)
+                if "client_to_client" in changed:
+                    InterfaceRepository.update_client_to_client(interface,interface.client_to_client)
         except ValueError as e:
             return str(e)
         except Exception:

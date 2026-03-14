@@ -3,7 +3,86 @@
 {% block title %}WG{% endblock %}
 
 {% block content %}
+{% load static %}
 
+
+<div class="container-fluid">
+  <div class="row">
+
+    <!-- Sidebar -->
+    <nav class="col-md-3 col-lg-2 d-md-block bg-light sidebar pt-4" style="position: sticky; top: 20px; height: 100vh;">
+      <ul class="nav flex-column">
+        <li class="nav-item">
+          <a class="nav-link" href="#users">Uživatele</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#keys">Připojení ke VPN serveru</a>
+        </li>
+
+      </ul>
+    </nav>
+
+    <!-- Content -->
+    <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+
+      <section id="users">
+        <h2>Přihlášení a registrace</h2>
+        <p>
+            Ve pravém horním rohu klikněte na text 'Účet' a vyberte si, 
+            pokud si vytvoříte nového uživatele přes registraci, nebo se přihlásíte 
+            ke existujícímu uživateli.
+            </br>
+            <img src="{% static 'login_register.png' %}">
+            </br>
+        </p>
+        <p>
+            Nově vytvořený uživatel nebude ověřený a nebude moct používat VPN server.
+            Pro ověření kontaktujte správce.
+        </p>
+      </section>
+
+      <hr>
+
+      <section id="keys">
+        <h2>Připojení ke VPN serveru</h2>
+        <p>
+            Abyste se mohli připojit na VPN server, nejdříve potřebujete si vytvořít klíč.
+        </p>
+        <p>
+            Potřebujete být přihlášený pro vytváření klíčů
+        </p>
+        <ol>
+            <li>
+                Přihlaste se do vašeho ověřeného uživatelského účtu.
+            </li>
+            <li>
+                Klikněta na záložky 'Moje klíče' v navigaci.
+            </li>
+            <li>
+                Klikněte na tlačítko 'Nový klíč' pro vytvoření nového klíče.
+            </li>
+            <li>
+                Zadejte jméno klíče a vyberte rozhraní serveru. Potom klikněte na 'Vytvořit nový klíč.'
+            </li>
+            <li>
+                Klikněte na 'Vytvořit konfiguraci' na kartu klíče, kterého jste vytvořili.
+            </li>
+            <li>
+                Vyberte, jestli chcete plný tunel, kde každý provoz sítě se přesměruje přes VPN server,
+                nebo Split tunel, kde jenom pro adresy v síti rozhraní serveru bude přesměrován přes VPN server.
+            </li>
+            <li>
+                Stáhněte nebo zkopírujte konfigurační soubor Wireguard připojení. Některé aplikace pro Wireguard připojení 
+                požadují jméno konfiguračního souboru s jenom znaky bez diakritiky a má koncovku '.conf'.
+            </li>
+        </ol>
+      </section>
+
+
+    </main>
+
+  </div>
+</div>
 
 
 {% endblock %}

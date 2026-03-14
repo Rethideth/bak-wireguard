@@ -6,38 +6,46 @@
 
 <div class="row justify-content-center">
     <div class="col-md-6">
-<h2 class="mb-4">
-{% if id %}Edit Server Interface{% else %}Add Server Interface{% endif %}
-</h2>
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header">
+                <strong>{% if id %}Editace rozhraní serveru{% else %}Vytváření rozhraní serveru{% endif %}</strong>
+            </div>
+            <div class="card-body justify-content-center">
+                <form method="post">
+                    {% csrf_token %}
+
+                    {% for field in form %}
+                        <div class="mb-3">
+                            <label class="form-label">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.help_text %}
+                                <div class="form-text">
+                                    {{ field.help_text }}
+                                </div>
+                            {% endif %}
+                            {% for error in field.errors %}
+                                <div class="text-danger">
+                                    {{ error }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+
+                    <button type="submit" class="btn btn-primary">
+                    {% if id %}Změnit{% else %}Vytvořit{% endif %}
+                    </button>
+                    {% if id %}
+                    <a href="{% url 'server' id=id %}" class="btn btn-secondary ms-2">Zrušit</a>
+                    {% else %}
+                    <a href="{% url 'allservers' %}" class="btn btn-secondary ms-2">Zrušit</a>
+                    {% endif %}
 
 
+                </form>
 
+            </div>
 
-<form method="post">
-{% csrf_token %}
-
-{% for field in form %}
-<div class="mb-3">
-<label class="form-label">{{ field.label }}</label>
-{{ field }}
-{% if field.help_text %}
-<div class="form-text">{{ field.help_text }}</div>
-{% endif %}
-{% for error in field.errors %}
-<div class="text-danger">{{ error }}</div>
-{% endfor %}
-</div>
-{% endfor %}
-
-<button type="submit" class="btn btn-primary">
-{% if id %}Update{% else %}Create{% endif %}
-</button>
-
-<a href="{% url 'allservers' %}" class="btn btn-secondary ms-2">Cancel</a>
-
-</form>
-
-</div>
+    </div>
 </div>
 
 

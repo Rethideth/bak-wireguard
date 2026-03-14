@@ -10,7 +10,7 @@ from .services.clientservice import ClientService
 from .services.serverservice import ServerService
 from django.core.exceptions import PermissionDenied
 
-from .forms import CustomUserCreationForm, ClientKeyForm,ServerInterfaceForm,UserUpdateForm,ProfileAdminForm
+from .forms import CustomUserCreationForm, ClientKeyForm,ServerInterfaceForm,UserUpdateForm,ProfileAdminForm,BootstrapChangePasswordForm,BootstrapSetPasswordForm
 
 from datetime import datetime
 from django.utils import timezone
@@ -28,7 +28,6 @@ def home(request : HttpRequest):
 @login_required
 def test(request : HttpRequest):
     return render(request, 'wireguardapp/test.html')
-
 
 def register(request : HttpRequest):
     if request.method == "POST":
@@ -133,13 +132,15 @@ def serverinterfaceform(request, id=None):
                 mask = data['ip_network_mask']
                 endpoint = data['server_endpoint']
                 port = data['listen_port']
+                clienttoclient = data['client_to_client']
 
                 result = ServerService.create_new_server(
                     name=name,
                     ip_network=ip_network,
                     network_mask=mask,
                     endpoint=endpoint,
-                    port=port)
+                    port=port,
+                    client_to_client=clienttoclient)
                 if result:
                     messages.error(request=request,message=result)
                 else:
@@ -163,8 +164,9 @@ def deleteinterface(request :HttpRequest):
             ServerService.remove_server(interface)
         else:
             messages.error(request=request,message="Vypněte server předtím, než ho odstraníte.")
+            return redirect('server', id=id)
     
-    return redirect('allserver')
+    return redirect('allservers')
         
 
 
@@ -245,20 +247,24 @@ def usersettings(request: HttpRequest, id):
         # Initialize all forms correctly
         user_form = UserUpdateForm(request.POST, instance=target_user)
         if request.user.is_staff:
-            password_form = SetPasswordForm(target_user, request.POST)
+            password_form = BootstrapSetPasswordForm(target_user, request.POST)
             profile_form = ProfileAdminForm(request.POST, instance=profile)
         else:
-            password_form = PasswordChangeForm(target_user, request.POST)
+            password_form = BootstrapChangePasswordForm(target_user, request.POST)
 
         # Detect which form was submitted
         if "update_profile" in request.POST:
             if user_form.is_valid():
-                user_form.save()
+                user = user_form.save()
                 if request.user.is_staff and profile_form.is_valid():
-                    profile_form.save()
+                    profile = profile_form.save()
+                    if profile.verified:
+                        ServerService.connect_user_to_wg(user)
+                    else:
+                        ServerService.disconnect_user_from_wg(user)
+
                 messages.success(request, "Profil uložen.")
                 return redirect("usersettings", id=id)
-            # If invalid, we stay on page and errors will render
 
         elif "change_password" in request.POST:
             if password_form.is_valid():
@@ -279,7 +285,7 @@ def usersettings(request: HttpRequest, id):
     else:
         # GET request, instantiate empty forms
         user_form = UserUpdateForm(instance=target_user)
-        password_form = SetPasswordForm(target_user) if request.user.is_staff else PasswordChangeForm(target_user)
+        password_form = BootstrapSetPasswordForm(target_user) if request.user.is_staff else BootstrapChangePasswordForm(target_user)
         if request.user.is_staff:
             profile_form = ProfileAdminForm(instance=profile)
 
@@ -290,3 +296,29 @@ def usersettings(request: HttpRequest, id):
         "target_user": target_user,
         "profile": profile
     })
+
+@login_required
+def userkeys(request :HttpRequest, id:int):
+    user = ClientService.get_user_from_id(id)
+    
+    if request.user != user and not request.user.is_staff:
+        return redirect("/")
+    
+    keys = ClientService.get_user_keys(user)
+    grouped = list(dict())
+    for key in keys:
+        peer = ClientService.get_peer_from_key(key)
+        interface = ClientService.get_interface_from_key(key)
+        server = ClientService.get_clients_server_interface(key)
+        endpoints = ClientService.get_endpoint_of_peer(peer)
+        grouped.append({
+            "key": key,
+            "interface":interface,
+            "server":server,
+            "peer": peer,
+            "endpoints": endpoints,
+        })
+    return render(request, 'wireguardapp/userkeys.html', {"infos": grouped, "user":user})
+
+def help(request :HttpRequest):
+    return render(request, 'wireguardapp/help.html', {})

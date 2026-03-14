@@ -23,6 +23,7 @@ class Key(models.Model):
         blank=True
     )
     name = models.CharField(
+        verbose_name="Jméno klíče",
         max_length=255,
         null=True
     )
@@ -44,27 +45,33 @@ class Interface(models.Model):
     TYPE_CONNECTION = [(SERVER, 'Server'), (CLIENT, 'Client')]
     
     name = models.CharField(
+        verbose_name="Systémové jméno serveru",
         max_length=100,
         unique=True,
         db_index=True
     )
     interface_key = models.ForeignKey(
         Key,
+        verbose_name="Klíč rozhraní",
         on_delete=models.CASCADE,
     )
     listen_port = models.PositiveIntegerField(
+        verbose_name="Port endpoitu k naslouchání",
         null=True,
         blank=True
     )
     ip_network = models.CharField(
+        verbose_name="Adresa sítě rozhraní",
         max_length=32,
         null=True
     )
     ip_network_mask = models.PositiveIntegerField(
+        verbose_name="Maska sítě",
         null=False,
     )
     
     ip_address = models.CharField(
+        verbose_name="Přidělena ip adresa rozraní",
         max_length=32,
         null=False
     )
@@ -73,17 +80,31 @@ class Interface(models.Model):
     )
     
     interface_type = models.CharField(
+        verbose_name="Typ rozhraní",
         max_length=32,
         choices=TYPE_CONNECTION,
     )
     server_endpoint = models.CharField(
+        verbose_name="Dosažitelná adresa rozhraní serveru (Endpoint)",
         max_length=32,
         null=True
     )
     session_number = models.PositiveIntegerField(default=1)
 
+    current_internet_interface = models.CharField(
+        verbose_name="Aktuální rozhraní pro přesměrování do internetu",
+        max_length=64)
+    
+    client_to_client = models.BooleanField(
+        verbose_name="Povolit klientům se připojit mezi sebou?",
+        default=False
+    )
+
     def __str__(self):
-        return f"{self.name}-{self.interface_key.name}"
+        conn = 'Ne'
+        if self.client_to_client:
+            conn ='Ano'
+        return f"{self.interface_key.name} (client-to-client:{conn})"
 
 
 class Peer(models.Model):
@@ -91,7 +112,7 @@ class Peer(models.Model):
         Interface,
         on_delete=models.CASCADE,
         related_name="owned_interface",
-        verbose_name="Interface included with this peer"
+        verbose_name="Rozhraní spojené s tímto peer"
     )
     peer_interface = models.ForeignKey(
         Interface,

@@ -68,7 +68,7 @@ class ModelFactory:
         )
 
     @staticmethod
-    def create_server_interface(key: Key, ip_network: str, netmask: str, endpoint: str, port: str) -> Interface:
+    def create_server_interface(key: Key, ip_network: str, netmask: str, endpoint: str, port: str,client_to_client : bool) -> Interface:
         network = ipaddress.ip_network(f"{ip_network}/{netmask}")
         address = next(network.hosts())
         name = ModelFactory.make_server_new_name()
@@ -80,7 +80,8 @@ class ModelFactory:
             ip_address=address,
             interface_type=Interface.SERVER,
             server_endpoint=endpoint,
-            listen_port=port
+            listen_port=port,
+            client_to_client=client_to_client,
         )
 
     @staticmethod

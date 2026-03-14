@@ -8,24 +8,48 @@ from wireguardapp.services.serverservice import ServerService
 
 from datetime import datetime
 import ipaddress
+from django.contrib.auth.views import LoginView
+from django.contrib.auth.forms import AuthenticationForm,PasswordChangeForm,SetPasswordForm
 
 
 
 
-class CustomUserCreationForm(UserCreationForm):
+class BootstrapFormMixin:
+    """Automatically add Bootstrap classes to form fields."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        for name, field in self.fields.items():
+            widget = field.widget
+
+            if isinstance(widget, forms.CheckboxInput):
+                widget.attrs["class"] = "form-check-input"
+            else:
+                existing = widget.attrs.get("class", "")
+                widget.attrs["class"] = f"{existing} form-control".strip()
+
+class BootstrapAuthenticationForm(BootstrapFormMixin, AuthenticationForm):
+    pass
+
+class BootstrapChangePasswordForm(BootstrapFormMixin, PasswordChangeForm):
+    pass
+
+class BootstrapSetPasswordForm(BootstrapFormMixin, SetPasswordForm):
+    pass
+
+
+class CustomLoginView(LoginView):
+    authentication_form = BootstrapAuthenticationForm
+
+
+class CustomUserCreationForm(BootstrapFormMixin, UserCreationForm):
     email = forms.EmailField(
-        widget=forms.EmailInput(attrs={
-            "autocomplete": "email"
-        }),
         required=True
     )
 
     username = forms.CharField(
-        widget=forms.TextInput(attrs={
-            "autocomplete": "username"
-        }),
         required=True
-
     )
 
     class Meta(UserCreationForm.Meta):
@@ -34,7 +58,7 @@ class CustomUserCreationForm(UserCreationForm):
 
 
 
-class ClientKeyForm(forms.Form):
+class ClientKeyForm(BootstrapFormMixin,forms.Form):
     name = forms.CharField(max_length=255)
     interface = forms.ModelChoiceField(
         queryset=ServerService.get_all_server_interfaces(),
@@ -42,9 +66,9 @@ class ClientKeyForm(forms.Form):
     )
 
 
-class ServerInterfaceForm(forms.ModelForm):
-    server_name = forms.CharField(max_length=255,required=False)
-    ip_network_mask = forms.IntegerField(max_value=31, min_value=0)
+class ServerInterfaceForm(BootstrapFormMixin,forms.ModelForm):
+    server_name = forms.CharField(max_length=255,required=False, label="Jméno rozhraní")
+    ip_network_mask = forms.IntegerField(max_value=31, min_value=0,label="Maska sítě")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -64,6 +88,7 @@ class ServerInterfaceForm(forms.ModelForm):
             "ip_network_mask",
             "server_endpoint",
             "listen_port",
+            "client_to_client",
         ]
 
     def clean(self):
@@ -118,14 +143,14 @@ class ServerInterfaceForm(forms.ModelForm):
 
 
 
-class UserUpdateForm(forms.ModelForm):
+class UserUpdateForm(BootstrapFormMixin,forms.ModelForm):
     class Meta:
         model = User
         fields = ["username", "first_name", "last_name", "email"]
 
 
 
-class ProfileAdminForm(forms.ModelForm):
+class ProfileAdminForm(BootstrapFormMixin,forms.ModelForm):
     class Meta:
         model = Profile
         fields = ["verified", "key_limit"]

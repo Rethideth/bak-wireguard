@@ -133,6 +133,10 @@ def generateServerConfText(serverInterface : Interface, interfaceInternetName : 
         raise TypeError
     serverPeers = PeerRepository.get_verified_peers_from_server(serverInterface)
 
+    clientComm = "DROP"
+    if serverInterface.client_to_client:
+        clientComm = "ACCEPT"
+
     conf = f"""
 [Interface]
 PrivateKey = {decrypt_value(serverInterface.interface_key.private_key)}
@@ -142,11 +146,11 @@ SaveConfig = true
 PostUp = iptables -t nat -A POSTROUTING -o {interfaceInternetName} -j MASQUERADE
 PostUp = iptables -A FORWARD -i {serverInterface.name} -o {interfaceInternetName} -j ACCEPT
 PostUp = iptables -A FORWARD -o {serverInterface.name} -i {interfaceInternetName} -m state --state RELATED,ESTABLISHED -j ACCEPT
-PostUp = iptables -A FORWARD -i {serverInterface.name} -o {serverInterface.name} -j ACCEPT
+PostUp = iptables -A FORWARD -i {serverInterface.name} -o {serverInterface.name} -j {clientComm}
 PostDown = iptables -t nat -D POSTROUTING -o {interfaceInternetName} -j MASQUERADE
 PostDown = iptables -D FORWARD -i {serverInterface.name} -o {interfaceInternetName} -j ACCEPT 
 PostDown = iptables -D FORWARD -o {serverInterface.name} -i {interfaceInternetName} -m state --state RELATED,ESTABLISHED -j ACCEPT 
-PostDown = iptables -D FORWARD -i {serverInterface.name} -o {serverInterface.name} -j ACCEPT
+PostDown = iptables -D FORWARD -i {serverInterface.name} -o {serverInterface.name} -j {clientComm}
 """.strip()
     
     for peer in serverPeers:
@@ -284,6 +288,7 @@ def startWGserver(serverInterface : Interface, interfaceInternetName : str):
     :param interfaceInternetName: The name of a interface to forward wireguard data transfer to. It needs to have a internet access to function.
         Usualy it will be 'eth0'.
     :type interfaceInternetName: 
+
     
     :raises CalledProcessError: If the script fail to execute fully
     :raises TypeError: If the provided `serverInterface` does not have a server type.

@@ -17,7 +17,9 @@ On windows, add DNS=1.1.1.1 to the client interface config, if not working.
 ## Sources
  - https://studygyaan.com/django/how-to-setup-django-applications-with-apache-and-mod-wsgi-on-ubuntu
  - https://docs.djangoproject.com/en/6.0/topics/auth/default/
+ - https://docs.djangoproject.com/en/6.0/topics/class-based-views/mixins/
  - https://documentation.ubuntu.com/server/how-to/wireguard-vpn/vpn-as-the-default-gateway/#using-the-vpn-as-the-default-gateway
  - https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
+ - https://www.w3schools.com/django/
 
 

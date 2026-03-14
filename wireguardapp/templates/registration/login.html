@@ -4,13 +4,43 @@
 
 {% block content %}
 
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Login</button>
-</form>
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header">
+                <strong>Přihlásit se</strong>
+            </div>
 
-{% if form.errors %}
-<p style="color:red;">Invalid username or password</p>
-{% endif %}
+            <div class="card-body justify-content-center">
+                <form method="post">
+                    {% for field in form %}
+                        <div class="mb-3">
+                            <label class="form-label">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.help_text %}
+                                <div class="form-text">
+                                    {{ field.help_text }}
+                                </div>
+                            {% endif %}
+                            {% for error in field.errors %}
+                                <div class="text-danger">
+                                    {{ error }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+                    {% if form.errors %}
+                        <p style="color:red;">Jméno uživatele neexistuje nebo špatně zadané heslo.</p>
+                    {% endif %}
+                    {% csrf_token %}
+                    <button type="submit" class="form-control">Přihlásit</button>
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
 {% endblock %}

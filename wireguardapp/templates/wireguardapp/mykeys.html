@@ -52,7 +52,7 @@
                 Vytvořit konfiguraci
             </button>
             <!-- Delete key -->
-            
+            {% if profile.verified %}
             <button 
                 class="btn btn-secondary delete-button"
                 name="button-deletekey"
@@ -61,14 +61,21 @@
                 onclick="return confirm('Opravdu chcete odstranit tento klíč?');">
                 Odstranit klíč
             </button>
+            {% endif %}
         
         </div>
     </div>
         {% empty %}
             <p>Zatím nemáte žádne kliče</p>
     {% endfor %}
-    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newkeyModal">Nový klíč</button>
     
+    {% if profile.verified %}
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newkeyModal">Nový klíč</button>
+    {% else %}
+        <p>
+            Nejste ověřeni pro vytváření klíčů.
+        </p>
+    {% endif %}
 
 
 

@@ -1,6 +1,6 @@
 import logging
 from django.contrib.auth.models import User
-from wireguardapp.models import Interface, Key, Profile
+from wireguardapp.models import Interface, Key, Profile,Peer
 from wireguardapp.database.repository import InterfaceRepository,PeerRepository,UserRepository,KeyRepository,ClientRepository
 from .wireguardcmd import addWGPeer, removeWGPeer, generateClientConfText
 from .modelfactory import ModelFactory
@@ -10,7 +10,7 @@ logger = logging.getLogger("wg")
 
 class ClientService:
     # -------------------
-    # Key & Interface Access
+    # Key & Interface & Peer Access
     # -------------------
     @staticmethod
     def get_key_by_id(key_id: int) -> Key | None:
@@ -19,6 +19,10 @@ class ClientService:
     @staticmethod
     def get_clients_server_interface(client_key: Key) -> Interface | None:
         return InterfaceRepository.get_clients_server_interface(client_key)
+    
+    @staticmethod
+    def get_interface_from_key(key:Key):
+        return InterfaceRepository.get_by_key(key)
 
     @staticmethod
     def get_user_profile(user: User) -> Profile:
@@ -35,6 +39,25 @@ class ClientService:
     @staticmethod
     def change_key_name(key:Key, name : str):
         return KeyRepository.update_name(key,name)
+    
+    @staticmethod
+    def get_peer_from_key(key : Key) -> Key | None:
+        return PeerRepository.get_peer_from_key(key)
+    
+    @staticmethod
+    def get_endpoint_of_peer(peer:Peer) -> set[str]:
+        ranked = PeerRepository.get_ordered_snapshots_from_peer(peer)
+
+        endpoints = set()
+        for snap in ranked:
+            endpoints.add(snap.endpoint)
+
+        try: 
+            endpoints.remove(None)
+        except:
+            pass
+        return endpoints
+
 
     # -------------------
     # Client Creation
@@ -42,6 +65,9 @@ class ClientService:
     @staticmethod
     def create_new_client(user: User, name: str, server_interface: Interface) -> str | None:
         profile = ClientService.get_user_profile(user)
+        
+        if not profile.verified:
+            return "Nejste ověřeni"
         if profile.key_limit <= profile.key_count:
             return "Dosáhli jste maximum počet klíču, co můžete mít."
 
@@ -61,15 +87,15 @@ class ClientService:
         UserRepository.update_profile(profile=profile, key_count=profile.key_count+1)
 
         # Add peer to WireGuard if user is verified
-        if profile.verified:
-            try:
-                addWGPeer(
-                    serverInterfaceName=server_interface.name,
-                    peerKey=interface.interface_key.public_key,
-                    ipAddress=interface.ip_address
-                )
-            except RuntimeError as e:
-                logger.error(f"Failed to add WireGuard peer: {e}")
+        
+        try:
+            addWGPeer(
+                serverInterfaceName=server_interface.name,
+                peerKey=interface.interface_key.public_key,
+                ipAddress=interface.ip_address
+            )
+        except RuntimeError as e:
+            logger.error(f"Failed to add WireGuard peer: {e}")
 
         return None
 

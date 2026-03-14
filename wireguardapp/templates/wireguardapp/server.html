@@ -67,6 +67,17 @@
                             <td>{{interface.listen_port}}</td>
                         </tr>
 
+                        <tr>
+                            <th>Připojení mezi klienty</th>
+                            <td>
+                                {% if interface.client_to_client %}
+                                    Ano
+                                {% else %}
+                                    Ne
+                                {% endif %}
+                            </td>
+                        </tr>
+
                     </tbody>
                 </table>
 
