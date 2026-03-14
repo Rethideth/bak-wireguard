@@ -33,7 +33,9 @@ def register(request : HttpRequest):
     if request.method == "POST":
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
-            user = ClientService.create_user(form=form)
+            user = form.save(commit=False)
+            user = ClientService.createUser(user)
+            form.save_m2m()
             login(request, user)  # auto-login after registration
             return redirect('/')
     else:
@@ -43,13 +45,13 @@ def register(request : HttpRequest):
 
 @login_required
 def mykeys(request : HttpRequest):
-    keys = ClientService.get_user_keys(request.user)
+    keys = ClientService.getUserKeys(request.user)
     form = ClientKeyForm()
     grouped = list(dict())
-    profile = ClientService.get_user_profile(request.user)
+    profile = ClientService.getUserProfile(request.user)
     for key in keys:
-        inf = ClientService.get_clients_server_interface(key)
-        grouped.append({"key":key, 'interfaceName' : inf.interface_key.name, 'interfaceUp': ServerService.check_server(inf) })
+        inf = ClientService.getClientsServerInterface(key)
+        grouped.append({"key":key, 'interfaceName' : inf.interface_key.name, 'interfaceUp': ServerService.checkServer(inf) })
     return render(request, 'wireguardapp/mykeys.html', {'keys':grouped, "form":form, "profile" : profile})
 
 
@@ -61,10 +63,10 @@ def newkey(request : HttpRequest):
         if form.is_valid():
             data = form.cleaned_data
             
-            result = ClientService.create_new_client(
+            result = ClientService.createNewClient(
                 user=request.user,
                 name=data['name'],
-                server_interface=data['interface'])
+                serverInterface=data['interface'])
             if result:
                 messages.error(request = request, message = result)
         else:
@@ -78,13 +80,13 @@ def serverinterfaces(request : HttpRequest):
         raise PermissionDenied
 
     interfaceInfo = list(dict())
-    interfaces = ServerService.get_all_server_interfaces()
+    interfaces = ServerService.getAllServerInterfaces()
 
     for interface in interfaces:
         interfaceInfo.append({
             "interface": interface,
-            "peers": ServerService.get_server_interface_peers(interface) ,
-            "isUp":ServerService.check_server(server_interface=interface)})
+            "peers": ServerService.getServerInterfacePeers(interface) ,
+            "isUp":ServerService.checkServer(serverInterface=interface)})
         
 
     return render(request, 'wireguardapp/serverlist.html' , {"grouped":interfaceInfo})
@@ -94,11 +96,11 @@ def serverinterface(request :HttpRequest, id:int):
     if not request.user.is_superuser or not request.user.is_staff:
         raise PermissionDenied
     
-    interface = ServerService.get_server_interface_by_id(id)
-    peers = ServerService.get_server_interface_peers(interface)
-    isUp = ServerService.check_server(interface)
+    interface = ServerService.getServerInterfaceById(id)
+    peers = ServerService.getServerInterfacePeers(interface)
+    isUp = ServerService.checkServer(interface)
 
-    networks = ServerService.get_network_interfaces()
+    networks = ServerService.getNetworkInterfaces()
 
     return render (request, 'wireguardapp/server.html', {"interface":interface,"peers" : peers, "isUp":isUp, "networks":networks})
 
@@ -109,8 +111,8 @@ def serverinterfaceform(request, id=None):
     """
 
     if id:
-        interface = ServerService.get_server_interface_by_id(id)
-        if ServerService.check_server(interface):
+        interface = ServerService.getServerInterfaceById(id)
+        if ServerService.checkServer(interface):
             messages.error(request=request, message="Nejdřív vypněte server než změníte nastavení rozhraní.")
             return redirect('server', id=id)
     else:
@@ -120,7 +122,7 @@ def serverinterfaceform(request, id=None):
         form = ServerInterfaceForm(request.POST, instance=interface)
         if form.is_valid():
             if id:
-                result = ServerService.update_server(interface=interface,changed=form.changed_data)
+                result = ServerService.updateServer(interface=interface,changed=form.changed_data)
                 if result:
                     messages.error(request=request,message=result)
                 else:
@@ -134,13 +136,13 @@ def serverinterfaceform(request, id=None):
                 port = data['listen_port']
                 clienttoclient = data['client_to_client']
 
-                result = ServerService.create_new_server(
+                result = ServerService.createNewServer(
                     name=name,
-                    ip_network=ip_network,
-                    network_mask=mask,
+                    ipNetwork=ip_network,
+                    networkMask=mask,
                     endpoint=endpoint,
                     port=port,
-                    client_to_client=clienttoclient)
+                    clientToClient=clienttoclient)
                 if result:
                     messages.error(request=request,message=result)
                 else:
@@ -159,9 +161,9 @@ def deleteinterface(request :HttpRequest):
         raise PermissionDenied
     if request.method == "POST":
         id = request.POST.get('id')
-        interface = ServerService.get_server_interface_by_id(id)
-        if not ServerService.check_server(interface):
-            ServerService.remove_server(interface)
+        interface = ServerService.getServerInterfaceById(id)
+        if not ServerService.checkServer(interface):
+            ServerService.removeServer(interface)
         else:
             messages.error(request=request,message="Vypněte server předtím, než ho odstraníte.")
             return redirect('server', id=id)
@@ -179,18 +181,18 @@ def downlandConf(request : HttpRequest):
     id = request.GET.get('id')
     full = request.GET.get('full')
     user = request.user
-    key = ClientService.get_key_by_id(id)
+    key = ClientService.getKeyById(id)
 
-    if not ClientService.check_user_of_key(user = user, key = key):
+    if not ClientService.checkUserOfKey(user = user, key = key):
         raise PermissionDenied
-    if not ClientService.get_user_profile(user=user).verified:
+    if not ClientService.getUserProfile(user=user).verified:
         messages.info(request=request, message="Nejste ověřeni.")
         return
 
     if full == 'y':
-        content = ClientService.generate_client_conf(user,key,False)
+        content = ClientService.generateClientConf(user,key,False)
     else:
-        content = ClientService.generate_client_conf(user,key,True)
+        content = ClientService.generateClientConf(user,key,True)
     response = HttpResponse(content, content_type="application/octet-stream")
     response['Content-Disposition'] = 'attachment; filename="wg.conf"'
     response["Content-Transfer-Encoding"] = "binary"
@@ -202,11 +204,11 @@ def listusers(request : HttpRequest):
     if not request.user.is_superuser or not request.user.is_staff:
         raise PermissionDenied
     
-    users = ServerService.get_all_client_users()
+    users = ServerService.getAllClientUsers()
 
     grouped = list(dict())
     for user in users:
-        grouped.append({"user":user, "profile": ClientService.get_user_profile(user=user)})
+        grouped.append({"user":user, "profile": ClientService.getUserProfile(user=user)})
 
     return render(request, 'wireguardapp/userlist.html', {"users":grouped})
     
@@ -218,7 +220,7 @@ def newuser(request :HttpRequest):
     if request.method == "POST":
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
-            ClientService.create_user(form=form)
+            ClientService.createUser(form=form)
 
             return redirect('listusers')
 
@@ -231,8 +233,8 @@ def newuser(request :HttpRequest):
 @login_required
 def usersettings(request: HttpRequest, id):
 
-    target_user = ClientService.get_user_from_id(id)
-    profile = ClientService.get_user_profile(target_user)
+    target_user = ClientService.getUserFromId(id)
+    profile = ClientService.getUserProfile(target_user)
 
     # security
     if request.user != target_user and not request.user.is_staff:
@@ -259,9 +261,9 @@ def usersettings(request: HttpRequest, id):
                 if request.user.is_staff and profile_form.is_valid():
                     profile = profile_form.save()
                     if profile.verified:
-                        ServerService.connect_user_to_wg(user)
+                        ServerService.connectUserToWg(user)
                     else:
-                        ServerService.disconnect_user_from_wg(user)
+                        ServerService.disconnectUserFromWg(user)
 
                 messages.success(request, "Profil uložen.")
                 return redirect("usersettings", id=id)
@@ -276,7 +278,7 @@ def usersettings(request: HttpRequest, id):
             # else: errors will show
 
         elif "delete_user" in request.POST:
-            ServerService.remove_user(target_user.pk)
+            ServerService.removeUser(target_user.pk)
             if request.user.is_superuser or request.user.is_staff:
                 return redirect("listusers")
             else:
@@ -299,18 +301,18 @@ def usersettings(request: HttpRequest, id):
 
 @login_required
 def userkeys(request :HttpRequest, id:int):
-    user = ClientService.get_user_from_id(id)
+    user = ClientService.getUserFromId(id)
     
     if request.user != user and not request.user.is_staff:
         return redirect("/")
     
-    keys = ClientService.get_user_keys(user)
+    keys = ClientService.getUserKeys(user)
     grouped = list(dict())
     for key in keys:
-        peer = ClientService.get_peer_from_key(key)
-        interface = ClientService.get_interface_from_key(key)
-        server = ClientService.get_clients_server_interface(key)
-        endpoints = ClientService.get_endpoint_of_peer(peer)
+        peer = ClientService.getPeerFromKey(key)
+        interface = ClientService.getInterfaceFromKey(key)
+        server = ClientService.getClientsServerInterface(key)
+        endpoints = ClientService.getEndpointOfPeer(peer)
         grouped.append({
             "key": key,
             "interface":interface,

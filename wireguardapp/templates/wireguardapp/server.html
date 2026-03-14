@@ -154,7 +154,7 @@
                 <button class="nav-link"
                         data-bs-toggle="tab"
                         data-bs-target="#peers">
-                    Peers
+                    Peerové
                 </button>
             </li>
 
@@ -162,7 +162,7 @@
                 <button class="nav-link"
                         data-bs-toggle="tab"
                         data-bs-target="#usage">
-                    Usage
+                    Aktuální stav
                 </button>
             </li>
 
@@ -190,12 +190,12 @@
 
                             <div class="col">
                                 <h5 id="peer-total">{{peers.count}}</h5>
-                                <small class="text-muted">Total Peers</small>
+                                <small class="text-muted">Celkově peerů</small>
                             </div>
 
                             <div class="col">
                                 <h5 id="peer-online">0</h5>
-                                <small class="text-muted">Connected</small>
+                                <small class="text-muted">Aktuálně připojeno</small>
                             </div>
 
                         </div>
@@ -279,9 +279,8 @@
                                 <tr>
                                     <th>Peer</th>
                                     <th>Endpoint</th>
-                                    <th>Handshake</th>
-                                    <th>Upload</th>
                                     <th>Download</th>
+                                    <th>Upload</th>
                                     <th>Status</th>
                                 </tr>
                             </thead>
@@ -401,33 +400,55 @@
     fetchPeers(table,id);
 
     // Refresh every 5 seconds
-    setInterval(() => fetchPeers(table, id), 5000);
+    setInterval(() => fetchPeers(table, id), 2000);
 
+
+    // Persistent storage for the previous results
+    let lastPeerData = {}; 
+    let lastFetchTime = null;
 
     function fetchPeers(table, id) {
+    const currentTime = Date.now();
 
-    ajaxWithCSRF("{% url 'peerstate' %}", {"id":id}, function(response)
-    {
-        if (response.success)
-        {
+    ajaxWithCSRF("{% url 'peerstate' %}", {"id": id}, function(response) {
+        if (response.success) {
             table.innerHTML = "";
-
-            let totalPeers = response.peers.length;
             let connectedPeers = 0;
 
-            response.peers.forEach(peer => {
+            // Calculate time elapsed in seconds
+            let timeElapsed = lastFetchTime ? (currentTime - lastFetchTime) / 1000 : 0;
 
-                if (peer.is_connected) {
-                    connectedPeers++;
+            response.peers.forEach(peer => {
+                if (peer.is_connected) connectedPeers++;
+
+                // Retrieve previous data for this specific peer (using public key or name as ID)
+                const previous = lastPeerData[peer.peer];
+                
+                let rxSpeed = 0;
+                let txSpeed = 0;
+
+                if (previous && timeElapsed > 0) {
+                    // (Current - Previous) / Seconds
+                    rxSpeed = Math.max(0, (peer.rx - previous.rx) / timeElapsed);
+                    txSpeed = Math.max(0, (peer.tx - previous.tx) / timeElapsed);
                 }
+
+                // Update the persistent storage for the next interval
+                lastPeerData[peer.peer] = {
+                    rx: peer.rx,
+                    tx: peer.tx
+                };
 
                 const row = `
                     <tr>
                         <td>${peer.peer}</td>
                         <td>${peer.endpoint}</td>
-                        <td>${peer.handshake > 0 ? "Connected" : "—"}</td>
-                        <td>${formatBytes(peer.rx)}</td>
-                        <td>${formatBytes(peer.tx)}</td>
+                        <td class="text-primary fw-bold">
+                            ↓ ${formatBytes(txSpeed)}/s
+                        </td>
+                        <td class="text-success fw-bold">
+                            ↑ ${formatBytes(rxSpeed)}/s
+                        </td>
                         <td>
                         ${peer.is_connected 
                             ? '<span class="badge bg-success">Online</span>' 
@@ -435,22 +456,16 @@
                         </td>
                     </tr>
                 `;
-
                 table.innerHTML += row;
             });
 
-            // Update dashboard counters
-            //document.getElementById("peer-total").textContent = totalPeers;
+            lastFetchTime = currentTime;
             document.getElementById("peer-online").textContent = connectedPeers;
-
-        }
-        else
-        {
+        } else {
             table.innerHTML = response.error;
         }
-
     });
-}
+    }
 
     
   

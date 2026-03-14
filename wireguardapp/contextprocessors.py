@@ -1,8 +1,8 @@
 from .models import Interface
-from .services.server import getServerInterfaces
+from .services.serverservice import ServerService
 
 def servers(request):
 
     return {
-        "servers": getServerInterfaces()
+        "servers": ServerService.getAllServerInterfaces()
     }

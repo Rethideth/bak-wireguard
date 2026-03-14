@@ -61,7 +61,7 @@ class CustomUserCreationForm(BootstrapFormMixin, UserCreationForm):
 class ClientKeyForm(BootstrapFormMixin,forms.Form):
     name = forms.CharField(max_length=255)
     interface = forms.ModelChoiceField(
-        queryset=ServerService.get_all_server_interfaces(),
+        queryset=ServerService.getAllServerInterfaces(),
         required=True
     )
 
@@ -109,7 +109,7 @@ class ServerInterfaceForm(BootstrapFormMixin,forms.ModelForm):
             )
             return cleaned
 
-        qs = ServerService.get_all_server_interfaces()
+        qs = ServerService.getAllServerInterfaces()
 
         if self.instance.pk:
             qs = qs.exclude(pk=self.instance.pk)
@@ -127,7 +127,7 @@ class ServerInterfaceForm(BootstrapFormMixin,forms.ModelForm):
     def clean_listen_port(self):
         value = self.cleaned_data["listen_port"]
 
-        qs = ServerService.get_all_server_interfaces()
+        qs = ServerService.getAllServerInterfaces()
 
         if self.instance.pk:
             qs = qs.exclude(pk=self.instance.pk)

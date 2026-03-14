@@ -18,6 +18,12 @@
         <li class="nav-item">
           <a class="nav-link" href="#keys">Připojení ke VPN serveru</a>
         </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#newserver">Vytvoření rozhraní serveru</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#serverusage">Používání serveru</a>
+        </li>
 
       </ul>
     </nav>
@@ -75,7 +81,53 @@
                 Stáhněte nebo zkopírujte konfigurační soubor Wireguard připojení. Některé aplikace pro Wireguard připojení 
                 požadují jméno konfiguračního souboru s jenom znaky bez diakritiky a má koncovku '.conf'.
             </li>
+            <li>
+                Přidejte stáhnutou/zkopírovanou konfiguraci do vašeho zvolené aplikace.
+            </li>
         </ol>
+      </section>
+
+      <hr>
+
+      <section id="newserver">
+        <h2>Vytvoření rozhraní serveru</h2>
+        <p>
+            Ve levem horním rohu klikněte na text 'Servery', 
+            a zde klikněte na 'Vytvořit nové rozhraní serveru'.
+        </p>
+        <p>
+            <ul>
+              <li>
+                Jméno rozhraní je jméno, které se bude zobrazovat pro uživatele.
+              </li>
+              <li>
+                Adresa sítě rozhraní je ip adresa sítě, která bude rozhraní serveru používat ke přidělení ip adres klientům
+              </li>
+              <li>
+                Maska sítě určuje masku sítě danou adresou sítě rozhraní. 
+              </li>
+              <li>
+                Dosažitelná adresa rozhraní serveru je adresa (ip adresa nebo doména), kde se hledá server. 
+                Tato adresa musí být dosažitelná bez VPN serveru. Pokud vaše zařízení, kde se tento VPN server a jeho rozhraní serveru Wireguard
+                nachází, je zapotřebí nastavit zařízení které jse dá dosáhnout z internetu směrovaní portu na adresu zařízení s VPN serverem.
+              </li>
+              <li>
+                Port endpoitu k naslouchání je port, kde bude rozhraní serveru Wireguard naslouchat. Většinou 51820.
+              </li>
+              <li>
+                Povolit klientům se připojit mezi sebou znamená, jestli bude povolena komunikace mezi klienty.
+              </li>
+            </ul>
+
+            Vplňte formulář a klikněte na tlačítko 'Vytvořit'.
+        </p>
+      </section>
+      
+      <hr>
+
+      <section id="serverusage">
+        <h2>Používání serveru</h2>
+        
       </section>
 
 

@@ -131,7 +131,7 @@ def generateServerConfText(serverInterface : Interface, interfaceInternetName : 
 
     if serverInterface.interface_type != Interface.SERVER:
         raise TypeError
-    serverPeers = PeerRepository.get_verified_peers_from_server(serverInterface)
+    serverPeers = PeerRepository.getVerifiedPeersFromServer(serverInterface)
 
     clientComm = "DROP"
     if serverInterface.client_to_client:
@@ -397,7 +397,7 @@ def isWGserverUp(serverInterface : Interface) -> bool:
 
 def getWGPeersState(serverInterface :Interface):
     """
-    Retrieve the current WireGuard peer state.
+    Retrieves the current WireGuard peer state.
 
     Uses the command ``wg show <interface_name> dump`` through a privileged script to read the
     current state of all peers attached to the server interface.
@@ -518,7 +518,7 @@ def saveWgDumpAll():
     """
     Runs the `getWgDump` for every server interface in the database.
     """
-    interfaces = InterfaceRepository.get_all_server_interfaces()
+    interfaces = InterfaceRepository.getAllServerInterfaces()
 
     logger.info(f"Starting logging and aggregating state of wireguard peers")
     for interface in interfaces:
