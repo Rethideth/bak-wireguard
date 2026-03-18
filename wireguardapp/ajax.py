@@ -12,6 +12,11 @@ from .services.serverservice import ServerService
 @require_POST
 @login_required
 def getconfajax(request):
+    """ 
+    Ajax functions returns text of the key wireguard configuration by the given key. 
+    Recieves an id ['id'] of the key.
+    Returns a confirmation if it was succesful and its configuration for full and split tunel. error message if failed.
+    """
     data = json.loads(request.body)
     user = request.user
 
@@ -38,6 +43,11 @@ def getconfajax(request):
 @require_POST
 @login_required
 def updatekeyname(request):
+    """ 
+    Updates the name of a given key. 
+    Recieves an id of a key ['key_id'] and the name to change to ['name']
+    Returns confirmation if the function was succesful.
+    """
     data = json.loads(request.body)
 
     key = ClientService.getKeyById(data["key_id"])
@@ -53,6 +63,7 @@ def updatekeyname(request):
 @require_POST
 @login_required
 def deletekey(request):
+    """ Removes a key based on its id ['id']."""
     user = request.user
     data = json.loads(request.body)
     key = ClientService.getKeyById(data['id'])
@@ -72,6 +83,7 @@ def deletekey(request):
 @require_POST
 @login_required
 def toggleServer(request):
+    """ Toggles a wireguard server interface state. """
     user = request.user
     if not user.is_superuser or not user.is_staff:
         return JsonResponse({"success": False, "error": "Nejste administrator pro vypínání/zapínání serveru."})
@@ -94,6 +106,7 @@ def toggleServer(request):
 @require_POST
 @login_required
 def getpeerstate(request):
+    """ Gets the wireguard server interface state. """
     user = request.user
     if not user.is_superuser or not user.is_staff:
         return JsonResponse({"success": False, "error": "Nejste nejste administrator pro získání logů."})
@@ -110,6 +123,7 @@ def getpeerstate(request):
 @require_POST
 @login_required
 def verifyUser(request):
+    """ Switches the verify status of a user by its if ['id']. """
     user = request.user
     if not user.is_superuser or not user.is_staff:
         return JsonResponse({"success": False, "error": "Nejste administrator pro získání logů."})

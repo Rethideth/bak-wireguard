@@ -44,12 +44,12 @@
             </td>
             <td>
                 <script>
-                    document.write(formatBytes({{peer.total_rx_bytes|default:0}}));
+                    document.write(formatBytes({{info.peer.total_rx_bytes|default:0}}));
                 </script>
             </td>
             <td>
                 <script>
-                    document.write(formatBytes({{peer.total_tx_bytes|default:0}}));
+                    document.write(formatBytes({{info.peer.total_tx_bytes|default:0}}));
                 </script>
             </td>
            

@@ -8,7 +8,7 @@ import logging
 logger = logging.getLogger('wg')
 
 class Command(BaseCommand):
-    help = "Update or start wireguard server interface"
+    help = "Stops wireguard server interface"
 
     def handle(self, *args, **options):
         stopWGserver()

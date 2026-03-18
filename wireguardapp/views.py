@@ -23,6 +23,7 @@ logger = logging.getLogger('test')
 
 
 def home(request : HttpRequest):
+    """ Home page view. Has a introduction of this """
     return render(request, 'wireguardapp/main.html')
 
 @login_required
@@ -30,6 +31,7 @@ def test(request : HttpRequest):
     return render(request, 'wireguardapp/test.html')
 
 def register(request : HttpRequest):
+    """ Register view. Will create a user with a profile and log in the user."""
     if request.method == "POST":
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
@@ -45,6 +47,7 @@ def register(request : HttpRequest):
 
 @login_required
 def mykeys(request : HttpRequest):
+    """ View that shows all keys which the user owns. Can add,remove and generate configuration for a key. """
     keys = ClientService.getUserKeys(request.user)
     form = ClientKeyForm()
     grouped = list(dict())
@@ -58,6 +61,7 @@ def mykeys(request : HttpRequest):
 
 @login_required
 def newkey(request : HttpRequest):
+    """ Form reciever that creates a new key for the user. """
     if request.method == "POST":
         form = ClientKeyForm(request.POST)
         if form.is_valid():
@@ -76,6 +80,7 @@ def newkey(request : HttpRequest):
 
 @login_required
 def serverinterfaces(request : HttpRequest):
+    """ View that shows all server interfaces and their basic information. """
     if not request.user.is_superuser or not request.user.is_staff:
         raise PermissionDenied
 
@@ -93,6 +98,7 @@ def serverinterfaces(request : HttpRequest):
 
 @login_required
 def serverinterface(request :HttpRequest, id:int):
+    """ View that shows the server interface dashboard. Information about interface configuration, its peers and current connection state. """
     if not request.user.is_superuser or not request.user.is_staff:
         raise PermissionDenied
     
@@ -106,7 +112,7 @@ def serverinterface(request :HttpRequest, id:int):
 
 def serverinterfaceform(request, id=None):
     """
-    Handles create and update of a Server Interface.
+    View and form reciever that handles create and update of a server interface.
     If pk is provided, edits an existing interface.
     """
 
@@ -157,6 +163,7 @@ def serverinterfaceform(request, id=None):
 
 @login_required
 def deleteinterface(request :HttpRequest):
+    """ Removes a server interface. """
     if not request.user.is_superuser or not request.user.is_staff:
         raise PermissionDenied
     if request.method == "POST":
@@ -173,11 +180,13 @@ def deleteinterface(request :HttpRequest):
 
 
 def dbdown(request : HttpRequest):
+    """ View that shows, when database service is unreachable. """
     return render(request, 'wireguardapp/dbdown.html', status=503)
 
 
 @login_required
 def downlandConf(request : HttpRequest):
+    """ Downland a configuration of the given key by id and if full or split tunel. """
     id = request.GET.get('id')
     full = request.GET.get('full')
     user = request.user
@@ -201,6 +210,7 @@ def downlandConf(request : HttpRequest):
 
 @login_required
 def listusers(request : HttpRequest):
+    """ Lists all users, their basic information and link to ther user options view. """
     if not request.user.is_superuser or not request.user.is_staff:
         raise PermissionDenied
     
@@ -214,13 +224,16 @@ def listusers(request : HttpRequest):
     
 @login_required
 def newuser(request :HttpRequest):
+    """ Admin based form view that creates an user. """
     if not request.user.is_superuser or not request.user.is_staff:
         raise PermissionDenied
     
     if request.method == "POST":
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
-            ClientService.createUser(form=form)
+            user = form.save(commit=False)
+            ClientService.createUser(user=user)
+            form.save_m2m()
 
             return redirect('listusers')
 
@@ -232,6 +245,11 @@ def newuser(request :HttpRequest):
 
 @login_required
 def usersettings(request: HttpRequest, id):
+    """ 
+    View that shows the target user setting. Allow changing of user information and reset their password. 
+    If admin uses this page, changes change password (need current password to change) to set password.
+    Also allows setting key limit and verified status.
+    """
 
     target_user = ClientService.getUserFromId(id)
     profile = ClientService.getUserProfile(target_user)
@@ -301,6 +319,7 @@ def usersettings(request: HttpRequest, id):
 
 @login_required
 def userkeys(request :HttpRequest, id:int):
+    """ View that shows a list of user keys and all their information """
     user = ClientService.getUserFromId(id)
     
     if request.user != user and not request.user.is_staff:
@@ -323,4 +342,5 @@ def userkeys(request :HttpRequest, id:int):
     return render(request, 'wireguardapp/userkeys.html', {"infos": grouped, "user":user})
 
 def help(request :HttpRequest):
+    """ View that shows instruction for how to use this web managment interface for wireguard. """
     return render(request, 'wireguardapp/help.html', {})

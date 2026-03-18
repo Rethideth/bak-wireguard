@@ -12,7 +12,7 @@ class DatabaseCheckMiddleware:
     """
     Middleware for checking database connection.
 
-    If down, users cannot access any sites that require database access, e.g. login page, mykeys page,...
+    If down, users cannot access any sites that require database access, e.g. login page, mykeys page, server dashboard,...
     """
     def __init__(self, get_response):
         self.get_response = get_response
