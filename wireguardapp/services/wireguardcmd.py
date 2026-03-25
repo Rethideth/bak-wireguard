@@ -191,7 +191,7 @@ def generateKeyPair():
 
 def addWGPeer(serverInterfaceName : str,peerKey : str, ipAddress : str):
     """
-    Executes a privileged bash script wg-peer-add.sh to temporarily add a peer to the server to connect a client.
+    Executes a privileged bash script wg-peer-add.bash to temporarily add a peer to the server to connect a client.
     On stopping the server interface, the pper should be saved into config due to 'SaveConfig = True'.
     Result is logged into logs/wg.log.
     To execute the script properly, the script must be owned
@@ -210,7 +210,7 @@ def addWGPeer(serverInterfaceName : str,peerKey : str, ipAddress : str):
     """
     cmd = [
             "sudo",
-            settings.BASE_DIR / "scripts/wg-peer-add.sh", 
+            settings.BASE_DIR / "scripts/wg-peer-add.bash", 
             serverInterfaceName, 
             peerKey,
             ipAddress
@@ -234,7 +234,7 @@ def addWGPeer(serverInterfaceName : str,peerKey : str, ipAddress : str):
 
 def removeWGPeer(serverInterfaceName :str, peerKey : str):
     """
-    Executes a privileged bash script wg-peer-remove.sh to temporarily remove a peer to the server to disconnect a client.
+    Executes a privileged bash script wg-peer-remove.bash to temporarily remove a peer to the server to disconnect a client.
     On stopping the server interface, the peer should be removed from config due to 'SaveConfig = True'.
     Result is logged into logs/wg.log.
     To execute the script properly, the script must be owned
@@ -251,7 +251,7 @@ def removeWGPeer(serverInterfaceName :str, peerKey : str):
 
     cmd = [
             "sudo",
-            settings.BASE_DIR / "scripts/wg-peer-remove.sh", 
+            settings.BASE_DIR / "scripts/wg-peer-remove.bash", 
             serverInterfaceName, 
             peerKey,
         ]
@@ -276,7 +276,7 @@ def removeWGPeer(serverInterfaceName :str, peerKey : str):
 
 def startWGserver(serverInterface : Interface, interfaceInternetName : str):
     """
-    Starts the server interface using a privileged bash script wg-start.sh.
+    Starts the server interface using a privileged bash script wg-start.bash.
     The interface will have a generated config file based on the server interface and its own peers.
     This function will create a temporary file, then the script will install the config file into /etc/wireguard.
     In the end the script will try to start the server interface using 'wg-quick'.
@@ -308,7 +308,7 @@ def startWGserver(serverInterface : Interface, interfaceInternetName : str):
 
     cmd = [
         "sudo",
-        settings.BASE_DIR / "scripts/wg-start.sh", 
+        settings.BASE_DIR / "scripts/wg-start.bash", 
         tmpPath,
         servername
     ]
@@ -320,7 +320,7 @@ def startWGserver(serverInterface : Interface, interfaceInternetName : str):
             capture_output=True,
         )
     except subprocess.CalledProcessError as e:
-        logger.error(f"({datetime.datetime.now()}):{serverInterface.name}-{serverInterface.interface_key.name} wg-start.sh script has failed.")
+        logger.error(f"({datetime.datetime.now()}):{serverInterface.name}-{serverInterface.interface_key.name} wg-start.bash script has failed.")
         logger.error(f"STDOUT: {e.stdout}")
         logger.error(f"STDERR: {e.stderr}")
         return e.stderr
@@ -331,7 +331,7 @@ def startWGserver(serverInterface : Interface, interfaceInternetName : str):
 
 def stopWGserver(serverInterface : Interface):
     """
-    Stops the server interface using a privileged bash script wg-stop.sh.
+    Stops the server interface using a privileged bash script wg-stop.bash.
     The script will try to stop the server interface using wg-quick.
     Result is logged into logs/wg.log
 
@@ -343,7 +343,7 @@ def stopWGserver(serverInterface : Interface):
 
     cmd = [
         "sudo",
-        settings.BASE_DIR / "scripts/wg-stop.sh", 
+        settings.BASE_DIR / "scripts/wg-stop.bash", 
         serverInterface.name
     ]
 
@@ -354,7 +354,7 @@ def stopWGserver(serverInterface : Interface):
             capture_output=True,
         )
     except subprocess.CalledProcessError as e:
-        logger.error(f"({datetime.datetime.now()}):{serverInterface.name}-{serverInterface.interface_key.name} wg-stop.sh script has failed.")
+        logger.error(f"({datetime.datetime.now()}):{serverInterface.name}-{serverInterface.interface_key.name} wg-stop.bash script has failed.")
         logger.error(f"STDOUT: {e.stdout}")
         logger.error(f"STDERR: {e.stderr}")
         return e.stderr
@@ -380,7 +380,7 @@ def isWGserverUp(serverInterface : Interface) -> bool:
 
     cmd = [
         "sudo",
-        settings.BASE_DIR / "scripts/wg-check.sh", 
+        settings.BASE_DIR / "scripts/wg-check.bash", 
         serverInterface.name
     ]
 
@@ -433,7 +433,7 @@ def getWGPeersState(serverInterface :Interface):
     now = int(time.time())
     cmd = [
         "sudo",
-        settings.BASE_DIR / "scripts/wg-inf-dump.sh", 
+        settings.BASE_DIR / "scripts/wg-inf-dump.bash", 
         serverInterface.name
     ]
 
@@ -538,7 +538,7 @@ def getWgDump(interface : Interface):
     """
     cmd = [
         "sudo",
-        settings.BASE_DIR / "scripts/wg-inf-dump.sh", 
+        settings.BASE_DIR / "scripts/wg-inf-dump.bash", 
         interface.name
     ]
     result = subprocess.run(

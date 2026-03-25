@@ -84,20 +84,20 @@ Enable the www-data user to execute wireguard commands that need sudo.
 sudo visudo /etc/sudoers.d/wireguard
 ```
 Write this into the visudo to enable executing these scripts with wireguard commands.
-Scripts files are in `/path/to/project/scripts/`, here it is `/var/www/wireguardweb/scripts`.
+Scripts files are in `/path/to/project/scripts/`, here it is `/var/www/wireguardweb/scripts/`.
 ```
 www-data ALL=(root) NOPASSWD: \
-	/var/www/wireguardweb/scripts/wg-peer-add.sh, \
-	/var/www/wireguardweb/scripts/wg-peer-remove.sh, \
-	/var/www/wireguardweb/scripts/wg-start.sh, \
-	/var/www/wireguardweb/scripts/wg-stop.sh, \
-	/var/www/wireguardweb/scripts/wg-check.sh, \
-	/var/www/wireguardweb/scripts/wg-inf-dump.sh
+	/var/www/wireguardweb/scripts/wg-peer-add.bash, \
+	/var/www/wireguardweb/scripts/wg-peer-remove.bash, \
+	/var/www/wireguardweb/scripts/wg-start.bash, \
+	/var/www/wireguardweb/scripts/wg-stop.bash, \
+	/var/www/wireguardweb/scripts/wg-check.bash, \
+	/var/www/wireguardweb/scripts/wg-inf-dump.bash
 ```
 Give the scripts execution privilege and change ownership to root.
 ```
-sudo chown root:root wg-peer-add.sh wg-peer-remove.sh wg-start.sh wg-stop.sh wg-check.sh wg-inf-dump.sh 
-sudo chmod 744 wg-peer-add.sh wg-peer-remove.sh wg-start.sh wg-stop.sh wg-check.sh wg-inf-dump.sh
+sudo chown root:root wg-peer-add.bash wg-peer-remove.bash wg-start.bash wg-stop.bash wg-check.bash wg-inf-dump.bash 
+sudo chmod 744 wg-peer-add.bash wg-peer-remove.bash wg-start.bash wg-stop.bash wg-check.bash wg-inf-dump.bash
 ```
 ### 2.6 mysql
 In mariadb database, create an user and a database for django server.
@@ -117,7 +117,7 @@ mkdir /var/www/wireguardweb/static
 ```
 Change group to www-data for all project files
 ```
-sudo chown  $USER:www-data /var/www/wireguardweb/* 
+sudo chown  $USER:www-data /var/www/wireguardweb/* -R
 ```
 
 Run these commands 

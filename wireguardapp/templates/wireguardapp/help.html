@@ -6,6 +6,7 @@
 {% load static %}
 
 
+
 <div class="container-fluid">
   <div class="row">
 
@@ -13,7 +14,7 @@
     <nav class="col-md-3 col-lg-2 d-md-block bg-light sidebar pt-4" style="position: sticky; top: 20px; height: 100vh;">
       <ul class="nav flex-column">
         <li class="nav-item">
-          <a class="nav-link" href="#users">Uživatele</a>
+          <a class="nav-link" href="#users">Přihlášení a registrace</a>
         </li>
         <li class="nav-item">
           <a class="nav-link" href="#keys">Připojení ke VPN serveru</a>
@@ -38,7 +39,12 @@
             pokud si vytvoříte nového uživatele přes registraci, nebo se přihlásíte 
             ke existujícímu uživateli.
             </br>
-            <img src="{% static 'login_register.png' %}">
+            <img src="{% static "wireguardapp/images/login_register.png" %}"
+              alt="Nav->login_or_register" 
+              class="img-fluid img-thumbnail w-75"
+              data-bs-toggle="modal" 
+              data-bs-target="#imageGalleryModal" 
+              data-bs-img-src="{% static "wireguardapp/images/login_register.png" %}">
             </br>
         </p>
         <p>
@@ -66,24 +72,114 @@
             </li>
             <li>
                 Klikněte na tlačítko 'Nový klíč' pro vytvoření nového klíče.
+                </br>
+                <img src="{% static "wireguardapp/images/new_key.png" %}" 
+                  alt="Vytvořit nový klíč" 
+                  class="img-fluid img-thumbnail w-75"
+                  data-bs-toggle="modal" 
+                  data-bs-target="#imageGalleryModal" 
+                  data-bs-img-src="{% static "wireguardapp/images/new_key.png" %}">
+                </br>
             </li>
             <li>
-                Zadejte jméno klíče a vyberte rozhraní serveru. Potom klikněte na 'Vytvořit nový klíč.'
+                Zadejte jméno klíče (1) a vyberte rozhraní serveru (2). Potom klikněte na 'Vytvořit nový klíč.'
+                </br>
+                <img src="{% static "wireguardapp/images/create_key.png" %}" 
+                  alt="Vyplnit formulář o novém klíči" 
+                  class="img-fluid img-thumbnail w-75"
+                  data-bs-toggle="modal" 
+                  data-bs-target="#imageGalleryModal" 
+                  data-bs-img-src="{% static "wireguardapp/images/create_key.png" %}">
+                </br>
             </li>
             <li>
                 Klikněte na 'Vytvořit konfiguraci' na kartu klíče, kterého jste vytvořili.
+                </br>
+                <img src="{% static "wireguardapp/images/key_configbutton.png" %}" 
+                  alt="kliknout na vytvořit konfiguraci" 
+                  class="img-fluid img-thumbnail w-75"
+                  data-bs-toggle="modal" 
+                  data-bs-target="#imageGalleryModal" 
+                  data-bs-img-src="{% static "wireguardapp/images/key_configbutton.png" %}">
+                </br>
             </li>
             <li>
                 Vyberte, jestli chcete plný tunel, kde každý provoz sítě se přesměruje přes VPN server,
                 nebo Split tunel, kde jenom pro adresy v síti rozhraní serveru bude přesměrován přes VPN server.
+                Potom stáhněte soubor Wireguard připojení.
+                </br>
+                <img src="{% static "wireguardapp/images/key_makeconfig.png" %}" 
+                  alt="Stahnout konfiguraci" 
+                  class="img-fluid img-thumbnail w-75"
+                  data-bs-toggle="modal" 
+                  data-bs-target="#imageGalleryModal" 
+                  data-bs-img-src="{% static "wireguardapp/images/key_makeconfig.png" %}">
+                </br>
             </li>
-            <li>
-                Stáhněte nebo zkopírujte konfigurační soubor Wireguard připojení. Některé aplikace pro Wireguard připojení 
-                požadují jméno konfiguračního souboru s jenom znaky bez diakritiky a má koncovku '.conf'.
-            </li>
-            <li>
-                Přidejte stáhnutou/zkopírovanou konfiguraci do vašeho zvolené aplikace.
-            </li>
+        </ol>
+
+
+        <strong>Linux (Ubuntu/Gnome)</strong>
+        <ol>
+          <li>
+            Pro používání wireguard klienta protřebuje instalovat wireguard na vašem zařízení.
+            Otevřete terminál (CTRL+ALT+T) a spusťte příkaz: </br><i>sudo apt install wireguard</i>
+          </li>
+          <li>
+            Přejděte na nastavení v záložce "Síť" a vytvořte nové VPN připojení. Můžete tam přejít do nastavení 
+            kliknutím ve pravém horním rohu na záložku kde je zobrazeno připojení,zvuk a napájení.
+            Nebo vyhledat nastavení v vyhledávaní aplikací.
+            </br>
+              <img src="{% static "wireguardapp/images/settings.png" %}" 
+                alt="Stahnout konfiguraci" 
+                class="img-fluid img-thumbnail w-75"
+                data-bs-toggle="modal" 
+                data-bs-target="#imageGalleryModal" 
+                data-bs-img-src="{% static "wireguardapp/images/settings.png" %}">
+              </br>
+              </br>
+              <img src="{% static "wireguardapp/images/ubuntu_vpnnew.png" %}" 
+                alt="Stahnout konfiguraci" 
+                class="img-fluid img-thumbnail w-75"
+                data-bs-toggle="modal" 
+                data-bs-target="#imageGalleryModal" 
+                data-bs-img-src="{% static "wireguardapp/images/ubuntu_vpnnew.png" %}">
+              </br>
+          </li>
+          <li>
+            Importujte nastavení wireguardu ze stáhnutého souboru nebo vypište wireguard tunel nastavení v grafickém rozhraní. 
+            </br>
+                <img src="{% static "wireguardapp/images/ubuntu_vpncreate.png" %}" 
+                  alt="Stahnout konfiguraci" 
+                  class="img-fluid img-thumbnail w-75"
+                  data-bs-toggle="modal" 
+                  data-bs-target="#imageGalleryModal" 
+                  data-bs-img-src="{% static "wireguardapp/images/ubuntu_vpncreate.png" %}">
+                </br>
+          </li>
+        </ol>
+
+        <strong>Windows</strong>
+        <ol>
+          <li>
+            Pro používání wireguard klienta protřebuje instalovat wireguard na vašem zařízení.
+            Na odkazu <a href="https://www.wireguard.com/install/">https://www.wireguard.com/install/</a> stáhněte a naistalujte 
+          </li>
+          <li>
+            Spusťte applikaci WireGuard a stiskněte tlačítko Importovat tunel(y) ze souboru nebo Přidat tunel 
+            a vyberte stáhnutý konfigurační soubor soubor.
+            </br>
+                <img src="{% static "wireguardapp/images/windows_vpn.png" %}" 
+                  alt="Stahnout konfiguraci" 
+                  class="img-fluid img-thumbnail w-75"
+                  data-bs-toggle="modal" 
+                  data-bs-target="#imageGalleryModal" 
+                  data-bs-img-src="{% static "wireguardapp/images/windows_vpn.png" %}">
+                </br>
+          </li>
+          <li>
+            Stiskněte tlačítko Aktivovat pro spuštění VPN tunelu.
+          </li>
         </ol>
       </section>
 
@@ -127,7 +223,47 @@
 
       <section id="serverusage">
         <h2>Používání serveru</h2>
-        
+        <p>
+          Všechny informace jsou o běhu serveru jsou dosažitelné ze dashboardu rozhraní serveru
+        </p>
+
+        </br>
+        <img src="{% static "wireguardapp/images/dashboard.png" %}" 
+          alt="Stahnout konfiguraci" 
+          class="img-fluid img-thumbnail w-75"
+          data-bs-toggle="modal" 
+          data-bs-target="#imageGalleryModal" 
+          data-bs-img-src="{% static "wireguardapp/images/dashboard.png" %}">
+        </br>
+
+        <ol>
+          <li>
+            List informací o serveru. 
+          </li>
+          <li>
+            Rozhraní pro přesměrování přenosu je jméno síťového rozhraní, kde se má provoz z VPN tunelu přesměrovat dále. Většinou je to eth0.
+          </li>
+          <li>
+            Stav WireGuard rozhraní serveru. Zelené tlačítko znamená, že server beží, červerné tlačítko server neběží.
+          </li>
+          <li>
+            Tlačítko pro změnu nastavení rozhraní.
+          </li>
+          <li>
+            Smazat rozhraní.
+          </li>
+          <li>
+            Lišta pro zobrazení statistikách rozhraní.
+          </li>
+          <li>
+            Lišta pro zobrazení agregovaných datech o každém klientovi
+          </li>
+          <li>
+            Lišta a aktuálnímu využívaní rozhraní pro každého klienta
+          </li>
+        </ol>
+
+
       </section>
 
 
@@ -135,6 +271,30 @@
 
   </div>
 </div>
+
+<div class="modal fade" id="imageGalleryModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-xl">
+    <div class="modal-content">
+      <div class="modal-body">
+        <img src="" id="modalImage" class="img-fluid">
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+  const galleryModal = document.getElementById('imageGalleryModal');
+galleryModal.addEventListener('show.bs.modal', function (event) {
+  // Button (image) that triggered the modal
+  const image = event.relatedTarget;
+  // Extract info from data-bs-* attributes
+  const src = image.getAttribute('data-bs-img-src');
+  // Update the modal's content
+  const modalImage = galleryModal.querySelector('#modalImage');
+  modalImage.src = src;
+});
+</script>
 
 
 {% endblock %}

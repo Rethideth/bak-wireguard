@@ -4,6 +4,9 @@ from . import views,ajax
 from django.contrib.auth import views as auth_views
 from wireguardapp.forms import CustomLoginView
 
+from django.conf import settings
+from django.conf.urls.static import static
+
 urlpatterns = [
     path('', views.home, name = 'home'),
     path("login/", CustomLoginView.as_view(), name="login"),
@@ -30,5 +33,5 @@ urlpatterns = [
     path('user/keys/<int:id>',views.userkeys,name='userkeys'),
     path('help/', views.help, name='help'),
     path('test/',views.test)
-]
+] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
     

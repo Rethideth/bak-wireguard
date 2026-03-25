@@ -21,5 +21,6 @@ On windows, add DNS=1.1.1.1 to the client interface config, if not working.
  - https://documentation.ubuntu.com/server/how-to/wireguard-vpn/vpn-as-the-default-gateway/#using-the-vpn-as-the-default-gateway
  - https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
  - https://www.w3schools.com/django/
-
+ - https://www.scaleway.com/en/docs/tutorials/install-wireguard/
+ - https://azure.microsoft.com/cs-cz/resources/cloud-computing-dictionary/what-is-vpn
 
