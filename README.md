@@ -23,6 +23,18 @@ The structure of the directory of the wireguard app is:
 Database access layer for the MariaDB database. 
 - repository.py - Static classes and methods for CRUD operations. Every model has a repository and special repositories for client and server operation.
 
+### management
+Has commands that are accessible from outside of the django project using virtual enviroment. 
+ - commands
+  - my_command.py - Dev testing managment command
+  - wgdump.py - Managment command for saving and aggregating current state of WireGuard server interfaces. Used for cron job.
+
+### static
+Has images for web interface.
+
+### templates
+Has html files for web interface. 
+
 ### service
 Business layer for the view functions.
  - clientservice.py - Has a one static class with methods intended mainly for client usage.

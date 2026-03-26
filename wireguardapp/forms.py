@@ -19,7 +19,7 @@ class BootstrapFormMixin:
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
+        
         for name, field in self.fields.items():
             widget = field.widget
 
@@ -30,7 +30,11 @@ class BootstrapFormMixin:
                 widget.attrs["class"] = f"{existing} form-control".strip()
 
 class BootstrapAuthenticationForm(BootstrapFormMixin, AuthenticationForm):
-    pass
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        self.fields['username'].label = "Uživatelské jméno"
+        self.fields['password'].label = "Heslo"
 
 class BootstrapChangePasswordForm(BootstrapFormMixin, PasswordChangeForm):
     pass
@@ -44,17 +48,16 @@ class CustomLoginView(LoginView):
 
 
 class CustomUserCreationForm(BootstrapFormMixin, UserCreationForm):
-    email = forms.EmailField(
-        required=True
-    )
-
-    username = forms.CharField(
-        required=True
-    )
+    email = forms.EmailField(required=True, label="E-mailová adresa")
+    username = forms.CharField(required=True, label="Uživatelské jméno")
 
     class Meta(UserCreationForm.Meta):
         model = User
         fields = ("username", "email", "first_name", "last_name","password1", "password2")
+        labels = {
+            'first_name': 'Jméno',
+            'last_name': 'Příjmení',
+        }
 
 
 
