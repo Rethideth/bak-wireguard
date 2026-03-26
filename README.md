@@ -1,18 +1,45 @@
-# Overview
-A web interface for Wireguard.  
-Uses django users to create users for creating users keys.
-Creates a one server interface and allows to create clients keys and their configuration for connection.
-Also shows active connection state and their sent/recieved bytes.
+# Unnamed WireGuard web interface
 
-Uses Apache2 server to host the website. The site is created by django and connected to the server using mod_wsgi.
+## Description
+A web interface for VPN server using WireGuard.  
+Allows the administrator to create WireGuard server interface and manage the server interface.
+Allow to create/register and manage users that can create their own keys for WireGuard interfaces.
+Also shows active connection state and their total and current sent/recieved bytes.
+
+## Features
+Uses Apache2 server to host the website. The site is deployed by django and connected to apache2 using mod_wsgi.
+
+MariaDB for database service.
 
 Uses scripts owned by root and permitted sudo for www-data to execute wireguard commands.
 
 Private key are encrypted by Fernet symmetric encryption cryptography.fernet.Fernet. The fernet key is stored in a enviroment file .env, and read when a private key need to be decrypted. 
 
-Logic of the website is in wireguardapp/services.
+## Project Structure
+Uses one django app `wireguardapp` for everything. More information is in documentation (unfinished).
 
-On windows, add DNS=1.1.1.1 to the client interface config, if not working.
+The structure of the directory of the wireguard app is:
+### database
+Database access layer for the MariaDB database. 
+- repository.py - Static classes and methods for CRUD operations. Every model has a repository and special repositories for client and server operation.
+
+### service
+Business layer for the view functions.
+ - clientservice.py - Has a one static class with methods intended mainly for client usage.
+ - serverservice.py - Has a one static class with methods intended mainly for server usage.
+ - modelfactory.py - Has a one static class with methods for correctly creating instances of models.
+ - wireguardcmd.py - Has functions which uses functions related to WireGuard configuration and commands, such as `wg show all dump`.
+ - crypto.py - Has two functions for encryption and decryption of private keys. 
+
+### Base
+ - ajax.py - All json web requests from ajax requests.
+ - contextprocessors.py - Has a single function that returns all server interfaces. Is used for getting a list of servers for dropdown of "Server Dashboards".
+ - forms.py - All forms that django app uses.
+ - middleware.py - Has middleware for django project. Has a one function that check if database is up and redirects if it is down.
+ - models.py - Has models of django app.
+ - tests.py - dev testing functions.
+ - urls.py - List of urls that are mapped to views or ajax functions.
+ - views.py - All http web requests.
 
 ## Sources
  - https://studygyaan.com/django/how-to-setup-django-applications-with-apache-and-mod-wsgi-on-ubuntu
