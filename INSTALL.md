@@ -68,6 +68,9 @@ Generate a secret key for django.
 Write output into `.env` file
 `SECRET_KEY=<the generated key>`
 
+Also add a row to store a password for MariaDB django user. Use this password in MariaDB user creation. 
+`DJANGO_PASSWORD=<plain-text-password>` 
+
 ### 2.4 Logging 
 You must have correct permission or manage.py runserver wont work correctly. 
 The user who will run the `python manage.py runserver` will throw error if it doesnt have read and write on the log files.
@@ -100,7 +103,7 @@ sudo chown root:root wg-peer-add.bash wg-peer-remove.bash wg-start.bash wg-stop.
 sudo chmod 744 wg-peer-add.bash wg-peer-remove.bash wg-start.bash wg-stop.bash wg-check.bash wg-inf-dump.bash
 ```
 ### 2.6 mysql
-In mariadb database, create an user and a database for django server.
+In mariadb database, create an user and a database for django server. Use the same password in enviroment file (here it is `django`).
 Enter the database:
 `sudo mysql`
 Execute these commands:
@@ -110,6 +113,8 @@ CREATE USER IF NOT EXISTS 'django'@'localhost' IDENTIFIED BY 'django';
 GRANT ALL PRIVILEGES ON wg_web.* TO 'django'@'localhost';
 FLUSH PRIVILEGES;
 ```
+
+
 ### 2.7 finish django
 Add static directory into the project directory
 ```
