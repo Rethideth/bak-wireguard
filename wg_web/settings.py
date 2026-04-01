@@ -23,6 +23,7 @@ load_dotenv(BASE_DIR/'.env')
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 FERNET_KEY = os.getenv("FERNET_KEY")
+DJANGO_PASSWORD = os.getenv("DJANGO_PASSWORD")
 
 CSRF_COOKIE_SECURE=True
 SESSION_COOKIE_SECURE=True
@@ -101,7 +102,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'wg_web',
 	    'USER': 'django',
-	    'PASSWORD': 'django',
+	    'PASSWORD': DJANGO_PASSWORD,
 	    'HOST': 'localhost',
 	    'PORT': '3306',
 	    'OPTIONS': {}

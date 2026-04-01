@@ -5,6 +5,7 @@ from django.urls import reverse
 
 ALLOWED_PATHS = [
     reverse('dbdown'),
+    reverse('help'),
     '/',
 ]
 

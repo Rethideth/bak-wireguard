@@ -74,7 +74,7 @@
                 {% if request.user.is_superuser or request.user.is_staff %}
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'allservers' %}">
-                        Servers
+                        Servery
                         </a>
                     </li>
 
@@ -143,18 +143,20 @@
                     <a class="nav-link dropdown-toggle"
                     data-bs-toggle="dropdown"
                     href="#">
-
-                    {% if request.user.is_authenticated %}
-                    {{ request.user.username }}
+                    {% if db_online %}
+                        {% if request.user.is_authenticated %}
+                        {{ request.user.username }}
+                        {% else %}
+                        Účet
+                        {% endif %}
                     {% else %}
                     Účet
                     {% endif %}
-
                     </a>
 
                     <ul class="dropdown-menu dropdown-menu-end">
 
-                        {% if request.user.is_authenticated %}
+                        {% if request.user and request.user.is_authenticated %}
 
                         <li>
                             <a class="dropdown-item"

@@ -37,7 +37,7 @@
         <div class="card-body">
             <p class="card-text mb-2">Veřejný klíč</p>
             <input id="public_key" class="form-control mb-2" type="text" value="{{ item.key.public_key }}" readonly>
-            <p>Interface serveru: {{item.interfaceName}}
+            <p>Rozhraní serveru: {{item.interfaceName}}
             {% if item.interfaceUp %}
             <span class="badge bg-success">Online</span>
             {% else %}

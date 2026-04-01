@@ -117,7 +117,7 @@ def generateServerConfText(serverInterface : Interface, interfaceInternetName : 
             iptables -A FORWARD -o <wireguard_interface> -i <internet_interface> -m state --state RELATED,ESTABLISHED -j ACCEPT; 
                                                                                             # enables responses 
             iptables -A FORWARD -i <wireguard_interface> -o <wireguard_interface> -j ACCEPT;# enables for clients to communicate woth each other
-    PostDown =                                                                              # removes network rules in interface stopping
+        PostDown =                                                                          # removes network rules in interface stopping
             iptables -t nat -D POSTROUTING -o <internet_interface>  -j MASQUERADE; 
             iptables -D FORWARD -i <wireguard_interface> -o <internet_interface> -j ACCEPT; 
             iptables -D FORWARD -o <wireguard_interface> -i <internet_interface> -m state --state RELATED,ESTABLISHED -j ACCEPT; 

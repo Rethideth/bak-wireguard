@@ -12,6 +12,7 @@ from .wireguardcmd import (
 )
 from .modelfactory import ModelFactory 
 from wireguardapp.database.repository import InterfaceRepository, PeerRepository, UserRepository, KeyRepository, ServerRepository
+import datetime
 
 logger = logging.getLogger("wg")
 
@@ -112,6 +113,7 @@ class ServerService:
         except Exception:
             return "Selhalo vytváření nového rozhraní serveru."
         ServerRepository.saveServer(key, interface)
+        logger.info(f"({datetime.datetime.now()}):New interface {interface.name}-{key.name} created.")
         return None
 
     @staticmethod
@@ -126,6 +128,7 @@ class ServerService:
         """
         ServerService.stopServer(serverInterface)
         ServerRepository.deleteServer(serverInterface.interface_key)
+        logger.info(f"({datetime.datetime.now()}):Interface {serverInterface.name}-{serverInterface.interface_key.name} deleted.")
 
     # -------------------
     # Peer Management
@@ -244,9 +247,11 @@ class ServerService:
         if profile.verified:
             UserRepository.updateProfile(profile, verified=False)
             ServerService.disconnectUserFromWg(user)
+            logger.info(f"({datetime.datetime.now()}):User {user.email} was unverified and disconnected")
         else:
             UserRepository.updateProfile(profile, verified=True)
             ServerService.connectUserToWg(user)
+            logger.info(f"({datetime.datetime.now()}):User {user.email} was verified and connected")
 
         return UserRepository.getOrCreateProfile(user)
 
@@ -290,21 +295,29 @@ class ServerService:
     # -------------------
     @staticmethod
     def updateServer(interface: Interface, changed: list[str]):
+        logger.info(f"({datetime.datetime.now()}):Interface {interface.name}-{interface.interface_key.name} changed.")
         try:
             with transaction.atomic():
                 if "ip_network" in changed or "ip_network_mask" in changed:
                     ServerService.updateServerPeersIpAddresses(interface)
+                    logger.info(f"({datetime.datetime.now()}):Interface {interface.name}-{interface.interface_key.name} changed ip network.")
                 if "server_endpoint" in changed:
                     InterfaceRepository.updateEndpoint(interface, interface.server_endpoint)
+                    logger.info(f"({datetime.datetime.now()}):Interface {interface.name}-{interface.interface_key.name} changed server endpoint.")
                 if "listen_port" in changed:
                     InterfaceRepository.updatePort(interface, interface.listen_port)
+                    logger.info(f"({datetime.datetime.now()}):Interface {interface.name}-{interface.interface_key.name} changed listen port.")
                 if "client_to_client" in changed:
                     InterfaceRepository.updateClientToClient(interface, interface.client_to_client)
+                    logger.info(f"({datetime.datetime.now()}):Interface {interface.name}-{interface.interface_key.name} changed client to client connection.")
         except ValueError as e:
+            logger.info(f"({datetime.datetime.now()}):Interface {interface.name}-{interface.interface_key.name} failed to change ip network: {str(e)}.")
             return str(e)
-        except Exception:
-            return "Nastala chyba při aktualizaci serveru"
-
+        except Exception as e:
+            logger.info(f"({datetime.datetime.now()}):Interface {interface.name}-{interface.interface_key.name} failed to change a value: {str(e)}.")
+            return "Nastala chyba při aktualizaci serveru: "+ str(e)
+        
+        
     @staticmethod
     def updateServerPeersIpAddresses(serverInterface: Interface):
         network = ipaddress.ip_network(f"{serverInterface.ip_network}/{serverInterface.ip_network_mask}")
