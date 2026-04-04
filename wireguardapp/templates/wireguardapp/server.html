@@ -258,12 +258,12 @@
                                     <td>{{peer.peer_interface.interface_key.name}}</td>
                                     <td>
                                         <script>
-                                            document.write(formatBytes({{peer.total_rx_bytes|default:0}}));
+                                            document.write(formatBytes({{peer.total_tx_bytes|default:0}}));
                                         </script> 
                                     </td>
                                     <td>
                                         <script>
-                                            document.write(formatBytes({{peer.total_tx_bytes|default:0}}));
+                                            document.write(formatBytes({{peer.total_rx_bytes|default:0}}));
                                         </script> 
                                     </td>
 
@@ -574,8 +574,8 @@
 
                                 <td>${peer.name}</td>
 
-                                <td>${formatBytes(peer.rx)}</td>
                                 <td>${formatBytes(peer.tx)}</td>
+                                <td>${formatBytes(peer.rx)}</td>
 
                                 <td>
                                     <a class="btn btn-sm btn-primary"
