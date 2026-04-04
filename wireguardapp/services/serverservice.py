@@ -243,31 +243,32 @@ class ServerService:
 
     @staticmethod
     def stripPort(address: str) -> str:
-        """
-        Tries to strip the port part of an IPv4 or IPv6 address. Returns the address straight 
-        if not in normal format.
-        """
         address = address.strip()
 
-        
+        # IPv6 ve formátu [addr]:port
         if address.startswith('['):
-            return address.split(']')[0][1:]
+            if ']' in address:
+                return address[1:address.index(']')]
+            return address  # fallback
 
-        
+        # zkus rovnou jestli to není čistá IP
         try:
             ipaddress.ip_address(address)
             return address
         except ValueError:
             pass
 
-        
+        # rozděl na IP + port (poslední :)
         if ':' in address:
-            ip_part = address.rsplit(':', 1)[0]
-            try:
-                ipaddress.ip_address(ip_part)
-                return ip_part
-            except ValueError:
-                pass
+            ip_part, port_part = address.rsplit(':', 1)
+
+            # port musí být číslo
+            if port_part.isdigit():
+                try:
+                    ipaddress.ip_address(ip_part)
+                    return ip_part
+                except ValueError:
+                    pass
 
         return address
     
