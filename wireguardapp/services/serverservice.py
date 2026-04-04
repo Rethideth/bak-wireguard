@@ -241,74 +241,7 @@ class ServerService:
         """
         return getWGPeersState(serverInterface,field,value,state)
 
-    @staticmethod
-    def stripPort(address: str) -> str:
-        address = address.strip()
 
-        # IPv6 ve formátu [addr]:port
-        if address.startswith('['):
-            if ']' in address:
-                return address[1:address.index(']')]
-            return address  # fallback
-
-        # zkus rovnou jestli to není čistá IP
-        try:
-            ipaddress.ip_address(address)
-            return address
-        except ValueError:
-            pass
-
-        # rozděl na IP + port (poslední :)
-        if ':' in address:
-            ip_part, port_part = address.rsplit(':', 1)
-
-            # port musí být číslo
-            if port_part.isdigit():
-                try:
-                    ipaddress.ip_address(ip_part)
-                    return ip_part
-                except ValueError:
-                    pass
-
-        return address
-    
-    @staticmethod
-    def getInterfacePeersTotalBytes(serverInterface: Interface) -> list[dict]:
-        """
-        Gets all peers of the given interface and their total recieved/sent bytes.
-        
-        :return: Returns a list of data in a dictionary about the peer, its endpoint, recieved/sent bytes total.
-        :rtype: list[dict]
-
-        ::
-
-            [
-                {
-                    "peer": Peer,       # Peer object of the Snapshot
-                    "endpoint": str,    # Endpoint of the Peer
-                    "rx_total": int,    # Total recieved bytes through this interface for this peer
-                    "tx_total": int,    # Total sent bytes through this interface for this peer
-                },
-            ]
-
-        """
-        peers = ServerService.getServerInterfacePeers(serverInterface)
-        ranked = PeerRepository.getOrderedSnapshotsFromInterface(serverInterface)
-        endpoints = defaultdict(set)
-        for snapshot in ranked:
-            endpoints[snapshot.peer.pk].add(ServerService.stripPort(snapshot.endpoint))
-
-        table = []
-        for peer in peers:
-            table.append({
-                "peer": peer,
-                "endpoint": endpoints[peer.pk],
-                "rx_total": peer.total_rx_bytes,
-                "tx_total": peer.total_tx_bytes,
-            })
-        return table
-
-    
 
     @staticmethod
     def getNetworkInterfaces():

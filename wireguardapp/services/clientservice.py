@@ -4,6 +4,7 @@ from wireguardapp.models import Interface, Key, Profile, Peer
 from wireguardapp.database.repository import InterfaceRepository, PeerRepository, UserRepository, KeyRepository, ClientRepository
 from .wireguardcmd import addWGPeer, removeWGPeer, generateClientConfText
 from .modelfactory import ModelFactory
+import ipaddress
 
 logger = logging.getLogger("wg")
 
@@ -111,6 +112,37 @@ class ClientService:
         """
         return PeerRepository.getPeerFromKey(key)
     
+
+    @staticmethod
+    def stripPort(address: str) -> str:
+        address = address.strip()
+
+        # IPv6 ve formátu [addr]:port
+        if address.startswith('['):
+            if ']' in address:
+                return address[1:address.index(']')]
+            return address  # fallback
+
+        # zkus rovnou jestli to není čistá IP
+        try:
+            ipaddress.ip_address(address)
+            return address
+        except ValueError:
+            pass
+
+        # rozděl na IP + port (poslední :)
+        if ':' in address:
+            ip_part, port_part = address.rsplit(':', 1)
+
+            # port musí být číslo
+            if port_part.isdigit():
+                try:
+                    ipaddress.ip_address(ip_part)
+                    return ip_part
+                except ValueError:
+                    pass
+
+        return address
     @staticmethod
     def getEndpointOfPeer(peer: Peer) -> set[str]:
         """
@@ -126,7 +158,7 @@ class ClientService:
 
         endpoints = set()
         for snap in ranked:
-            endpoints.add(snap.endpoint)
+            endpoints.add(ClientService.stripPort(snap.endpoint))
 
         try: 
             endpoints.remove(None)
