@@ -36,11 +36,9 @@
             <td>{{info.server}}</td>
             <td>
                 {% for endpoint in info.endpoints %}
-                    [<span class="font-monospace">{{endpoint}}</span>]
-                    {% if not forloop.last%} 
-                        ,
-                    {% endif%}
-                {% endfor%}
+                    <span class="font-monospace">{{ endpoint }}</span>
+                    {% if not forloop.last %},{% endif %}
+                {% endfor %}
             </td>
             <td>
                 <script>
