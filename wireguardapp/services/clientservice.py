@@ -115,6 +115,8 @@ class ClientService:
 
     @staticmethod
     def stripPort(address: str) -> str:
+        if address == None:
+            return address
         address = address.strip()
 
         # IPv6 ve formátu [addr]:port
@@ -143,6 +145,7 @@ class ClientService:
                     pass
 
         return address
+    
     @staticmethod
     def getEndpointOfPeer(peer: Peer) -> set[str]:
         """
