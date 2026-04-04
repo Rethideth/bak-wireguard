@@ -213,6 +213,25 @@
                 <div class="card">
                     <div class="card-body">
 
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <select id="filter-field-peer" class="form-select">
+                                    <option value="user">Uživatel</option>
+                                    <option value="ip">IP adresa</option>
+                                    <option value="name">Jméno klíče</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-5">
+                                <input type="text" id="filter-value-peer" class="form-control" placeholder="Zadej hodnotu">
+                            </div>
+
+                            <div class="col-md-4 d-flex gap-2">
+                                <button class="btn btn-primary" onclick="applyFilterPeer()">Filtrovat</button>
+                                <button class="btn btn-secondary" onclick="resetFilterPeer()">Reset</button>
+                            </div>
+                        </div>
+
                         <table class="table">
 
                             <thead>
@@ -226,7 +245,7 @@
                                 </tr>
                             </thead>
 
-                            <tbody>
+                            <tbody id="peer-table-body">
 
                             {% for peer in peers %}
                                 <tr>
@@ -257,7 +276,7 @@
                                 </tr>
                             {% endfor %}
 
-                          R serveru  </tbody>
+                            </tbody>
 
                         </table>
 
@@ -272,6 +291,33 @@
 
                 <div class="card">
                     <div class="card-body">
+
+                        <div class="row mb-3">
+                            <div class="col">
+                                <select id="filter-field-active" class="form-select">
+                                    <option value="user">Uživatel</option>
+                                    <option value="ip">IP adresa</option>
+                                    <option value="name">Jméno klíče</option>
+                                </select>
+                            </div>
+
+                            <div class="col">
+                                <input type="text" id="filter-value-active" class="form-control" placeholder="Zadej hodnotu">
+                            </div>
+
+                            <div class="col">
+                                <select id="filter-state-active" class="form-select">
+                                    <option value="">Online/Offline</option>
+                                    <option value="true">Online</option>
+                                    <option value="false">Offline</option>
+                                </select>
+                            </div>
+
+                            <div class="col d-flex gap-2">
+                                <button class="btn btn-primary" onclick="applyFilterActive()">Filtrovat</button>
+                                <button class="btn btn-secondary" onclick="resetFilterActive()">Reset</button>
+                            </div>
+                        </div>
 
                         <table class="table table-striped">
 
@@ -394,80 +440,168 @@
 
     });
 
+    let usageFilter = {
+        field: "user",
+        value: "",
+        state: "",
+    };
+
+    function applyFilterActive() {
+        usageFilter.field = document.getElementById("filter-field-active").value;
+        usageFilter.value = document.getElementById("filter-value-active").value.trim();
+        usageFilter.state = document.getElementById("filter-state-active").value;
+
+        const table = document.getElementById("usage-table");
+        const id = table.dataset.id;
+        fetchPeers(table, id);
+    }
+
+    function resetFilterActive() {
+        document.getElementById("filter-field-active").value = "user";
+        document.getElementById("filter-value-active").value = "";
+        document.getElementById("filter-state-active").value = "";
+
+        applyFilterActive();
+    }
+
     table = document.getElementById("usage-table")
     const id = table.dataset.id;
     // Fetch immediately
     fetchPeers(table,id);
-
     // Refresh every 5 seconds
     setInterval(() => fetchPeers(table, id), 2000);
-
 
     // Persistent storage for the previous results
     let lastPeerData = {}; 
     let lastFetchTime = null;
 
     function fetchPeers(table, id) {
-    const currentTime = Date.now();
+        const currentTime = Date.now();
 
-    ajaxWithCSRF("{% url 'peerstate' %}", {"id": id}, function(response) {
-        if (response.success) {
-            table.innerHTML = "";
-            let connectedPeers = 0;
+        fetch(`/server/state/?field=${usageFilter.field}&value=${usageFilter.value}&state=${usageFilter.state}&interface=${id}`,
+        {
+            method: "GET",
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) 
+            {
+                table.innerHTML = "";
 
-            // Calculate time elapsed in seconds
-            let timeElapsed = lastFetchTime ? (currentTime - lastFetchTime) / 1000 : 0;
+                // Calculate time elapsed in seconds
+                let timeElapsed = lastFetchTime ? (currentTime - lastFetchTime) / 1000 : 0;
 
-            response.peers.forEach(peer => {
-                if (peer.is_connected) connectedPeers++;
+                data.peers.forEach(peer => {
 
-                // Retrieve previous data for this specific peer (using public key or name as ID)
-                const previous = lastPeerData[peer.peer];
-                
-                let rxSpeed = 0;
-                let txSpeed = 0;
+                    // Retrieve previous data for this specific peer (using public key or name as ID)
+                    const previous = lastPeerData[peer.peer];
+                    
+                    let rxSpeed = 0;
+                    let txSpeed = 0;
 
-                if (previous && timeElapsed > 0) {
-                    // (Current - Previous) / Seconds
-                    rxSpeed = Math.max(0, (peer.rx - previous.rx) / timeElapsed);
-                    txSpeed = Math.max(0, (peer.tx - previous.tx) / timeElapsed);
-                }
+                    if (previous && timeElapsed > 0) {
+                        // (Current - Previous) / Seconds
+                        rxSpeed = Math.max(0, (peer.rx - previous.rx) / timeElapsed);
+                        txSpeed = Math.max(0, (peer.tx - previous.tx) / timeElapsed);
+                    }
 
-                // Update the persistent storage for the next interval
-                lastPeerData[peer.peer] = {
-                    rx: peer.rx,
-                    tx: peer.tx
-                };
+                    // Update the persistent storage for the next interval
+                    lastPeerData[peer.peer] = {
+                        rx: peer.rx,
+                        tx: peer.tx
+                    };
 
-                const row = `
-                    <tr>
-                        <td>${peer.peer}</td>
-                        <td>${peer.endpoint}</td>
-                        <td class="text-primary fw-bold">
-                            ↓ ${formatBytes(txSpeed)}/s
-                        </td>
-                        <td class="text-success fw-bold">
-                            ↑ ${formatBytes(rxSpeed)}/s
-                        </td>
-                        <td>
-                        ${peer.is_connected 
-                            ? '<span class="badge bg-success">Online</span>' 
-                            : '<span class="badge bg-secondary">Offline</span>'}
-                        </td>
-                    </tr>
-                `;
-                table.innerHTML += row;
-            });
+                    const row = `
+                        <tr>
+                            <td>${peer.peer}</td>
+                            <td>${peer.endpoint}</td>
+                            <td class="text-primary fw-bold">
+                                ↓ ${formatBytes(txSpeed)}/s
+                            </td>
+                            <td class="text-success fw-bold">
+                                ↑ ${formatBytes(rxSpeed)}/s
+                            </td>
+                            <td>
+                            ${peer.is_connected 
+                                ? '<span class="badge bg-success">Online</span>' 
+                                : '<span class="badge bg-secondary">Offline</span>'}
+                            </td>
+                        </tr>
+                    `;
+                    table.innerHTML += row;
+                });
 
-            lastFetchTime = currentTime;
-            document.getElementById("peer-online").textContent = connectedPeers;
-        } else {
-            table.innerHTML = response.error;
-        }
-    });
+                lastFetchTime = currentTime;
+                document.getElementById("peer-online").textContent = data.online_count;
+            } 
+            else 
+            {
+                table.innerHTML = data.error;
+            }
+
+        });
     }
 
+   
+
     
+    function applyFilterPeer() {
+        const field = document.getElementById("filter-field-peer").value;
+        const value = document.getElementById("filter-value-peer").value;
+
+        const tbody = document.getElementById("peer-table-body");
+        tbody.innerHTML = "<tr><td colspan='6'>Načítám...</td></tr>";
+
+        fetch(`/peers/filter/?field=${field}&value=${value}&interface={{interface.id}}`)
+            .then(response => response.json())
+            .then(data => {
+                tbody.innerHTML = "";
+                if (data.success)
+                {
+                    if (data.data.length === 0) {
+                        tbody.innerHTML = "<tr><td colspan='6'>Žádné výsledky</td></tr>";
+                        return;
+                    }
+
+                    data.data.forEach(peer => {
+                        const row = `
+                            <tr>
+                                <td>${peer.user}</td>
+
+                                <td class="wg-wrap font-monospace">
+                                    ${peer.ip}
+                                </td>
+
+                                <td>${peer.name}</td>
+
+                                <td>${formatBytes(peer.rx)}</td>
+                                <td>${formatBytes(peer.tx)}</td>
+
+                                <td>
+                                    <a class="btn btn-sm btn-primary"
+                                    href="user/profile/${peer.user_id}">
+                                        Profil
+                                    </a>
+                                </td>
+                            </tr>
+                        `;
+
+                        tbody.innerHTML += row;
+                    });
+                }
+                else
+                {
+                    tbody.innerHTML = data.error
+                }      
+        });
+    }
+
+    function resetFilterPeer() {
+        document.getElementById("filter-field-peer").value = "user";
+        document.getElementById("filter-value-peer").value = "";
+
+        applyFilterPeer();
+    }
   
 
 

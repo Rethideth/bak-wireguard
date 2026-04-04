@@ -179,7 +179,7 @@ def deleteinterface(request :HttpRequest):
         if not ServerService.checkServer(interface):
             ServerService.removeServer(interface)
         else:
-            messages.error(request=request,message="Vypněte server předtím, než ho odstraníte.")
+            messages.error(request,"Vypněte server předtím, než ho odstraníte.")
             return redirect('server', id=id)
     
     return redirect('allservers')

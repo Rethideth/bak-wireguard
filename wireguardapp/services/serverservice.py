@@ -3,6 +3,7 @@ from collections import defaultdict
 from django.db import transaction
 from django.contrib.auth.models import User
 import ipaddress
+from django.db.models import Q
 
 from wireguardapp.models import Interface, Peer, Profile
 from .wireguardcmd import (
@@ -145,11 +146,55 @@ class ServerService:
         :rtype: QuerySet[Peer]
         """
         return PeerRepository.getPeersByInterface(serverInterface)
+    
+    @staticmethod
+    def getServerInterfacePeersFiltered(serverInterface: Interface, field :str, value : str):
+        """
+        Gets filtered peers of the `serverInterface`.
+
+        :param serverInterface: The interface to return its own peer objects.
+        :type serverInterface: Interface
+
+        :param field: The field to filter peers. Choices are `user` to filter by username or first or last name,
+          `ip` to filter based on the ip address of a peer, `name` to filter based on peer key name.
+        :type field: str
+
+        :param value: The value of the field to filter peers.
+        :type value: str
+
+        :param serverInterface: The interface to return its own peer objects.
+        :type serverInterface: Interface
+
+        :return: The peers of the given interface.
+        :rtype: QuerySet[Peer]
+        """
+        peers = PeerRepository.getPeersByInterface(serverInterface)
+
+        if value:
+            if field == "user":
+                peers = peers.filter(
+                    Q(peer_interface__interface_key__user__username__icontains=value) |
+                    Q(peer_interface__interface_key__user__first_name__icontains=value) |
+                    Q(peer_interface__interface_key__user__last_name__icontains=value)
+                )
+
+            elif field == "ip":
+                peers = peers.filter(
+                    peer_interface__ip_address__icontains=value
+                )
+
+            elif field == "name":
+                peers = peers.filter(
+                    peer_interface__interface_key__name__icontains=value
+                )
+        return peers
+
 
     @staticmethod
-    def getWgPeerConnectionState(serverInterface: Interface):
+    def getWgPeerConnectionState(serverInterface: Interface, field : str = None, value : str = None, state : str = None):
         """
-        This function accesses the wireguard service for the `getWGPeersState` function.
+        This function accesses the wireguard service for the `getWGPeersState` function. Will filter the output
+        based on the given field and value and by state of connection.
 
         Uses the command ``wg show <interface_name> dump`` through a privileged script to read the
         current state of all peers attached to the server interface.
@@ -162,9 +207,19 @@ class ServerService:
         :param serverInterface: The server interface to get its own peers.
         :type serverInterface: Interface
 
-        :return: A list of dictionaries, one per peer, with the structure or a empty list
-            of command execution fails.
-        :rtype: list[dict]
+        :param field: The name of the field to filter the result. Choices are: `user` for the name of a user,
+        `ip` for the ip addres of the peer, `name` for the name of the peer key. Anything else is ignored.
+        :type field: str
+
+        :param value: The value of the field parameter to be filtered.
+        :type value: str
+
+        :param state: The state of the peer to be filtered. If None, result wont be filtered. 
+        :type state: str
+
+        :return: A tuple of a list of dictionaries and count of online peers. Each entry of the list equals to one peer, with the structure below or a empty list
+        of command execution fails.
+        :rtype: tuple[list[dict],int]
 
         List structure
         ------------------
@@ -184,8 +239,38 @@ class ServerService:
 
 
         """
-        return getWGPeersState(serverInterface)
+        return getWGPeersState(serverInterface,field,value,state)
 
+    @staticmethod
+    def stripPort(address: str) -> str:
+        """
+        Tries to strip the port part of an IPv4 or IPv6 address. Returns the address straight 
+        if not in normal format.
+        """
+        address = address.strip()
+
+        
+        if address.startswith('['):
+            return address.split(']')[0][1:]
+
+        
+        try:
+            ipaddress.ip_address(address)
+            return address
+        except ValueError:
+            pass
+
+        
+        if ':' in address:
+            ip_part = address.rsplit(':', 1)[0]
+            try:
+                ipaddress.ip_address(ip_part)
+                return ip_part
+            except ValueError:
+                pass
+
+        return address
+    
     @staticmethod
     def getInterfacePeersTotalBytes(serverInterface: Interface) -> list[dict]:
         """
@@ -210,7 +295,7 @@ class ServerService:
         ranked = PeerRepository.getOrderedSnapshotsFromInterface(serverInterface)
         endpoints = defaultdict(set)
         for snapshot in ranked:
-            endpoints[snapshot.peer].add(snapshot.endpoint)
+            endpoints[snapshot.peer].add(ServerService.stripPort(snapshot.endpoint))
 
         table = []
         for peer in peers:
@@ -222,8 +307,14 @@ class ServerService:
             })
         return table
 
+    
+
     @staticmethod
     def getNetworkInterfaces():
+        """
+        Gets all current network interfaces of this device.
+        
+        """
         return selectAllNetworkInterfaces()
 
     # -------------------
@@ -238,6 +329,30 @@ class ServerService:
         :rtype: QuerySet[User]
         """
         return UserRepository.getAllNonAdminUsers()
+
+    @staticmethod
+    def getAllClientUsersFiltered(name : str, username : str, email : str, verified : str):
+        clients = ServerService.getAllClientUsers()
+
+        if name:
+            clients = clients.filter(
+                Q(first_name__icontains=name) |
+                Q(last_name__icontains=name)
+            )
+
+        if username:
+            clients = clients.filter(username__icontains=username)
+
+        if email:
+            clients = clients.filter(email__icontains=email)
+
+        if verified == "true":
+            clients = clients.filter(profile__verified=True)
+        elif verified == "false":
+            clients = clients.filter(profile__verified=False)
+
+        return clients
+
 
     @staticmethod
     def switchVerifyProfile(userId: int) -> Profile:

@@ -32,6 +32,8 @@ urlpatterns = [
     path('user/profile/<int:id>',views.usersettings,name='usersettings'),
     path('user/keys/<int:id>',views.userkeys,name='userkeys'),
     path('help/', views.help, name='help'),
-    path('test/',views.test)
+    path('test/',views.test),
+    path("users/filter/", ajax.filterUsers, name="filterusers"),
+    path("peers/filter/", ajax.filterPeers, name="filterpeers"),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
     

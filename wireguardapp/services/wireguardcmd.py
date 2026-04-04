@@ -1,5 +1,6 @@
 import subprocess
 from wireguardapp.models import Interface, Peer,  PeerSnapshot, Key
+from django.contrib.auth.models import User
 from .crypto import decrypt_value
 import subprocess
 import tempfile
@@ -7,7 +8,7 @@ from django.conf import settings
 import logging
 import time
 import psutil
-from wireguardapp.database.repository import InterfaceRepository,PeerRepository
+from wireguardapp.database.repository import InterfaceRepository,PeerRepository,UserRepository,KeyRepository
 import datetime
 
 logger = logging.getLogger('wg')
@@ -395,9 +396,9 @@ def isWGserverUp(serverInterface : Interface) -> bool:
         return False
     
 
-def getWGPeersState(serverInterface :Interface):
+def getWGPeersState(serverInterface :Interface, field : str = None, value : str = None, state : str = None):
     """
-    Retrieves the current WireGuard peer state.
+    Retrieves the current WireGuard peer state and count of online peers.
 
     Uses the command ``wg show <interface_name> dump`` through a privileged script to read the
     current state of all peers attached to the server interface.
@@ -410,9 +411,19 @@ def getWGPeersState(serverInterface :Interface):
     :param serverInterface: The server interface to get its own peers.
     :type serverInterface: Interface
 
-    :return: A list of dictionaries, one per peer, with the structure or a empty list
+    :param field: The name of the field to filter peers. Choices are: `user` for the name of a user,
+    `ip` for the ip addres of the peer, `name` for the name of the peer key. Anything else is ignored.
+    :type field: str
+
+    :param value: The value of the field parameter to be filtered.
+    :type value: str
+
+    :param state: The state of the peer to be filtered. If None, result wont be filtered. 
+    :type state: str
+
+    :return: A tuple of a list of dictionaries and count of online peers. Each entry of the list equals to one peer, with the structure below or a empty list
         of command execution fails.
-    :rtype: list[dict]
+    :rtype: tuple[list[dict],int]
 
     List structure
     ------------------
@@ -431,53 +442,79 @@ def getWGPeersState(serverInterface :Interface):
         ]
     """
     now = int(time.time())
-    cmd = [
-        "sudo",
-        settings.BASE_DIR / "scripts/wg-inf-dump.bash", 
-        serverInterface.name
-    ]
-
+    value = (value or "").lower()
 
     try:
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            check=True
-        )
+        lines = getWgDump(serverInterface)
+    except:
+        return [],int(0)
 
-        lines = result.stdout.strip().split("\n")
+    # preload mapy
+    keys = KeyRepository.getAllKeys()
+    keyMap = {k.public_key: k for k in keys}
 
-        peers = []
+    interfaces = InterfaceRepository.getAllInterfaces()
+    interfaceMap = {i.interface_key.public_key: i for i in interfaces}
 
-        # First line is interface info → skip it
-        for line in lines[1:]:
-            parts = line.split("\t")
+    peersDb = PeerRepository.getAllPeers()
+    peerMap = {
+        p.peer_interface.interface_key.public_key: p
+        for p in peersDb
+    }
 
-            public_key = parts[0]
-            endpoint = parts[2]
-            latest_handshake = int(parts[4])
-            transfer_rx = int(parts[5])
-            transfer_tx = int(parts[6])
-            is_connected = (
-                latest_handshake > 0 and
-                (now - latest_handshake) < 120
-            )
-            peer = Peer.objects.get(peer_interface__interface_key__public_key = public_key)
+    peers = []
+    onlineCount = 0
 
-            peers.append({
-                "peer": peer.__str__(),
-                "endpoint": endpoint or "—",
-                "handshake": latest_handshake,
-                "rx": transfer_rx,
-                "tx": transfer_tx,
-                'is_connected':is_connected
-            })
+    for line in lines[1:]:
+        parts = line.split("\t")
 
-        return peers
+        public_key = parts[0]
+        endpoint = parts[2]
+        latest_handshake = int(parts[4])
+        rx = int(parts[5])
+        tx = int(parts[6])
 
-    except Exception:
-        return []
+        is_connected = latest_handshake > 0 and (now - latest_handshake) < 120
+
+        if is_connected:
+            onlineCount += 1
+
+        key = keyMap.get(public_key)
+        if not key:
+            continue
+
+        interface = interfaceMap.get(public_key)
+        peer = peerMap.get(public_key)
+
+        # FILTER
+        if value:
+            if field == 'user':
+                if not (
+                    value in key.user.username.lower() or
+                    value in key.user.first_name.lower() or
+                    value in key.user.last_name.lower()
+                ):
+                    continue
+            elif field == 'ip':
+                if not value in str(interface.ip_address).lower():
+                    continue
+            elif field == 'name':
+                if not value in key.name.lower():
+                    continue
+
+        if state in ["true", "false"]:
+            if is_connected != (state == "true"):
+                continue
+
+        peers.append({
+            "peer": str(peer),
+            "endpoint": endpoint or "—",
+            "rx": rx,
+            "tx": tx,
+            "is_connected": is_connected
+        })
+
+    return peers,onlineCount
     
 
 def selectAllNetworkInterfaces() -> list[str]:

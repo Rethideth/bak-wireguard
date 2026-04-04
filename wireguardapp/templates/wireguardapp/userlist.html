@@ -7,6 +7,33 @@
 <h1>List uživatelů</h1>
 
 
+<div class="row mb-3">
+    <div class="col">
+        <input type="text" id="filter-name" class="form-control" placeholder="Jméno">
+    </div>
+
+    <div class="col">
+        <input type="text" id="filter-username" class="form-control" placeholder="Username">
+    </div>
+
+    <div class="col">
+        <input type="text" id="filter-email" class="form-control" placeholder="Email">
+    </div>
+
+    <div class="col">
+        <select id="filter-verified" class="form-select">
+            <option value="">Všichni</option>
+            <option value="true">Ověření</option>
+            <option value="false">Neověření</option>
+        </select>
+    </div>
+
+    <div class="col d-flex gap-2">
+        <button class="btn btn-primary" onclick="filterUsers()">Filtrovat</button>
+        <button class="btn btn-secondary" onclick="resetFilters()">Reset</button>
+    </div>
+</div>
+
 <table class="table table-bordered table-striped align-middle">
   <thead>
     <tr>
@@ -18,7 +45,7 @@
       <th scope="col">Akce</th>
     </tr>
   </thead>
-  <tbody class= "table-group-divider ">
+  <tbody class="table-group-divider" id="table-body">
     {% for userInfo in users %}
         <tr>
             <th scope="row">{{forloop.counter}}</th>
@@ -98,49 +125,126 @@
         });
     }
 
-    document.querySelectorAll(".user-verify").forEach(button => {
+    document.addEventListener("click", function(e) {
+        const button = e.target.closest(".user-verify");
+        if (!button) return;
+
         const id = button.dataset.id;
-        const badge = document.getElementById("badge-"+id)
-        const btnText = document.getElementById("btn-text-"+id);
+        const badge = document.getElementById("badge-" + id);
+        const btnText = document.getElementById("btn-text-" + id);
 
-        button.addEventListener('click', function() {
+        button.disabled = true;
 
-            button.disabled = true;
+        ajaxWithCSRF("{% url 'verify' %}", {'id': id}, function(response) {
+            if (response.success) {
+                if (response.verified) {
+                    button.classList.remove("btn-danger");
+                    button.classList.add("btn-success");
+                    btnText.textContent = "Zrušit ověření";
 
-            ajaxWithCSRF("{% url 'verify' %}",{'id':id}, function(response)
-            {
-                if (response.success)
-                {
-                    if (response.verified) {
-                        button.classList.remove("btn-danger");
-                        button.classList.add("btn-success");
-                        btnText.textContent = "Zrušit ověření";
+                    badge.classList.remove("bg-danger");
+                    badge.classList.add("bg-success");
+                    badge.textContent = "Ověřený";
+                } else {
+                    button.classList.remove("btn-success");
+                    button.classList.add("btn-danger");
+                    btnText.textContent = "Ověřit";
 
-                        badge.classList.remove("bg-danger");
-                        badge.classList.add("bg-success");
-                        badge.textContent = "Ověřený"
-                    } else {
-                        button.classList.remove("btn-success");
-                        button.classList.add("btn-danger");
-                        btnText.textContent = "Ověřit";
-
-                        badge.classList.remove("bg-success");
-                        badge.classList.add("bg-danger");
-                        badge.textContent = "Neověřený"
-                    }
+                    badge.classList.remove("bg-success");
+                    badge.classList.add("bg-danger");
+                    badge.textContent = "Neověřený";
                 }
-                else
-                {
-                    alert("Došlo k chybě při verifikaci uživatele: " +response.error );
-                }
-                button.disabled = false;
-            });
-            
+            } else {
+                alert("Chyba: " + response.error);
+            }
+
+            button.disabled = false;
         });
-
     });
 
 
+    function filterUsers() {
+        const name = document.getElementById("filter-name").value;
+        const username = document.getElementById("filter-username").value;
+        const email = document.getElementById("filter-email").value;
+        const verified = document.getElementById("filter-verified").value;
+
+        fetch(`/users/filter/?name=${name}&username=${username}&email=${email}&verified=${verified}`)
+            .then(response => response.json())
+            .then(data => {
+                const tbody = document.getElementById("table-body");
+                tbody.innerHTML = "";
+
+                if (data.success)
+                {
+                    data.data.forEach((user, index) => {
+                        const verifiedBadge = user.verified
+                            ? `<span class="badge bg-success">Ověřený</span>`
+                            : `<span class="badge bg-danger">Neověřený</span>`;
+
+                        const btnClass = user.verified ? "btn-success" : "btn-danger";
+                        const btnText = user.verified ? "Zrušit ověření" : "Ověřit";
+
+                        const row = `
+                            <tr>
+                                <th scope="row">${index + 1}</th>
+                                <td>${user.first_name} ${user.last_name}</td>
+                                <td>${user.username}</td>
+                                <td>${user.email}</td>
+                                <td>
+                                    <span 
+                                        class="badge ${user.verified ? 'bg-success' : 'bg-danger'}"
+                                        id="badge-${user.id}">
+                                        ${user.verified ? 'Ověřený' : 'Neověřený'}
+                                    </span>
+                                </td>
+                                <td>
+                                    <button 
+                                        class="btn user-verify ${user.verified ? 'btn-success' : 'btn-danger'}"
+                                        data-id="${user.id}">
+                                        <span id="btn-text-${user.id}">
+                                            ${user.verified ? 'Zrušit ověření' : 'Ověřit'}
+                                        </span>
+                                    </button>
+
+                                    <a class="btn btn-primary ms-1" href="/usersettings/${user.id}">
+                                        Zobrazit profil
+                                    </a>
+                                </td>
+                            </tr>
+                        `;
+
+                        tbody.innerHTML += row;
+                    });
+                }
+                else
+                {
+                    tbody.innerHTML = data.error;
+                }
+
+                
+            });
+    }
+
+    function resetFilters() {
+        document.getElementById("filter-name").value = "";
+        document.getElementById("filter-username").value = "";
+        document.getElementById("filter-email").value = "";
+        document.getElementById("filter-verified").value = "";
+
+        filterUsers(); // znovu načte všechny uživatele
+    }
+
+    // debounce (aby to neposílalo request při každém znaku)
+    let timeout = null;
+
+    ["filter-name", "filter-username"].forEach(id => {
+    document.getElementById(id).addEventListener("keypress", function(e) {
+        if (e.key === "Enter") {
+            filterUsers();
+        }
+    });
+});
 
 </script>
 

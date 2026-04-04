@@ -17,6 +17,10 @@ class KeyRepository:
         key.delete()
 
     @staticmethod
+    def getAllKeys():
+        return Key.objects.all()
+
+    @staticmethod
     def updateName(key: Key, name: str):
         key.name = name
         key.save(update_fields=['name'])
@@ -28,6 +32,10 @@ class KeyRepository:
     @staticmethod
     def getByUser(user: User):
         return Key.objects.filter(user=user)
+    
+    @staticmethod
+    def getByPublicKey(publicKey : str):
+        return Key.objects.filter(public_key = publicKey).first()
 
 
 # --------------------------
@@ -38,6 +46,10 @@ class InterfaceRepository:
     def save(interface: Interface):
         """ Saves the given interface instance. """
         interface.save()
+
+    @staticmethod
+    def getAllInterfaces():
+        return Interface.objects.all()
 
     @staticmethod
     def getFirstServerInterface() -> Interface | None:
@@ -127,6 +139,10 @@ class PeerRepository:
         peer.save()
 
     @staticmethod
+    def getAllPeers():
+        return Peer.objects.all()
+
+    @staticmethod
     def getPeersByInterface(interface: Interface):
         """ Returns all peer of a server interface interface """
         return Peer.objects.filter(interface=interface)
@@ -153,6 +169,7 @@ class PeerRepository:
     def getPeerFromKey(key: Key) -> Peer | None:
         """ Returns a client peer from its key. """
         return Peer.objects.filter(peer_interface__interface_key=key).first()
+    
 
     
     @staticmethod
