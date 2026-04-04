@@ -296,13 +296,13 @@ class ServerService:
         ranked = PeerRepository.getOrderedSnapshotsFromInterface(serverInterface)
         endpoints = defaultdict(set)
         for snapshot in ranked:
-            endpoints[snapshot.peer].add(ServerService.stripPort(snapshot.endpoint))
+            endpoints[snapshot.peer.pk].add(ServerService.stripPort(snapshot.endpoint))
 
         table = []
         for peer in peers:
             table.append({
                 "peer": peer,
-                "endpoint": endpoints[peer],
+                "endpoint": endpoints[peer.pk],
                 "rx_total": peer.total_rx_bytes,
                 "tx_total": peer.total_tx_bytes,
             })
