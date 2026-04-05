@@ -1,15 +1,43 @@
 {% extends "wireguardapp/base.html" %}
 
-{% block title %}quack{% endblock %}
+{% block title %}WG{% endblock %}
 
 {% block content %}
 
-<h1>Nový uživatel</h1>
+<h1></h1>
 
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Vytvořit uživatele</button>
-</form>
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header">
+                <strong>Nový uživatel</strong>
+            </div>
+
+            <div class="card-body justify-content-center">
+                <form method="post">
+                    {% csrf_token %}
+                    {% for field in form %}
+                        <div class="mb-3">
+                            <label class="form-label">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.help_text %}
+                                <div class="form-text">
+                                    {{ field.help_text }}
+                                </div>
+                            {% endif %}
+                            {% for error in field.errors %}
+                                <div class="text-danger">
+                                    {{ error }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+                    <button type="submit"class="form-control">Vytvořit nového uživatele</button>
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
 
 {% endblock %}

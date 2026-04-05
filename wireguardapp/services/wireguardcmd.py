@@ -10,6 +10,7 @@ import time
 import psutil
 from wireguardapp.database.repository import InterfaceRepository,PeerRepository,UserRepository,KeyRepository
 import datetime
+from django.utils import timezone
 
 logger = logging.getLogger('wg')
 
@@ -615,8 +616,12 @@ def saveWgDump(interface : Interface):
 
         peer = Peer.objects.get(peer_interface__interface_key__public_key = public_key)
         
-        # Insert snapshot
-        handshake_dt = None if latest_handshake == "0" else datetime.datetime.fromtimestamp(int(latest_handshake))
+        if latest_handshake == 0: 
+            handshake_dt = None
+        else:
+            naive_dt = datetime.datetime.fromtimestamp(latest_handshake)
+            handshake_dt = timezone.make_aware(naive_dt)
+
         PeerSnapshot.objects.create(
             peer=peer,
             endpoint=None if endpoint == "(none)" else endpoint,
