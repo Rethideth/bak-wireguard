@@ -7,14 +7,20 @@
 
 <h1 class="mb-4">Seznam Klíčů</h1>
 
-<div class="d-flex align-items-center mb-2">
-  <span class="me-3"><strong>Použito klíčů</strong></span>
-  <div class="progress" style="width: 200px; height: 20px;">
-    <div class="progress-bar d-flex justify-content-center align-items-center"
-         role="progressbar"
-         style="width: {% widthratio profile.key_count profile.key_limit 100 %}%;">
-      {{ profile.key_count }} / {{ profile.key_limit }}
-    </div>
+
+
+<div class="d-flex align-items-center mb-2"> 
+    <span class="me-3"><strong>Použito klíčů:</strong></span> 
+    <div class="progress" style="width: 200px; height: 20px;">
+    
+        <div id="key-progress-bar"
+            class="progress-bar d-flex justify-content-center align-items-center"
+            role="progressbar"
+            style="width: {% widthratio profile.key_count profile.key_limit 100 %}%;">
+        <span id="key-progress-text">
+        {{ profile.key_count }} / {{ profile.key_limit }}
+        </span>
+        </div>
   </div>
 </div>
 
@@ -133,7 +139,27 @@
         <!-- New Key-->
         <form method="post" action="{% url 'newkey' %}">
             {% csrf_token %}
-            {{ form.as_p }}
+            {% for field in form %}
+                <div class="mb-3">
+                    <label class="form-label">
+                        {{ field.label }}
+                        {% if field.field.required %}
+                            <span class="text-danger">*</span>
+                        {% endif %}
+                    </label>
+                    {{ field }}
+                    {% if field.help_text %}
+                        <div class="form-text">
+                            {{ field.help_text }}
+                        </div>
+                    {% endif %}
+                    {% for error in field.errors %}
+                        <div class="text-danger">
+                            {{ error }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endfor %}
             <button class="btn btn-primary new-button" type="submit" >Vytvořit nový klíč</button>
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zavřít</button>
         </form>
@@ -220,6 +246,13 @@
                 if (response.success) 
                 {
                     card.remove(); // remove card from html list
+                    const bar = document.getElementById('key-progress-bar');
+                    const text = document.getElementById('key-progress-text');
+
+                    const percent = (response.key_count / response.key_limit) * 100;
+
+                    bar.style.width = percent + "%";
+                    text.innerText = `${response.key_count} / ${response.key_limit}`;
                     alert(response.body);
                 } 
                 else 

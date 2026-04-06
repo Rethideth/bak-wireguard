@@ -217,7 +217,7 @@ class ClientService:
 
         # Save all client models atomically
         ClientRepository.saveClient(clientKey=key, clientInterface=interface, serverPeer=serverPeer)
-        UserRepository.updateProfile(profile=profile, keyCount=profile.key_count + 1)
+        
 
         # Add peer to WireGuard
         try:
@@ -254,7 +254,7 @@ class ClientService:
 
         serverInterface = InterfaceRepository.getClientsServerInterface(key)
         ClientRepository.deleteClient(key)
-        UserRepository.updateProfile(profile=profile, keyCount=profile.key_count - 1)
+        
 
         # Remove from WireGuard
         try:

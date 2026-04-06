@@ -60,10 +60,11 @@ class CustomUserCreationForm(BootstrapFormMixin, UserCreationForm):
 
 
 class ClientKeyForm(BootstrapFormMixin,forms.Form):
-    name = forms.CharField(max_length=255)
+    name = forms.CharField(max_length=255, label="Jméno klíče")
     interface = forms.ModelChoiceField(
         queryset=ServerService.getAllServerInterfaces(),
-        required=True
+        required=True,
+        label='Rozhraní serveru'
     )
 
 

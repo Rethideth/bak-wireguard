@@ -76,11 +76,15 @@ def deletekey(request):
             return JsonResponse({"success": False, "body": "Musíte být vlastníkem klíče nebo administrator."})
     
     result = ClientService.removeClient(key.user, key)
+    profile = ClientService.getUserProfile(key.user)
 
     if result:
         return JsonResponse({"success": False, "body": result})
     
-    return JsonResponse({"success": True, "body": "Klíč byl odstraněn"})
+    return JsonResponse({"success": True, 
+                         "body": "Klíč byl odstraněn", 
+                         "key_count": profile.key_count,
+                         "key_limit": profile.key_limit,})
 
 
 @require_POST

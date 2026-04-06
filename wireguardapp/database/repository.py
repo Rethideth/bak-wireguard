@@ -254,11 +254,16 @@ class ClientRepository:
             KeyRepository.save(clientKey)
             InterfaceRepository.save(clientInterface)
             PeerRepository.save(serverPeer)
+            profile = UserRepository.getOrCreateProfile(clientKey.user)
+            UserRepository.updateProfile(profile=profile, keyCount=profile.key_count + 1)
 
     @staticmethod
     def deleteClient(clientKey: Key):
         """Deletes the client (cascades to interface and peers)."""
-        KeyRepository.delete(clientKey)
+        with transaction.atomic():
+            KeyRepository.delete(clientKey)
+            profile = UserRepository.getOrCreateProfile(clientKey.user)
+            UserRepository.updateProfile(profile=profile, keyCount=profile.key_count - 1)
 
 
 class ServerRepository:
@@ -272,4 +277,9 @@ class ServerRepository:
     @staticmethod
     def deleteServer(serverKey: Key):
         """ Deletes a server. """
-        KeyRepository.delete(serverKey)
+        with transaction.atomic():
+            server = InterfaceRepository.getByKey(serverKey)
+            clientInterfaces = InterfaceRepository.getClientInterfacesFromServer(server)
+            for client in clientInterfaces:
+                ClientRepository.deleteClient(client.interface_key)
+            KeyRepository.delete(serverKey)
