@@ -208,20 +208,27 @@
         button.addEventListener('click', function() {
             const id = this.dataset.id;
 
-            ajaxWithCSRF("{% url 'confajax' %}", { 'id': id }, function(response) {
-                // Fill modal with config
-                const configText1 = document.getElementById('configtext1');
-                const configText2 = document.getElementById('configtext2');
-                configText1.textContent = response.body1 || 'Žádná konfigurace nebyla vrácena.';
-                configText2.textContent = response.body2 || 'Žádná konfigurace nebyla vrácena.';
-                // set which config to send by key id
-                const downlandId = document.getElementById('conf-downland-id')
-                downlandId.value = id
+            fetch(`{% url 'confajax' %}?id=${id}`)
+                .then(response => response.json())
+                .then(response => {
+                    // Fill modal with config
+                    const configText1 = document.getElementById('configtext1');
+                    const configText2 = document.getElementById('configtext2');
 
-                // Show modal
-                const modal = new bootstrap.Modal(document.getElementById('configModal'));
-                modal.show();
-            });
+                    configText1.textContent = response.body1 || 'Žádná konfigurace nebyla vrácena.';
+                    configText2.textContent = response.body2 || 'Žádná konfigurace nebyla vrácena.';
+
+                    // set which config to send by key id
+                    const downlandId = document.getElementById('conf-downland-id');
+                    downlandId.value = id;
+
+                    // Show modal
+                    const modal = new bootstrap.Modal(document.getElementById('configModal'));
+                    modal.show();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
         });
     });
 

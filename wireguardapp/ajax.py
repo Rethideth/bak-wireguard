@@ -25,9 +25,9 @@ def getconfajax(request):
     user = request.user
 
     keyId = request.GET.get("id")
-    key = ClientService.getKeyById(keyId)
+    key = ClientService.getKeyById(keyId=keyId)
 
-    if not key:
+    if key == None:
         return JsonResponse(
             {"success": False, "error": "Klíč neexistuje."},
             status=404
