@@ -48,16 +48,14 @@ class CustomLoginView(LoginView):
 
 
 class CustomUserCreationForm(BootstrapFormMixin, UserCreationForm):
-    email = forms.EmailField(required=True, label="E-mailová adresa")
-    username = forms.CharField(required=True, label="Uživatelské jméno")
 
     class Meta(UserCreationForm.Meta):
         model = User
         fields = ("username", "email", "first_name", "last_name","password1", "password2")
-        labels = {
-            'first_name': 'Jméno',
-            'last_name': 'Příjmení',
-        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['email'].required = True
 
 
 
@@ -78,7 +76,7 @@ class ServerInterfaceForm(BootstrapFormMixin,forms.ModelForm):
 
         self.fields['listen_port'].required = True
         self.fields['ip_network'].required = True
-        self.fields['ip_network'].help_text = "In a form of e.g. 10.10.0.0"
+        self.fields['ip_network'].help_text = "Ve formě 10.10.0.0"
         if self.instance and self.instance.pk:
             del self.fields['server_name']
 

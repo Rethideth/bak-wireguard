@@ -58,7 +58,8 @@ class ServerService:
         Tries to start the wireguard server interface service. See `wireguard.startWGserver` for more.
         Also increments session number of the server interface.
         """
-        InterfaceRepository.incrementSession(interface=serverInterface)
+        if interfaceInternetName == '':
+            return "Síťové rozhraní pro přesměrování přenosu chybí."
         result = startWGserver(serverInterface, interfaceInternetName)
         saveWgDump(serverInterface)
         return result

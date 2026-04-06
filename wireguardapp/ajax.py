@@ -101,7 +101,7 @@ def toggleServer(request):
         result = ServerService.startServer(serverInterface, data['interface'])
 
     if result:
-        return JsonResponse({"success": False, "error": result})
+        return JsonResponse({"success": False, "is_up" : ServerService.checkServer(serverInterface), "error": result})
     else:
         return JsonResponse({"success": True, "is_up": ServerService.checkServer(serverInterface)})
 
@@ -182,7 +182,6 @@ def filterPeers(request):
     id = request.GET.get("interface")
 
     peers = ServerService.getServerInterfacePeersFiltered(serverInterface=ServerService.getServerInterfaceById(id),field=field,value=value)
-
 
     data = []
     for p in peers:

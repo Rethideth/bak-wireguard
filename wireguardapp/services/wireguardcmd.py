@@ -328,7 +328,7 @@ def startWGserver(serverInterface : Interface, interfaceInternetName : str):
         return e.stderr
     
     logger.info(f"({datetime.datetime.now()}):{serverInterface.name}-{serverInterface.interface_key.name} Wireguard server has been started.")
-
+    InterfaceRepository.incrementSession(interface=serverInterface)
     return 
 
 def stopWGserver(serverInterface : Interface):
