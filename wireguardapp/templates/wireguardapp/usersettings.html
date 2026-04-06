@@ -121,6 +121,7 @@ Uživatel {{ target_user.username }}
                         {{ user_form.last_name }}
                     </div>
 
+                    {% if user_form.email %}
                     <div class="mb-3">
                         <label class="form-label">Email</label>
                         {% if user_form.last_name.errors %}
@@ -128,6 +129,17 @@ Uživatel {{ target_user.username }}
                         {% endif %}
                         {{ user_form.email }}
                     </div>
+                    {% endif %}
+
+                    {% if user_form.is_staff %}
+                    <div class="form-check  mb-3">
+                        <label class="form-check-label">Správce</label>
+                        {{ user_form.is_staff }}
+                        {% if user_form.is_staff.errors %}
+                            <div class="text-danger">{{ user_form.is_staff.errors }}</div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
 
                     {% if profile_form %}
 

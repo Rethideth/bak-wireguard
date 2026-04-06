@@ -11,6 +11,9 @@ from django.db.models import Q
 from .services.clientservice import ClientService
 from .services.serverservice import ServerService
 
+def is_admin(user : User) -> bool:
+    """ Return True if user is an administrator, False if not. """
+    return user.is_staff or user.is_superuser
 
 @require_POST
 @login_required
@@ -31,7 +34,7 @@ def getconfajax(request):
             status=404
         )
     
-    if not (key.user == user or user.is_superuser or user.is_staff):
+    if not (key.user == user or is_admin(user)):
         return JsonResponse(
             {"success": False, "error": "Nejste vlastníkem klíče nebo administrator."},
             status=403
@@ -55,7 +58,7 @@ def updatekeyname(request):
 
     key = ClientService.getKeyById(data["key_id"])
 
-    if not (key.user == request.user or request.user.is_superuser):
+    if not (key.user == request.user or is_admin(request.user)):
         return JsonResponse({"success": False})
 
     ClientService.changeKeyName(key, data["name"])
@@ -92,7 +95,7 @@ def deletekey(request):
 def toggleServer(request):
     """ Toggles a wireguard server interface state. """
     user = request.user
-    if not user.is_superuser or not user.is_staff:
+    if not is_admin(user):
         return JsonResponse({"success": False, "error": "Nejste administrator pro vypínání/zapínání serveru."})
     
     data = json.loads(request.body)
@@ -114,7 +117,7 @@ def toggleServer(request):
 def getpeerstate(request):
     """ Gets the wireguard server interface state. """
     user = request.user
-    if not user.is_superuser or not user.is_staff:
+    if not is_admin(user):
         return JsonResponse({"success": False, "error": "Nejste nejste administrator pro získání logů."})
 
     id = request.GET.get("interface")
@@ -137,7 +140,7 @@ def getpeerstate(request):
 def verifyUser(request):
     """ Switches the verify status of a user by its if ['id']. """
     user = request.user
-    if not user.is_superuser or not user.is_staff:
+    if not is_admin(user):
         return JsonResponse({"success": False, "error": "Nejste administrator pro získání logů."})
     
     data = json.loads(request.body)
@@ -151,7 +154,7 @@ def verifyUser(request):
 @login_required
 def filterUsers(request):
     user = request.user
-    if not user.is_superuser or not user.is_staff:
+    if not is_admin(user):
         return JsonResponse({"success": False, "error": "Nejste administrator pro získání listu uživatelů."})
     
     name = request.GET.get("name")
@@ -178,7 +181,7 @@ def filterUsers(request):
 @login_required
 def filterPeers(request):
     user = request.user
-    if not user.is_superuser or not user.is_staff:
+    if not is_admin(user):
         return JsonResponse({"success": False, "error": "Nejste administrator pro získání informací o peerů."})
     
     field = request.GET.get("field")

@@ -148,7 +148,18 @@ class ServerInterfaceForm(BootstrapFormMixin,forms.ModelForm):
 class UserUpdateForm(BootstrapFormMixin,forms.ModelForm):
     class Meta:
         model = User
-        fields = ["username", "first_name", "last_name", "email"]
+        fields = ["username", "first_name", "last_name", "email", "is_staff"]
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user')  
+        super().__init__(*args, **kwargs)
+
+        if self.instance and self.instance.is_superuser:
+            self.fields['is_staff'].disabled = True
+        
+        if not (user.is_staff or user.is_superuser):
+            self.fields.pop('email')
+            self.fields.pop('is_staff')
 
 
 

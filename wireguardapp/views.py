@@ -3,8 +3,9 @@ from django.views.decorators.http import require_POST
 from django.contrib.auth import login, update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm,SetPasswordForm
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required,user_passes_test
 from wireguardapp.models import Interface, Peer, PeerSnapshot, Key,Profile
+from django.contrib.auth.models import User
 
 from .services.clientservice import ClientService
 from .services.serverservice import ServerService
@@ -23,6 +24,9 @@ from django.db.utils import OperationalError
 logger = logging.getLogger('test')
 # Create your views here.
 
+def is_admin(user : User) -> bool:
+    """ Return True if user is an administrator, False if not. """
+    return user.is_staff or user.is_superuser
 
 def home(request : HttpRequest):
     """ Home page view. Has a introduction of this """
@@ -86,10 +90,9 @@ def newkey(request : HttpRequest):
     return redirect("mykeys")
 
 @login_required
+@user_passes_test(is_admin)
 def serverinterfaces(request : HttpRequest):
     """ View that shows all server interfaces and their basic information. """
-    if not request.user.is_superuser or not request.user.is_staff:
-        raise PermissionDenied
 
     interfaceInfo = list(dict())
     interfaces = ServerService.getAllServerInterfaces()
@@ -104,10 +107,9 @@ def serverinterfaces(request : HttpRequest):
     return render(request, 'wireguardapp/serverlist.html' , {"grouped":interfaceInfo})
 
 @login_required
+@user_passes_test(is_admin)
 def serverinterface(request :HttpRequest, id:int):
     """ View that shows the server interface dashboard. Information about interface configuration, its peers and current connection state. """
-    if not request.user.is_superuser or not request.user.is_staff:
-        raise PermissionDenied
     
     interface = ServerService.getServerInterfaceById(id)
     peers = ServerService.getServerInterfacePeers(interface)
@@ -169,10 +171,10 @@ def serverinterfaceform(request, id=None):
 
 
 @login_required
+@user_passes_test(is_admin)
 def deleteinterface(request :HttpRequest):
     """ Removes a server interface. """
-    if not request.user.is_superuser or not request.user.is_staff:
-        raise PermissionDenied
+
     if request.method == "POST":
         id = request.POST.get('id')
         interface = ServerService.getServerInterfaceById(id)
@@ -216,10 +218,9 @@ def downlandConf(request : HttpRequest):
     return response
 
 @login_required
+@user_passes_test(is_admin)
 def listusers(request : HttpRequest):
     """ Lists all users, their basic information and link to ther user options view. """
-    if not request.user.is_superuser or not request.user.is_staff:
-        raise PermissionDenied
     
     users = ServerService.getAllClientUsers()
 
@@ -230,10 +231,10 @@ def listusers(request : HttpRequest):
     return render(request, 'wireguardapp/userlist.html', {"users":grouped})
     
 @login_required
+@user_passes_test(is_admin)
 def newuser(request :HttpRequest):
     """ Admin based form view that creates an user. """
-    if not request.user.is_superuser or not request.user.is_staff:
-        raise PermissionDenied
+
     
     if request.method == "POST":
         form = CustomUserCreationForm(request.POST)
@@ -272,7 +273,7 @@ def usersettings(request: HttpRequest, id):
     if request.method == "POST":
 
         # Initialize all forms correctly
-        user_form = UserUpdateForm(request.POST, instance=target_user)
+        user_form = UserUpdateForm(request.POST, instance=target_user, user = request.user)
         if request.user.is_staff:
             password_form = BootstrapSetPasswordForm(target_user, request.POST)
             profile_form = ProfileAdminForm(request.POST, instance=profile)
@@ -311,7 +312,7 @@ def usersettings(request: HttpRequest, id):
 
     else:
         # GET request, instantiate empty forms
-        user_form = UserUpdateForm(instance=target_user)
+        user_form = UserUpdateForm(instance=target_user, user = request.user)
         password_form = BootstrapSetPasswordForm(target_user) if request.user.is_staff else BootstrapChangePasswordForm(target_user)
         if request.user.is_staff:
             profile_form = ProfileAdminForm(instance=profile)
@@ -329,8 +330,8 @@ def userkeys(request :HttpRequest, id:int):
     """ View that shows a list of user keys and all their information """
     user = ClientService.getUserFromId(id)
     
-    if request.user != user and not request.user.is_staff:
-        return redirect("/")
+    if request.user != user and not is_admin(request.user):
+        raise PermissionDenied
     
     keys = ClientService.getUserKeys(user)
     grouped = list(dict())
