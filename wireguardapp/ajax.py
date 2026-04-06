@@ -24,8 +24,8 @@ def getconfajax(request):
     """
     user = request.user
 
-    id = request.GET.get("id")
-    key = ClientService.getKeyById(id)
+    keyId = request.GET.get("id")
+    key = ClientService.getKeyById(keyId)
 
     if not key:
         return JsonResponse(
