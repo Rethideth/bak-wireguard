@@ -15,7 +15,6 @@ def is_admin(user : User) -> bool:
     """ Return True if user is an administrator, False if not. """
     return user.is_staff or user.is_superuser
 
-@require_POST
 @login_required
 def getconfajax(request):
     """ 
@@ -23,10 +22,10 @@ def getconfajax(request):
     Recieves an id ['id'] of the key.
     Returns a confirmation if it was succesful and its configuration for full and split tunel. error message if failed.
     """
-    data = json.loads(request.body)
     user = request.user
 
-    key = ClientService.getKeyById(data['id'])
+    id = request.GET.get("id")
+    key = ClientService.getKeyById(id)
 
     if not key:
         return JsonResponse(
