@@ -249,7 +249,6 @@ class ServerService:
     def getNetworkInterfaces():
         """
         Gets all current network interfaces of this device.
-        
         """
         return selectAllNetworkInterfaces()
     
@@ -429,21 +428,25 @@ class ServerService:
     # -------------------
     @staticmethod
     def updateServer(interface: Interface, changed: list[str]):
-        logger.info(f"({datetime.datetime.now()}):Interface {interface.name}-{interface.interface_key.name} changed.")
+        oldInterface = InterfaceRepository.getById(interface.pk)
         try:
             with transaction.atomic():
                 if "ip_network" in changed or "ip_network_mask" in changed:
                     ServerService.updateServerPeersIpAddresses(interface)
-                    logger.info(f"({datetime.datetime.now()}):Interface {interface.name}-{interface.interface_key.name} changed ip network.")
+                    logger.info(f"({datetime.datetime.now()}):Interface {interface.name}-{interface.interface_key.name} " +
+                                f"changed ip network {oldInterface.ip_network}/{oldInterface.ip_network_mask} -> {interface.ip_network}/{interface.ip_network_mask}.")
                 if "server_endpoint" in changed:
                     InterfaceRepository.updateEndpoint(interface, interface.server_endpoint)
-                    logger.info(f"({datetime.datetime.now()}):Interface {interface.name}-{interface.interface_key.name} changed server endpoint.")
+                    logger.info(f"({datetime.datetime.now()}):Interface {interface.name}-{interface.interface_key.name} "+
+                                f"changed server endpoint {oldInterface.server_endpoint} -> {interface.server_endpoint}.")
                 if "listen_port" in changed:
                     InterfaceRepository.updatePort(interface, interface.listen_port)
-                    logger.info(f"({datetime.datetime.now()}):Interface {interface.name}-{interface.interface_key.name} changed listen port.")
+                    logger.info(f"({datetime.datetime.now()}):Interface {interface.name}-{interface.interface_key.name} "+
+                                f"changed listen port {oldInterface.listen_port} -> {interface.listen_port}.")
                 if "client_to_client" in changed:
                     InterfaceRepository.updateClientToClient(interface, interface.client_to_client)
-                    logger.info(f"({datetime.datetime.now()}):Interface {interface.name}-{interface.interface_key.name} changed client to client connection.")
+                    logger.info(f"({datetime.datetime.now()}):Interface {interface.name}-{interface.interface_key.name} "+
+                                f"changed client to client connection {oldInterface.client_to_client} -> {interface.client_to_client}.")
         except ValueError as e:
             logger.info(f"({datetime.datetime.now()}):Interface {interface.name}-{interface.interface_key.name} failed to change ip network: {str(e)}.")
             return str(e)
@@ -455,7 +458,6 @@ class ServerService:
     @staticmethod
     def updateServerPeersIpAddresses(serverInterface: Interface):
         network = ipaddress.ip_network(f"{serverInterface.ip_network}/{serverInterface.ip_network_mask}")
-        logger.info(f"network: {network}")
         
         clients = InterfaceRepository.getClientInterfacesFromServer(serverInterface)
         count = network.num_addresses - 2
