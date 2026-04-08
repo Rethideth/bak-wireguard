@@ -37,6 +37,7 @@
                     {% csrf_token %}
                     <button type="submit" class="form-control">Přihlásit</button>
                 </form>
+                <a href="{% url "password_reset" %}">Zapomentuté heslo?</a>
 
             </div>
         </div>

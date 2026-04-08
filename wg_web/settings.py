@@ -25,9 +25,7 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 FERNET_KEY = os.getenv("FERNET_KEY")
 DJANGO_PASSWORD = os.getenv("DJANGO_PASSWORD")
 
-CSRF_COOKIE_SECURE=True
-SESSION_COOKIE_SECURE=True
-SECURE_SSL_REDIRECT=True
+
 # Only if web certificate in correct (not expired, self signed, invalid) 
 ## SECURE_HSTS_SECONDS=True
 
@@ -72,6 +70,7 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
+            BASE_DIR / 'templates'
         ],
         'APP_DIRS': True,
         'OPTIONS': {
@@ -128,6 +127,15 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# Email for password reset
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+#EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+#EMAIL_HOST = 'smtp.example.com'
+#EMAIL_PORT = 587
+#EMAIL_HOST_USER = 'your@email.com'
+#EMAIL_HOST_PASSWORD = 'password'
+#EMAIL_USE_TLS = True
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/

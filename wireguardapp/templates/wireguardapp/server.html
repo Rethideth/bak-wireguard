@@ -539,7 +539,9 @@
                 table.innerHTML = data.error;
             }
 
-        });
+        }).catch(error => {
+                console.error('Error:', error);
+            });
     }
 
    
@@ -593,7 +595,10 @@
                 {
                     tbody.innerHTML = data.error
                 }      
-        });
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
     }
 
     function resetFilterPeer() {
