@@ -3,6 +3,12 @@ from django.contrib.auth.models import User
 from django.db import transaction
 from django.db.models import F, Window
 from django.db.models.functions import RowNumber
+import datetime
+from django.utils import timezone
+from datetime import timedelta
+
+
+OLD_LOG_DAYS_CUTOFF = 30
 
 # --------------------------
 # Key Repository
@@ -139,6 +145,15 @@ class PeerRepository:
         peer.save()
 
     @staticmethod
+    def saveState(peer:Peer):
+        """ Save the fields `total_rx_bytes`, `total_tx_bytes`, `last_rx_bytes`, `last_tx_bytes` of the instance"""
+        peer.save(update_fields=
+                ['total_rx_bytes',
+                    'total_tx_bytes',
+                    'last_rx_bytes',
+                    'last_tx_bytes'])
+
+    @staticmethod
     def getAllPeers():
         return Peer.objects.all()
 
@@ -171,7 +186,6 @@ class PeerRepository:
         return Peer.objects.filter(peer_interface__interface_key=key).first()
     
 
-    
     @staticmethod
     def getOrderedSnapshotsFromInterface(serverInterface: Interface):
         """ Retuns all peer snapshots of the given interface. Adds `row_number` to each row. Grouped by peer and Ordered by collected_at descending. """
@@ -242,6 +256,18 @@ class UserRepository:
             fields.append('key_count')
         if fields:
             profile.save(update_fields=fields)
+
+class PeerSnapshotRepository:
+    @staticmethod
+    def save(snapshot :PeerSnapshot):
+        """Saves the peer snapshot. """
+        snapshot.save()
+    
+    def deleteOldSnapShots():
+        cutoff = timezone.now() - timedelta(days=OLD_LOG_DAYS_CUTOFF)
+        PeerSnapshot.objects.filter(created_at__lt=cutoff).delete()
+
+
 
 # --------------------------
 # High-level Operations

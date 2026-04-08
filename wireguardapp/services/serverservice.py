@@ -5,15 +5,16 @@ from django.contrib.auth.models import User
 import ipaddress
 from django.db.models import Q
 
-from wireguardapp.models import Interface, Peer, Profile
+from wireguardapp.models import Interface, Peer, Profile,PeerSnapshot
 from .wireguardcmd import (
     startWGserver, stopWGserver, isWGserverUp,
     getWGPeersState, selectAllNetworkInterfaces,
-    addWGPeer, removeWGPeer, saveWgDump
+    addWGPeer, removeWGPeer,getWgDump
 )
 from .modelfactory import ModelFactory 
-from wireguardapp.database.repository import InterfaceRepository, PeerRepository, UserRepository, KeyRepository, ServerRepository
+from wireguardapp.database.repository import InterfaceRepository, PeerRepository, UserRepository, KeyRepository, ServerRepository,PeerSnapshotRepository
 import datetime
+from django.utils import timezone
 
 logger = logging.getLogger("wg")
 
@@ -61,7 +62,7 @@ class ServerService:
         if interfaceInternetName == '':
             return "Síťové rozhraní pro přesměrování přenosu chybí."
         result = startWGserver(serverInterface, interfaceInternetName)
-        saveWgDump(serverInterface)
+        ServerService.saveServerInterfacePeersState(serverInterface)
         return result
 
     @staticmethod
@@ -251,6 +252,89 @@ class ServerService:
         
         """
         return selectAllNetworkInterfaces()
+    
+    @staticmethod
+    def saveAllPeersState():
+        """
+        Runs the `getWgDump` for every server interface in the database. 
+        Saves the snapshot of every enabled peer and aggregate its data into peer object.
+        Also deletes month old snapshots.
+        """
+        interfaces = InterfaceRepository.getAllServerInterfaces()
+
+        for interface in interfaces:
+            ServerService.saveServerInterfacePeersState(interface=interface)
+        PeerSnapshotRepository.deleteOldSnapShots()
+
+    @staticmethod
+    def saveServerInterfacePeersState(interface :Interface):
+        """
+        Saves the state on the given interface based on the command 'wg show <interface.name> dump'.
+        The information is saved in PeerSnapshot models and aggregated in peer object (total send/recieved bytes)
+
+        If the interface in not up, it skips saving data.
+
+        :param interface: The interface to save its own dump.
+        :type interface: Interface
+        """
+        try:
+            lines = getWgDump(interface=interface)
+        except:
+            return
+        i = 0
+
+        # First line is interface info → skip it
+        for line in lines[1:]:
+            parts = line.split("\t")
+
+            public_key = parts[0]
+            endpoint = parts[2]
+            latest_handshake = int(parts[4])
+            rx_bytes = int(parts[5])
+            tx_bytes = int(parts[6])
+            keepalive = parts[7]
+
+            peer = PeerRepository.getPeerFromKey(KeyRepository.getByPublicKey(public_key))
+            
+            if latest_handshake == 0: 
+                handshake_dt = None
+            else:
+                naive_dt = datetime.datetime.fromtimestamp(latest_handshake)
+                handshake_dt = timezone.make_aware(naive_dt)
+
+
+            snapshot = ModelFactory.createPeerSnapshot(
+                peer=peer,
+                endpoint=endpoint,
+                handshake_dt=handshake_dt,
+                rx_bytes=rx_bytes,
+                tx_bytes=tx_bytes,
+                serverInterface=interface
+            )
+            PeerSnapshotRepository.save(snapshot)
+            # Update peer state
+
+            currentRx = rx_bytes
+            currentTx = tx_bytes
+
+            # was interface reseted?
+            if (peer.last_rx_bytes > currentRx or
+                peer.last_tx_bytes > currentTx):
+                diffR = currentRx
+                diffT = currentTx
+            else:
+                diffR = currentRx - peer.last_rx_bytes
+                diffT = currentTx - peer.last_tx_bytes
+
+            peer.total_rx_bytes += diffR
+            peer.total_tx_bytes += diffT
+            peer.last_rx_bytes = currentRx
+            peer.last_tx_bytes = currentTx
+
+            PeerRepository.saveState(peer)
+
+            i += 1
+        logger.info(f"({datetime.datetime.now()}):{interface.name}-{interface.interface_key.name} saved states of {i} peers.")
 
     # -------------------
     # User Management

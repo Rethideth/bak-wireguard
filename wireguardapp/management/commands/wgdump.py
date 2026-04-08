@@ -2,7 +2,7 @@ from django.core.management.base import BaseCommand
 import subprocess
 from datetime import datetime
 from wireguardapp.models import Interface, Peer, PeerSnapshot, Key
-from wireguardapp.services.wireguardcmd import saveWgDumpAll
+from wireguardapp.services.serverservice import ServerService
 import logging
 import datetime
 
@@ -13,8 +13,6 @@ class Command(BaseCommand):
 
     
     def handle(self, *args, **options):
-        saveWgDumpAll()
-        logger.info(f"({datetime.datetime.now()}): WireGuard peer state aggregation completed")
-        self.stdout.write(self.style.SUCCESS("WireGuard ingestion completed"))
+        ServerService.saveAllPeersState()
 
     

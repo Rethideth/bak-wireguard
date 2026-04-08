@@ -4,14 +4,15 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from collections import defaultdict
 
-from wireguardapp.models import Interface, Peer, Key, Profile
+from wireguardapp.models import Interface, Peer, Key, Profile, PeerSnapshot
 
-from .wireguardcmd import  generateKeyPair
+from .wireguardcmd import generateKeyPair
 from .crypto import encrypt_value
 
 import ipaddress
 import re
-
+import datetime
+from django.utils import timezone
 from wireguardapp.database.repository import InterfaceRepository
 
 
@@ -200,3 +201,14 @@ class ModelFactory:
         nums = [int(re.search(r"\d+", x).group()) for x in names if re.search(r"\d+", x)]
         num = max(nums, default=-1)
         return f"wg-server{num + 1}"
+    
+    @staticmethod
+    def createPeerSnapshot(peer :Peer, endpoint : str, handshake_dt :datetime, rx_bytes : int, tx_bytes : int, serverInterface : Interface):
+        return PeerSnapshot(
+            peer=peer,
+            endpoint=None if endpoint == "(none)" else endpoint,
+            latest_handshake=handshake_dt,
+            rx_bytes=rx_bytes,
+            tx_bytes=tx_bytes,
+            session=serverInterface.session_number
+        )

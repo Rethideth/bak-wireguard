@@ -552,15 +552,7 @@ def selectAllNetworkInterfaces() -> list[str]:
 
     return interfaces
 
-def saveWgDumpAll():
-    """
-    Runs the `getWgDump` for every server interface in the database.
-    """
-    interfaces = InterfaceRepository.getAllServerInterfaces()
 
-    logger.info(f"Starting logging and aggregating state of wireguard peers")
-    for interface in interfaces:
-        saveWgDump(interface=interface)
 
 def getWgDump(interface : Interface):
     """
@@ -586,76 +578,4 @@ def getWgDump(interface : Interface):
         check=True,
     )
     return result.stdout.strip().splitlines()
-
-def saveWgDump(interface : Interface):
-    """
-    Saves the state on the given interface based on the command 'wg show <interface.name> dump'.
-    The information is saved in PeerSnapshot models and aggregated in peer object (total send/recieved bytes)
-
-    If the interface in not up, it skips saving data.
-
-    :param interface: The interface to save its own dump.
-    :type interface: Interface
-    """
-    try:
-        lines = getWgDump(interface=interface)
-    except:
-        return
-    i = 0
-
-    # First line is interface info → skip it
-    for line in lines[1:]:
-        parts = line.split("\t")
-
-        public_key = parts[0]
-        endpoint = parts[2]
-        latest_handshake = int(parts[4])
-        rx_bytes = int(parts[5])
-        tx_bytes = int(parts[6])
-        keepalive = parts[7]
-
-        peer = Peer.objects.get(peer_interface__interface_key__public_key = public_key)
-        
-        if latest_handshake == 0: 
-            handshake_dt = None
-        else:
-            naive_dt = datetime.datetime.fromtimestamp(latest_handshake)
-            handshake_dt = timezone.make_aware(naive_dt)
-
-        PeerSnapshot.objects.create(
-            peer=peer,
-            endpoint=None if endpoint == "(none)" else endpoint,
-            latest_handshake=handshake_dt,
-            rx_bytes=int(rx_bytes),
-            tx_bytes=int(tx_bytes),
-            session=interface.session_number
-        )
-        # Update peer state
-
-        currentRx = rx_bytes
-        currentTx = tx_bytes
-
-        # was interface reseted?
-        if (peer.last_rx_bytes > currentRx or
-            peer.last_tx_bytes > currentTx):
-            diffR = currentRx
-            diffT = currentTx
-        else:
-            diffR = currentRx - peer.last_rx_bytes
-            diffT = currentTx - peer.last_tx_bytes
-
-        peer.total_rx_bytes += diffR
-        peer.total_tx_bytes += diffT
-        peer.last_rx_bytes = currentRx
-        peer.last_tx_bytes = currentTx
-
-        peer.save(update_fields=
-                ['total_rx_bytes',
-                    'total_tx_bytes',
-                    'last_rx_bytes',
-                    'last_tx_bytes'])
-
-        i += 1
-        logger.info(f"WireGuard saved snapshot of [{interface.name}] session [{interface.session_number}] - {peer.peer_interface.interface_key}")
-
 
