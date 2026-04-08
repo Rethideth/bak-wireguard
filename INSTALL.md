@@ -1,5 +1,9 @@
 # Installation
-on ubuntu.
+You will need:
+- public IP address
+- Email with application access (gmail,outlook,...)
+- Linux/Ubuntu OS
+- Some knowledge about Apache2 and Django config
 
 ## 1. Install dependencies.
 ```
@@ -71,7 +75,7 @@ Write output into `.env` file
 Also add a row to store a password for MariaDB django user. Use this password in MariaDB user creation. 
 `DJANGO_PASSWORD=<plain-text-password>` 
 
-Add a application password (Hesla aplikací) from email for sending password resets. You may use gmail or outlook with 2FA settings for getting application key. Generate the password for `Django framework` and generate 16 character long password and put the password between single quotes. Use the searching function to see it in your account settings.
+Add a application password (Hesla aplikací) from email for sending password resets. You may use gmail or outlook with 2FA settings for getting application key. Generate the password for `Django framework` and generate 16 character long password (example:`vmyp hqdr uixp xytz`) and put the password between single quotes. Use the searching function to see it in your account settings. DO NOT PUT YOUR OWN PASSWORD.
 `EMAIL_PASSWORD='<16-lenght-password>'`
 
 ### 2.4 Logging 
@@ -284,7 +288,7 @@ Enable firewall
 sudo ufw enable
 ```
 ## 6. Automatic logging
-Enable a cron job for executing django managment command for logging peer data.
+Enable a cron job for executing django managment command for logging peer data. This configuration saves the state every hour.
 Edit cron jobs for the user `www-data`
 ```
 sudo crontab -u www-data -e

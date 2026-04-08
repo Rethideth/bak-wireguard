@@ -62,4 +62,5 @@ Business layer for the view functions.
  - https://www.w3schools.com/django/
  - https://www.scaleway.com/en/docs/tutorials/install-wireguard/
  - https://azure.microsoft.com/cs-cz/resources/cloud-computing-dictionary/what-is-vpn
+ - https://sendlayer.com/blog/how-to-implement-password-reset-in-django/
 
