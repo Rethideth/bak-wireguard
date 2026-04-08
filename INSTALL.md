@@ -71,6 +71,9 @@ Write output into `.env` file
 Also add a row to store a password for MariaDB django user. Use this password in MariaDB user creation. 
 `DJANGO_PASSWORD=<plain-text-password>` 
 
+Add a application password (Hesla aplikací) from email for sending password resets. You may use gmail or outlook with 2FA settings for getting application key. Generate the password for `Django framework` and generate 16 character long password and put the password between single quotes. Use the searching function to see it in your account settings.
+`EMAIL_PASSWORD='<16-lenght-password>'`
+
 ### 2.4 Logging 
 You must have correct permission or manage.py runserver wont work correctly. 
 The user who will run the `python manage.py runserver` will throw error if it doesnt have read and write on the log files.
@@ -125,6 +128,25 @@ Change group to www-data for all project files
 sudo chown  $USER:www-data /var/www/wireguardweb/* -R
 ```
 
+In project `settings.py` in  (`/var/www/wireguardweb/wg_web/settings.py`) alter the parameter to your information.
+
+Add or change the field `ALLOWED_HOSTS` to any address your application will be hosted on.
+
+Alter the email fields:
+- `EMAIL_HOST`: `'smtp.gmail.com'` or `'smtp.office365.com'` or other email SMTP service that implements application access.
+- `EMAIL_HOST_USER`: your own email address (e.g. `rethideth@gmail.com`) that added application password the `EMAIL_PASSWORD`.
+
+```
+ALLOWED_HOSTS = ['<IP-address>', '<Domain-name-address>']
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = '<your-email-smtp-service-address>'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = '<your-email-address>'
+EMAIL_HOST_PASSWORD = EMAIL_PASSWORD
+```
+
 Run these commands 
 ```
 python manage.py makemigrations
@@ -138,12 +160,14 @@ python manage.py runserver
 If runserver is ok, everything on the side of django is completed.
 
 
+
+
 ## 3. Apache 
 Create a configuration file
 ```
 sudo nano /etc/apache2/sites-available/wgweb.conf
 ```
-Write into the config file the code under. You may need to change the project directory (`/var/www/wireguardweb`), ServerName and other if you need.
+Write into the config file the code under. You may need to change `DocumentRoot` to the the project directory (`/var/www/wireguardweb`). Set ServerName and ServerAlias to the website address.
 ```
 <VirtualHost *:443>
         SSLEngine on

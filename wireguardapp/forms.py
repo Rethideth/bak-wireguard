@@ -9,7 +9,7 @@ from wireguardapp.services.serverservice import ServerService
 from datetime import datetime
 import ipaddress
 from django.contrib.auth.views import LoginView
-from django.contrib.auth.forms import AuthenticationForm,PasswordChangeForm,SetPasswordForm
+from django.contrib.auth.forms import AuthenticationForm,PasswordChangeForm,SetPasswordForm, PasswordResetForm
 
 
 
@@ -30,16 +30,15 @@ class BootstrapFormMixin:
                 widget.attrs["class"] = f"{existing} form-control".strip()
 
 class BootstrapAuthenticationForm(BootstrapFormMixin, AuthenticationForm):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        
-        self.fields['username'].label = "Uživatelské jméno"
-        self.fields['password'].label = "Heslo"
+    pass
 
 class BootstrapChangePasswordForm(BootstrapFormMixin, PasswordChangeForm):
     pass
 
 class BootstrapSetPasswordForm(BootstrapFormMixin, SetPasswordForm):
+    pass
+
+class BootstrapPasswordResetForm(BootstrapFormMixin,PasswordResetForm):
     pass
 
 
@@ -167,3 +166,7 @@ class ProfileAdminForm(BootstrapFormMixin,forms.ModelForm):
     class Meta:
         model = Profile
         fields = ["verified", "key_limit"]
+
+
+
+

@@ -2,7 +2,7 @@ from django.urls import path
 from . import views,ajax
 
 from django.contrib.auth import views as auth_views
-from wireguardapp.forms import CustomLoginView
+from wireguardapp.forms import CustomLoginView,BootstrapPasswordResetForm,BootstrapSetPasswordForm
 
 from django.conf import settings
 from django.conf.urls.static import static
@@ -35,9 +35,15 @@ urlpatterns = [
     path('test/',views.test),
     path("users/filter/", ajax.filterUsers, name="filterusers"),
     path("peers/filter/", ajax.filterPeers, name="filterpeers"),
-    path('password_reset/', auth_views.PasswordResetView.as_view(), name='password_reset'),
-    path('password_reset/done/', auth_views.PasswordResetDoneView.as_view(), name='password_reset_done'),
-    path('reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
-    path('reset/done/', auth_views.PasswordResetCompleteView.as_view(), name='password_reset_complete'),
+    path('password_reset/', auth_views.PasswordResetView.as_view(
+        template_name='registration/passwordresetform.html',
+        form_class=BootstrapPasswordResetForm,
+        email_template_name='registration/passwordresetemail.html',
+        subject_template_name='registration/passwordresetemailsubject.txt'), name='password_reset'),
+    path('password_reset/done/', auth_views.PasswordResetDoneView.as_view(template_name='registration/passwordresetdone.html'), name='password_reset_done'),
+    path('reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(
+        template_name='registration/passwordresetconfirm.html',
+        form_class=BootstrapSetPasswordForm), name='password_reset_confirm'),
+    path('reset/done/', auth_views.PasswordResetCompleteView.as_view(template_name='registration/passwordresetcomplete.html'), name='password_reset_complete'),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
     

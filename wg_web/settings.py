@@ -24,6 +24,7 @@ load_dotenv(BASE_DIR/'.env')
 SECRET_KEY = os.getenv("SECRET_KEY")
 FERNET_KEY = os.getenv("FERNET_KEY")
 DJANGO_PASSWORD = os.getenv("DJANGO_PASSWORD")
+EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
 
 
 # Only if web certificate in correct (not expired, self signed, invalid) 
@@ -37,6 +38,16 @@ ALLOWED_HOSTS = ['192.168.0.161',
     '10.234.14.79',
     '127.0.0.1',
     'wgweb.localhost']
+
+# Email for password reset
+
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'www.rethideth@gmail.com'
+EMAIL_HOST_PASSWORD = EMAIL_PASSWORD
 
 
 
@@ -127,15 +138,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# Email for password reset
-
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-#EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-#EMAIL_HOST = 'smtp.example.com'
-#EMAIL_PORT = 587
-#EMAIL_HOST_USER = 'your@email.com'
-#EMAIL_HOST_PASSWORD = 'password'
-#EMAIL_USE_TLS = True
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
