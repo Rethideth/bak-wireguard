@@ -7,14 +7,15 @@ You will need:
 
 ## 1. Install dependencies.
 ```
-sudo apt install python3-pip
-sudo apt install python3-venv
-sudo apt-get install python3-pip apache2 libapache2-mod-wsgi-py3
-sudo apt-get install libmariadb-devUpdate
-sudo apt-get install pkg-config python3-dev default-libmysqlclient-dev build-essential
-sudo apt install mariadb-server
-sudo apt install git
-sudo apt install wireguard
+sudo apt-get update
+sudo apt-get -y install python3-pip
+sudo apt-get -y install python3-venv
+sudo apt-get -y install python3-pip apache2 libapache2-mod-wsgi-py3
+sudo apt-get -y install libmariadb-devUpdate
+sudo apt-get -y install pkg-config python3-dev default-libmysqlclient-dev build-essential
+sudo apt-get -y install mariadb-server
+sudo apt-get -y install git
+sudo apt-get -y install wireguard
 ```
 Go to a directory where do you want to install the project (here it is in `/var/www/wireguardweb`)
 
@@ -46,13 +47,9 @@ Activate the virtual enviroment using `source venv/bin/activate`.
 Deactivate using `deactivate`.
 
 ### 2.2 requirements
-Requirement for project. Execute the commands below inside virtual enviroment.
+Requirement for project. Execute the command below inside virtual enviroment.
 ```
-pip install django
-pip install mysqlclient
-pip install cryptography
-pip install python-dotenv
-pip install psutil
+pip install -r requirements.txt 
 ```
 ### 2.3 encryption and enviroment values
 Encryption for private key.
@@ -75,7 +72,7 @@ Write output into `.env` file
 Also add a row to store a password for MariaDB django user. Use this password in MariaDB user creation. 
 `DJANGO_PASSWORD=<plain-text-password>` 
 
-Add a application password (Hesla aplikací) from email for sending password resets. You may use gmail or outlook with 2FA settings for getting application key. Generate the password for `Django framework` and generate 16 character long password (example:`vmyp hqdr uixp xytz`) and put the password between single quotes. Use the searching function to see it in your account settings. DO NOT PUT YOUR OWN PASSWORD TO YOUR ACCOUNT.
+Add a application password (Hesla aplikací) from email for sending password resets. You may use gmail or outlook with 2FA settings for getting application key. Generate the password for `Django framework` and generate 16 character long password (example:`vmyp hqdr uixp xytz`) and put the password between single quotes. Use the searching function to see it in your account settings of your email account. DO NOT PUT YOUR OWN PASSWORD TO YOUR ACCOUNT.
 `EMAIL_PASSWORD='<16-lenght-password>'`
 
 Example:

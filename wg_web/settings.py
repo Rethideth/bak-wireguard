@@ -31,7 +31,7 @@ EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
 ## SECURE_HSTS_SECONDS=True
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['192.168.0.161',
     '10.0.0.99',
