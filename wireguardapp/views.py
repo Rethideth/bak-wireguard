@@ -18,8 +18,7 @@ from django.utils import timezone
 from django.http import HttpRequest,HttpResponse, HttpResponseNotFound
 import logging
 from django.conf import settings
-from django.db import connections
-from django.db.utils import OperationalError
+
 
 logger = logging.getLogger('test')
 # Create your views here.
@@ -30,12 +29,7 @@ def is_admin(user : User) -> bool:
 
 def home(request : HttpRequest):
     """ Home page view. Has a introduction of this """
-    db_online = True
-    try:
-        connections['default'].cursor()
-    except OperationalError:
-        db_online = False
-    return render(request, 'wireguardapp/main.html', {"db_online":db_online})
+    return render(request, 'wireguardapp/main.html', {})
 
 @login_required
 def test(request : HttpRequest):
