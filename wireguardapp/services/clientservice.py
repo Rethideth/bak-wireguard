@@ -5,6 +5,8 @@ from wireguardapp.database.repository import InterfaceRepository, PeerRepository
 from .wireguardcmd import addWGPeer, removeWGPeer, generateClientConfText
 from .modelfactory import ModelFactory
 import ipaddress
+import datetime
+from django.utils import timezone
 
 logger = logging.getLogger("wg")
 
@@ -236,7 +238,7 @@ class ClientService:
 
         # Save all client models atomically
         ClientRepository.saveClient(clientKey=key, clientInterface=interface, serverPeer=serverPeer)
-        
+        logger.info(f"({datetime.datetime.now()}):New client {user.username}-{key.name} created.")
 
         # Add peer to WireGuard
         try:
@@ -273,6 +275,7 @@ class ClientService:
 
         serverInterface = InterfaceRepository.getClientsServerInterface(key)
         ClientRepository.deleteClient(key)
+        logger.info(f"({datetime.datetime.now()}):Client {user.username}-{key.name} deleted.")
         
 
         # Remove from WireGuard
