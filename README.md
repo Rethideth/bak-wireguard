@@ -15,27 +15,37 @@ Uses scripts owned by root and permitted sudo for www-data to execute wireguard 
 
 Private key are encrypted by Fernet symmetric encryption cryptography.fernet.Fernet. The fernet key is stored in a enviroment file .env, and read when a private key need to be decrypted. 
 
+Provides password reset by email for accounts.
+
+Web interface actions are logged in `/var/log/wgweb/wg.log`. These include:
+- Creating or deleting a server interface
+- Creating or removing a client key
+- Turning On/Off the server interface
+- Altering server interface information
+- WireGuard peer state saving
+- Disconnecting or connecting of WireGuard peers to the server interface
+
 ## Project Structure
-Uses one django app `wireguardapp` for everything. More information is in documentation (unfinished).
+Uses one django app `wireguardapp` for everything. Every function added by this work is documented by docstrings.
 
 The structure of the directory of the wireguard app is:
-### database
+### Database
 Database access layer for the MariaDB database. 
 - repository.py - Static classes and methods for CRUD operations. Every model has a repository and special repositories for client and server operation.
 
-### management
+### Management
 Has commands that are accessible from outside of the django project using virtual enviroment. 
  - commands
   - my_command.py - Dev testing managment command
   - wgdump.py - Managment command for saving and aggregating current state of WireGuard server interfaces. Used for cron job.
 
-### static
+### Static
 Has images for web interface.
 
-### templates
+### Templates
 Has html files for web interface. 
 
-### service
+### Service
 Business layer for the view functions.
  - clientservice.py - Has a one static class with methods intended mainly for client usage.
  - serverservice.py - Has a one static class with methods intended mainly for server usage.
@@ -45,11 +55,11 @@ Business layer for the view functions.
 
 ### Base
  - ajax.py - All json web requests from ajax requests.
- - contextprocessors.py - Has a single function that returns all server interfaces. Is used for getting a list of servers for dropdown of "Server Dashboards".
+ - contextprocessors.py - Has a single function that returns all server interfaces. Is used for getting a list of servers for dropdown of "Server Dashboardy".
  - forms.py - All forms that django app uses.
  - middleware.py - Has middleware for django project. Has a one function that check if database is up and redirects if it is down.
  - models.py - Has models of django app.
- - tests.py - dev testing functions.
+ - tests.py - Dev testing functions.
  - urls.py - List of urls that are mapped to views or ajax functions.
  - views.py - All http web requests.
 
@@ -61,6 +71,5 @@ Business layer for the view functions.
  - https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
  - https://www.w3schools.com/django/
  - https://www.scaleway.com/en/docs/tutorials/install-wireguard/
- - https://azure.microsoft.com/cs-cz/resources/cloud-computing-dictionary/what-is-vpn
  - https://sendlayer.com/blog/how-to-implement-password-reset-in-django/
 
