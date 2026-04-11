@@ -118,6 +118,11 @@
             </li>
         </ol>
 
+        <p>
+          Způsob nastavení VPN tunelu na různých operačních systémech je jiný. Odtuď následuje postup pro 
+          Linux s distribucí Ubuntu a grafickým rozhraní GNOME, potom pro Windows. 
+          <i>Jméno konfiguračního souboru nesmí mít závorky, které se přidávají pokud už existuje soubor se stejným názvem na zařízení</i>
+        </p> 
 
         <strong>Linux (Ubuntu/Gnome)</strong>
         <ol>
@@ -185,6 +190,41 @@
           </li>
         </ol>
       </section>
+
+      <strong>Android</strong>
+      <ol>
+        <li>
+            Pro používání wireguard klienta protřebuje instalovat wireguard na vašem zařízení.
+            Ve obchodu aplikací vyhledejte aplikaci WireGuard od vývojáře WireGuard Development Team
+            (https://play.google.com/store/apps/details?id=com.wireguard.android&pcampaignid=web_share)
+        </li>
+        <li>
+            Spusťte aplikace a vytvořte nový tunel přes 'importovat ze souboru nebo archivu'.
+            </br>
+                <img src="{% static "wireguardapp/images/android_new.jpg" %}" 
+                  alt="Wireguard nový tunel" 
+                  class="img-fluid img-thumbnail w-25">
+                </br>
+        </li>
+        <li>
+            Nalezněte ve vašem průzkumníku souborů stáhnutý konfigurační soubor. Pokud konfigurační soubor má závorky 
+            ve svém jméně, ve aplikaci 'Moje soubory' nebo podobně, přejděte na 'Poslední soubory' nebo 'Interní pamět -> Downland' a seřaďte podle datumu. 
+            Potom podržte na soubor a ve nastavení (v další -> přejmenovat) přejmenujte na název s jenom písmeny.
+            </br>
+                <img src="{% static "wireguardapp/images/android_rename.jpg" %}" 
+                  alt="Přejmenovat soubor v průzkumníku souborů 'Moje soubory'" 
+                  class="img-fluid img-thumbnail w-25">
+                </br>
+            </br>
+                <img src="{% static "wireguardapp/images/android_import.jpg" %}" 
+                  alt="Importovat konfigurační soubor" 
+                  class="img-fluid img-thumbnail w-25">
+                </br>
+        </li>
+        <li>
+          Zapněte tunel v aplikaci.
+        </li>
+      </ol>
 
       <hr>
 
@@ -284,6 +324,7 @@
     </div>
   </div>
 </div>
+
 
 
 <script>

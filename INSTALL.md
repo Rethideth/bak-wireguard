@@ -60,12 +60,16 @@ sudo chmod 660 .env
 sudo chown :www-data .env
 ```
 Run this command and copy its output (e.g. `Q-E4ykYV9nUGuYfEvyvLaPJAV_oVoKGpDDZkt2Ue_40=`):
-```python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"```
+```
+python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+```
 Then write the generated key into the `.env` file. 
 `FERNET_KEY=<the generated key>` 
 
 Generate a secret key for django (e.g. `%$lqxz)e_=sv45e00!n#@(hej1j5(wvrgz+1^f9^o_@6+f7=8^`).
-```python3 -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"```
+```
+python3 -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+```
 Write output into `.env` file
 `SECRET_KEY=<the generated key>`
 
