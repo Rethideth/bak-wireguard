@@ -135,7 +135,7 @@ def generateServerConfText(serverInterface : Interface, interfaceInternetName : 
         raise TypeError
     serverPeers = PeerRepository.getVerifiedPeersFromServer(serverInterface)
 
-    clientComm = "DROP"
+    clientComm = "REJECT"
     if serverInterface.client_to_client:
         clientComm = "ACCEPT"
 
