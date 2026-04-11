@@ -16,31 +16,38 @@ OLD_LOG_DAYS_CUTOFF = 30
 class KeyRepository:
     @staticmethod
     def save(key: Key):
+        """ Saves the instance of a key"""
         key.save()
 
     @staticmethod
     def delete(key: Key):
+        """Deletes the key of this instance."""
         key.delete()
 
     @staticmethod
     def getAllKeys():
+        """ Gets all keys."""
         return Key.objects.all()
 
     @staticmethod
     def updateName(key: Key, name: str):
+        """Updates the name of the key by the given name. """
         key.name = name
         key.save(update_fields=['name'])
 
     @staticmethod
     def getById(keyId: int) -> Key | None:
+        """ Gets a key based on its id, None if it does not exists. """
         return Key.objects.filter(id=keyId).first()
 
     @staticmethod
     def getByUser(user: User):
+        """ Gets all keys owned by the given user"""
         return Key.objects.filter(user=user)
     
     @staticmethod
     def getByPublicKey(publicKey : str):
+        """ Gets the key based on `public_key` field, None if it does not exists. """
         return Key.objects.filter(public_key = publicKey).first()
 
 
@@ -55,6 +62,7 @@ class InterfaceRepository:
 
     @staticmethod
     def getAllInterfaces():
+        """ Gets all interfaces. """
         return Interface.objects.all()
 
     @staticmethod
@@ -155,6 +163,7 @@ class PeerRepository:
 
     @staticmethod
     def getAllPeers():
+        """ Gets all peers. """
         return Peer.objects.all()
 
     @staticmethod

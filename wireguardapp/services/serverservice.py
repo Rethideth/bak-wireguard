@@ -58,6 +58,18 @@ class ServerService:
         """ 
         Tries to start the wireguard server interface service. See `wireguard.startWGserver` for more.
         Also increments session number of the server interface.
+
+        If starting of the interface failed, returns the error message.
+
+        :param serverInterface: The server interface to start.
+        :type serverInterface: Interface
+
+        :param interfaceInternetName: The name of a interface to forward wireguard data transfer to. It needs to have a internet access to function.
+            Usualy it will be 'eth0'.
+        :type interfaceInternetName: 
+
+        :return: None if scripts executed succesfully, an error value if error happened during the executing proccess.
+        :rtype: None | str
         """
         if interfaceInternetName == '':
             return "Síťové rozhraní pro přesměrování přenosu chybí."
@@ -67,12 +79,28 @@ class ServerService:
 
     @staticmethod
     def stopServer(serverInterface: Interface):
-        """ Tries to stop the wireguard server interface service. See `wireguard.stopWGserver` for more."""
+        """ 
+        Tries to stop the wireguard server interface service. See `wireguard.stopWGserver` for more.
+
+        :param serverInterface: The server interface to stop.
+        :type serverInterface: Interface
+        
+        :return: None if scripts executed succesfully, an error value if error happened during the executing proccess.
+        :rtype: None | str
+        """
         return stopWGserver(serverInterface)
 
     @staticmethod
     def checkServer(serverInterface: Interface):
-        """ Checks if the server interface is running or stopped. See `wireguard.isWGserverUp` for more."""
+        """ 
+        Checks if the server interface is running or stopped. See `wireguard.isWGserverUp` for more.
+        
+        :param serverInterface: The server interface to check if it is running.
+        :type serverInterface: Interface
+
+        :return: Return True if interface is running, False if it is stopped. 
+        :rtype: bool
+        """
         return isWGserverUp(serverInterface)
 
     # -------------------
@@ -248,7 +276,10 @@ class ServerService:
     @staticmethod
     def getNetworkInterfaces():
         """
-        Gets all current network interfaces of this device.
+        Gets the names of all current network interfaces of the current device.
+
+        :returns: List of interfaces names e.g. ['eth0', 'wlo0']
+        :rtype: list[str]
         """
         return selectAllNetworkInterfaces()
     
@@ -341,7 +372,7 @@ class ServerService:
     @staticmethod
     def getAllClientUsers():
         """
-        Gets all users that aren not superuser of staff.
+        Gets all users that are not superuser.
 
         :return: All users that have the field `is_superuser` False
         :rtype: QuerySet[User]
@@ -350,6 +381,24 @@ class ServerService:
 
     @staticmethod
     def getAllClientUsersFiltered(name : str, username : str, email : str, verified : str):
+        """
+        Gets all users that are not superuser. This querySet is filtered by the given paramenters.
+
+        :param name: The name of the searched User. Includes fields `first_name` and `last_name`.
+        :type name: str
+
+        :param username: The username of the searched User.
+        :type username: str
+
+        :param email: The email of the searched User.
+        :type email: str
+
+        :param verified: The verification state of the seached User. Choices are either `true` or `false`, otherwise the field is not filtered.
+        :type verified: str
+
+        :return: All users that have the field `is_superuser` False and filtered by the given parameters.
+        :rtype: QuerySet[User]
+        """
         clients = ServerService.getAllClientUsers()
 
         if name:
@@ -374,6 +423,16 @@ class ServerService:
 
     @staticmethod
     def switchVerifyProfile(userId: int) -> Profile:
+        """
+        Swithes the verification of the User by the given id. Also connects or disconnects based on their verification status.
+
+        :param userId: The id of the user to switch the verification status.
+        :type userId: int
+
+        :return: The current profile of the user after the switch.
+        :rtype: Profile
+
+        """
         user = UserRepository.getById(userId)
         profile = UserRepository.getOrCreateProfile(user)
 
@@ -390,6 +449,12 @@ class ServerService:
 
     @staticmethod
     def connectUserToWg(user: User):
+        """
+        Connect all WireGuard peers to their server interfaces of their given user.
+
+        :param user: The user to connect its peer to their selected server interface.
+        :type user: User
+        """
         peers = PeerRepository.getByUser(user)
         for peer in peers:
             try:
@@ -399,10 +464,16 @@ class ServerService:
                     ipAddress=peer.peer_interface.ip_address
                 )
             except Exception as e:
-                logger.warning(f"Failed to connect user peer: {e}")
+                logger.error(f"Failed to connect user peer: {e}")
 
     @staticmethod
     def disconnectUserFromWg(user: User):
+        """
+        Disconnects all WireGuard peers from their server interfaces of their given user.
+
+        :param user: The user to disconnect its peer from their selected server interface.
+        :type user: User
+        """
         peers = PeerRepository.getByUser(user)
         for peer in peers:
             try:
@@ -411,10 +482,19 @@ class ServerService:
                     peerKey=peer.peer_interface.interface_key.public_key
                 )
             except Exception as e:
-                logger.warning(f"Failed to disconnect user peer: {e}")
+                logger.error(f"Failed to disconnect user peer: {e}")
 
     @staticmethod
     def removeUser(userId: int) -> str | None:
+        """
+        Removes the given user and disconect its own peers from the WireGuard server interface.
+
+        :param userId: The id of the user to remove and disconnect from WireGuard server interface.
+        :type userId: int
+
+        :return: None if succesful, returns an error message if user was not found.
+        :rtype: str| None
+        """
         user = UserRepository.getById(userId)
         if not user:
             return "Uživatel nenalezen"
@@ -428,6 +508,20 @@ class ServerService:
     # -------------------
     @staticmethod
     def updateServer(interface: Interface, changed: list[str]):
+        """
+        Saves the altered information of the given interface. The information is changed based on the changed values.
+        The saving is in a transaction.
+
+        :param interface: The interface to change its own information. The changed values are alredy in the interface instance.
+        :type interface: Interface
+
+        :param changed: The list of values that are changed in the interface instance.
+        The values that will be altered are: `ip_network`, `ip_network_mask`, `server_endpoint`, `listen_port`, `client_to_client`
+        :type: list[str]
+
+        :return: None if no errors happened, a string value if yes.
+        :rtype: None | str
+        """
         oldInterface = InterfaceRepository.getById(interface.pk)
         try:
             with transaction.atomic():
@@ -457,6 +551,16 @@ class ServerService:
         
     @staticmethod
     def updateServerPeersIpAddresses(serverInterface: Interface):
+        """
+        Saves the altered network information of the given server interface. 
+        Also changes the network information of all clients of the server interface.
+        Raises a `ValueError` if the network is not big enough for the server interface network or the values are not an ip address and mask.
+
+        :param serverInterface: The server interface with the altered `ip_network` or `ip_network_mask`.
+        :type serverInterface: Interface
+
+        :raises ValueError: Raised if the network is not suitable or the `ip_network` or `ip_network_mask` are not in the corrent format.
+        """
         network = ipaddress.ip_network(f"{serverInterface.ip_network}/{serverInterface.ip_network_mask}")
         
         clients = InterfaceRepository.getClientInterfacesFromServer(serverInterface)

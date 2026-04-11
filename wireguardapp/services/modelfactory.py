@@ -203,7 +203,32 @@ class ModelFactory:
         return f"wg-server{num + 1}"
     
     @staticmethod
-    def createPeerSnapshot(peer :Peer, endpoint : str, handshake_dt :datetime, rx_bytes : int, tx_bytes : int, serverInterface : Interface):
+    def createPeerSnapshot(peer :Peer, endpoint : str, handshake_dt :datetime, rx_bytes : int, tx_bytes : int, serverInterface : Interface) -> PeerSnapshot:
+        """
+        Creates a PeerSnapshot object for saving peer state. 
+
+        :param peer: The Peer to save its snapshot of its state.
+        :type peer: Peer
+
+        :param endpoint: The last endpoint that the peer connected from, will insert None if value is `(none)` 
+        :type endpoint: str
+
+        :param handshake_dt: Last time that a wireguard handshake happened. Insert timezone aware datetime with `timezone.make_aware(date)`
+        :type handshake_dt: datetime
+
+        :param rx_bytes: The amount of recieved bytes to the peer of the server interface from client interface. Means Upload.
+        :type rx_bytes: int
+
+        :param tx_bytes: The amount of sent bytes from the peer of the server interface to client interface. Means Download.
+        :type tx_bytes: int
+
+        :param serverInterface: The server interface of this peer. Used to get session number of the server interface.
+        :type serverInterface: Interface
+
+        :return: The created PeerSnapshot instance.
+        :rtype: PeerSNapshot
+        
+        """
         return PeerSnapshot(
             peer=peer,
             endpoint=None if endpoint == "(none)" else endpoint,

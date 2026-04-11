@@ -291,9 +291,8 @@ def startWGserver(serverInterface : Interface, interfaceInternetName : str):
         Usualy it will be 'eth0'.
     :type interfaceInternetName: 
 
-    
-    :raises CalledProcessError: If the script fail to execute fully
-    :raises TypeError: If the provided `serverInterface` does not have a server type.
+    :return: None if scripts executed succesfully, an error value if error happened during the executing proccess.
+    :rtype: None | string
     """
     conf, servername = generateServerConfText(
                 serverInterface=serverInterface, 
@@ -340,7 +339,8 @@ def stopWGserver(serverInterface : Interface):
     :param serverInterface: The server interface to stop.
     :type serverInterface: Interface
     
-    :raises CalledProcessError: If the script fail to execute fully
+    :return: None if scripts executed succesfully, an error value if error happened during the executing proccess.
+    :rtype: None | string
     """
 
     cmd = [
@@ -520,7 +520,7 @@ def getWGPeersState(serverInterface :Interface, field : str = None, value : str 
 
 def selectAllNetworkInterfaces() -> list[str]:
     """
-    Gets all available network interfaces of this device. Uses `psutil` to get names of all interfaces.
+    Gets all available network interfaces of the current device. Uses `psutil` to get names of all interfaces.
     Used to select the interface to forward the VPN network transfer into.
     Excludes loopback, wireguard, docker and other interfaces that highly likely do not have internet access. 
 

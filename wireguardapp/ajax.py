@@ -114,7 +114,7 @@ def toggleServer(request):
 
 @login_required
 def getpeerstate(request):
-    """ Gets the wireguard server interface state. """
+    """ Gets the wireguard server interface state. The peers are filtered by the given parameters. """
     user = request.user
     if not is_admin(user):
         return JsonResponse({"success": False, "error": "Nejste nejste administrator pro získání logů."})
@@ -152,6 +152,7 @@ def verifyUser(request):
 
 @login_required
 def filterUsers(request):
+    """ Return a list of filtered users. """
     user = request.user
     if not is_admin(user):
         return JsonResponse({"success": False, "error": "Nejste administrator pro získání listu uživatelů."})
@@ -179,6 +180,7 @@ def filterUsers(request):
 
 @login_required
 def filterPeers(request):
+    """ Returns a list of filtered peers. """
     user = request.user
     if not is_admin(user):
         return JsonResponse({"success": False, "error": "Nejste administrator pro získání informací o peerů."})

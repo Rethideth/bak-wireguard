@@ -40,7 +40,16 @@ class ClientService:
         return InterfaceRepository.getClientsServerInterface(clientKey)
     
     @staticmethod
-    def getInterfaceFromKey(key: Key):
+    def getInterfaceFromKey(key: Key) -> Interface | None:
+        """
+        Gets a interface from its own key. 
+
+        :param key: The key of the interface.
+        :type key: Key
+
+        :return: Interface of the key, None if the key does not have a interface
+        :rtype: Interface
+        """
         return InterfaceRepository.getByKey(key)
 
     @staticmethod
@@ -115,28 +124,38 @@ class ClientService:
 
     @staticmethod
     def stripPort(address: str) -> str:
+        """
+        Removes the port part of an IP address.
+        If it is not an IP address, will return it just as it is.
+
+        :param address: The address to remove its port part.
+        :type address: str
+
+        :return: An address without a port part, or the given address if it is not an IP address or has a wrong format
+        :rtype: str
+        """
         if address == None:
             return address
         address = address.strip()
 
-        # IPv6 ve formátu [addr]:port
+        # IPv6 in format [addr]:port
         if address.startswith('['):
             if ']' in address:
                 return address[1:address.index(']')]
             return address  # fallback
 
-        # zkus rovnou jestli to není čistá IP
+        # is ip address already without a port part
         try:
             ipaddress.ip_address(address)
             return address
         except ValueError:
             pass
 
-        # rozděl na IP + port (poslední :)
+        # separate IP and port by last :
         if ':' in address:
             ip_part, port_part = address.rsplit(':', 1)
 
-            # port musí být číslo
+            # the port must be a number
             if port_part.isdigit():
                 try:
                     ipaddress.ip_address(ip_part)
