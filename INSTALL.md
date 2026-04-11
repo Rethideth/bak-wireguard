@@ -78,14 +78,6 @@ Also add a row to store a password for MariaDB django user. Use this password in
 Add a application password (Hesla aplikací) from email for sending password resets. You may use gmail or outlook with 2FA settings for getting application key. Generate the password for `Django framework` and generate 16 character long password (example:`vmyp hqdr uixp xytz`) and put the password between single quotes. Use the searching function to see it in your account settings. DO NOT PUT YOUR OWN PASSWORD TO YOUR ACCOUNT.
 `EMAIL_PASSWORD='<16-lenght-password>'`
 
-Example:
-```
-FERNET_KEY=<generated-fernet-key>
-SECRET_KEY=<generated-django-key>
-DJANGO_PASSWORD=<database-user-password>
-EMAIL_PASSWORD=<email-application-password>
-```
-
 ### 2.4 Logging 
 You must have correct permission or manage.py runserver wont work correctly. 
 The user who will run the `python manage.py runserver` will throw error if it doesnt have read and write on the log files.
