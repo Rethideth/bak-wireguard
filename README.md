@@ -32,6 +32,19 @@ The structure of the directory of the wireguard app is:
 ### Database
 Database access layer for the MariaDB database. 
 - repository.py - Static classes and methods for CRUD operations. Every model has a repository and special repositories for client and server operation.
+#### Models of the database
+- Key
+ - Information about a static pair of WireGuard keys, has its own name and private key is encrypted
+ - Used to save WireGuard keys of WireGuard interfaces.
+- Interface
+ - Information about a WireGuard interface. Houses network adresses and its identification.
+ - Used for server WireGuard interfaces and client WireGuard interfaces.
+- Peer
+ - Information about WireGuard peers on the server side. Has aggregated statistics about traffic and WireGuard peer specific information
+ - Used for getting information of client traffic and state and defining connection of server and client interfaces.
+- PeerSnapshot
+ - Information about the taken state of a peer. Saves the information from `wg show <interface> dump` command.
+ - Used to get all endpoint that the peer connected from. Automaticaly cleans old records defined in the code. 
 
 ### Management
 Has commands that are accessible from outside of the django project using virtual enviroment. 
