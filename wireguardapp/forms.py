@@ -68,6 +68,7 @@ class ClientKeyForm(BootstrapFormMixin,forms.Form):
 
 
 class ServerInterfaceForm(BootstrapFormMixin,forms.ModelForm):
+    """ Include `Interface` instance into `instance` parameter to edit existing interface. """
     server_name = forms.CharField(max_length=255,required=False, label="Jméno rozhraní")
     ip_network_mask = forms.IntegerField(max_value=31, min_value=0,label="Maska sítě")
 
@@ -145,6 +146,14 @@ class ServerInterfaceForm(BootstrapFormMixin,forms.ModelForm):
 
 
 class UserUpdateForm(BootstrapFormMixin,forms.ModelForm):
+    """
+    Include two parameters:
+    
+    `instance` -> the user instance to edit its information.
+
+    `user` -> the user that is viewing the form. If the user is admin, he can edit email and elevate the instance to admin.
+    
+    """
     class Meta:
         model = User
         fields = ["username", "first_name", "last_name", "email", "is_staff"]
@@ -163,6 +172,7 @@ class UserUpdateForm(BootstrapFormMixin,forms.ModelForm):
 
 
 class ProfileAdminForm(BootstrapFormMixin,forms.ModelForm):
+    """ Form for admins to edit user verification and key limit. """
     class Meta:
         model = Profile
         fields = ["verified", "key_limit"]
