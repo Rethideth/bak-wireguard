@@ -115,6 +115,7 @@ www-data ALL=(root) NOPASSWD: \
 ```
 Give the scripts execution privilege and change ownership to root.
 ```
+cd /var/www/wireguardweb/scripts/
 sudo chown root:root wg-peer-add.bash wg-peer-remove.bash wg-start.bash wg-stop.bash wg-check.bash wg-inf-dump.bash 
 sudo chmod 744 wg-peer-add.bash wg-peer-remove.bash wg-start.bash wg-stop.bash wg-check.bash wg-inf-dump.bash
 ```
