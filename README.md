@@ -1,4 +1,4 @@
-# Unnamed WireGuard web interface
+# A WireGuard web interface
 
 ## Description
 A web interface for VPN server using WireGuard.  
